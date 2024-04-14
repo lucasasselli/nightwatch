@@ -1,0 +1,6 @@
+build
+build-sim
+build-dev
+Source
+*.pdx
+compile_commands.json
