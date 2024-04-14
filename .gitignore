@@ -4,3 +4,4 @@ build-dev
 Source
 *.pdx
 compile_commands.json
+.cache

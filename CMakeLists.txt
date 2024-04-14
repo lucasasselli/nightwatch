@@ -16,15 +16,19 @@ set(PLAYDATE_GAME_DEVICE hello_world_DEVICE)
 project(${PLAYDATE_GAME_NAME} C ASM)
 
 file(GLOB SOURCE_FILES src/*.c)
+file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
 include_directories(${PLAYDATE_GAME_NAME} include)
+include_directories(${PLAYDATE_GAME_NAME} libs/minigl/include)
 
 if (TOOLCHAIN STREQUAL "armgcc")
 	add_executable(${PLAYDATE_GAME_DEVICE} 
+        ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 else()
 	add_library(${PLAYDATE_GAME_NAME} SHARED 
+        ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 endif()
