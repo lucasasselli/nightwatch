@@ -46,11 +46,38 @@ __declspec(dllexport)
 #define TEXT_WIDTH 86
 #define TEXT_HEIGHT 16
 
-obj_data_t cube;
+minigl_obj_t cube;
+
+LCDBitmap *bm;
+
+#define samplepixel(data, x, y, rowbytes) (((data[(y) * rowbytes + (x) / 8] & (1 << (uint8_t)(7 - ((x) % 8)))) != 0) ? kColorBlack : kColorWhite)
 
 void setup(PlaydateAPI *_pd) {
     pd = _pd;
     cube = obj_file_read("res/models/cube.obj");
+
+    const char *error = NULL;
+    LCDBitmap *bm = pd->graphics->loadBitmap("res/textures/mario.png", &error);
+    if (error != NULL) {
+        pd->system->logToConsole("%s", error);
+    }
+
+    int width;
+    int height;
+    int rowbytes;
+    uint8_t *data;
+    pd->graphics->getBitmapData(bm, &width, &height, &rowbytes, NULL, &data);
+
+    uint8_t **tex = (uint8_t **)malloc(height * sizeof(uint8_t *));
+
+    for (int j = 0; j < height; j++) {
+        tex[j] = (uint8_t *)malloc(width * sizeof(uint8_t));
+        for (int i = 0; i < width; i++) {
+            tex[j][i] = samplepixel(data, i, j, rowbytes);
+        }
+    }
+
+    minigl_set_texture(tex, width, height);
 }
 
 static int update(void *userdata) {
@@ -61,20 +88,20 @@ static int update(void *userdata) {
     // pd->graphics->drawText("Hello World!", strlen("Hello World!"),
     // kASCIIEncoding, x, y);
 
-    obj_data_t obj = cube;
+    minigl_obj_t obj = cube;
 
     // Copy the vertices
-    obj.vptr = (vec4_t *)malloc(sizeof(vec4_t) * cube.vptr_size);
-    memcpy(obj.vptr, cube.vptr, sizeof(vec4_t) * cube.vptr_size);
+    obj.vcoord_ptr = (vec4_t *)malloc(sizeof(vec4_t) * cube.vcoord_size);
+    memcpy(obj.vcoord_ptr, cube.vcoord_ptr, sizeof(vec4_t) * cube.vcoord_size);
 
-    for (int i = 0; i < obj.vptr_size; i++) {
-        vertex_scale(&obj.vptr[i], 1);
-        vertex_move(&obj.vptr[i], 0, 0, -7, r);
-        minigl_perspective(&obj.vptr[i], M_PI / 3, 0.6f, 1, 20);
+    for (int i = 0; i < obj.vcoord_size; i++) {
+        vertex_scale(&obj.vcoord_ptr[i], 1);
+        vertex_move(&obj.vcoord_ptr[i], 0, 0, -3, r);
+        minigl_perspective(&obj.vcoord_ptr[i], M_PI / 3, 0.6f, 1, 20);
     }
 
     minigl_clear(0, -1);
-    minigl_draw(obj.vptr, obj.fptr, obj.fptr_size);
+    minigl_draw(obj);
     minigl_swap_frame();
 
     r += M_PI / 100;

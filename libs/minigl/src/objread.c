@@ -2,95 +2,109 @@
 
 #include <stdlib.h>
 
-// TODO: Write a script to convert to binary directly
-obj_data_t obj_file_read(char *path) {
+// TODO: Write a script to convert to binary directly?
+minigl_obj_t obj_file_read(char *path) {
+    // Get the file handle
     SDFile *f = pd->file->open(path, kFileRead);
     if (f == NULL) {
         pd->system->error("Failed to open %s: %s", path, pd->file->geterr());
     }
 
-    char a;
-    float x, y, z;
+    // NOTE: Read the entire buffer in memory in a string array
+    char file_buffer[OBJ_FILE_BUFFER_SIZE][20];
+    int char_index = 0;
+    int file_lines = 0;
 
-    char file_buffer[OBJ_FILE_BUFFER_SIZE];
-    int file_size = pd->file->read(f, file_buffer, OBJ_FILE_BUFFER_SIZE);
+    // Read file line by line into the buffer
+    minigl_obj_t obj;
+    obj.vcoord_size = 0;
+    obj.face_size = 0;
+    obj.tcoord_size = 0;
 
-    char line_buffer[20];
-    int line_size;
+    char c;
 
-    obj_data_t obj;
-
-    // First pass to calculate size
-    obj.vptr_size = 0;
-    obj.fptr_size = 0;
-    line_size = 0;
-    for (int i = 0; i < file_size; i++) {
-        line_buffer[line_size] = file_buffer[i];
-        if (file_buffer[i] == '\n' || file_buffer[i] == EOF) {
-            line_buffer[line_size] = '\0';
-
+    while (pd->file->read(f, (void *)&c, 1)) {
+        file_buffer[file_lines][char_index] = c;
+        if (c == '\n' || c == EOF) {
             // Found EOL
-            sscanf(line_buffer, "%c %f %f %f", &a, &x, &y, &z);
-            switch (a) {
+            file_buffer[file_lines][char_index] = '\0';
+
+            // Count fields for malloc
+            switch (file_buffer[file_lines][0]) {
                 case 'v':
-                    obj.vptr_size++;
-                    break;
-
-                case 'f':
-                    obj.fptr_size++;
-                    break;
-            }
-
-            // Reset line
-            line_size = 0;
-        } else {
-            line_size++;
-        }
-    }
-
-    // Allocate memory
-    obj.vptr = malloc(sizeof(vec4_t) * obj.vptr_size);
-    obj.fptr = malloc(sizeof(vec3_t) * obj.fptr_size);
-
-    // Load data
-    obj.vptr_size = 0;
-    obj.fptr_size = 0;
-    line_size = 0;
-    for (int i = 0; i < file_size; i++) {
-        line_buffer[line_size] = file_buffer[i];
-        if (file_buffer[i] == '\n' || file_buffer[i] == EOF) {
-            line_buffer[line_size] = '\0';
-
-            // Found EOL
-            sscanf(line_buffer, "%c %f %f %f", &a, &x, &y, &z);
-            switch (a) {
-                case 'v':
-                    // Vertex
-                    obj.vptr[obj.vptr_size] = (vec4_t){{x, y, z, 1}};
-                    obj.vptr_size++;
+                    if (file_buffer[file_lines][1] == 't') {
+                        // Texture coordinate
+                        obj.tcoord_size++;
+                    } else {
+                        // Vertex coordidate
+                        obj.vcoord_size++;
+                    }
                     break;
 
                 case 'f':
                     // Face
-                    // NOTE: Indexing starts at 1
-                    obj.fptr[obj.fptr_size].array[0] = x - 1;
-                    obj.fptr[obj.fptr_size].array[1] = y - 1;
-                    obj.fptr[obj.fptr_size].array[2] = z - 1;
-                    obj.fptr_size++;
+                    obj.face_size++;
                     break;
             }
 
-            // TODO: Add debug macro
-            pd->system->logToConsole("%c %f %f %f", a, x, y, z);
-
             // Reset line
-            line_size = 0;
+            char_index = 0;
+            file_lines++;
         } else {
-            line_size++;
+            char_index++;
         }
     }
 
-    pd->file->close(f);
+    // Allocate memory
+    obj.vcoord_ptr = malloc(sizeof(vec4_t) * obj.vcoord_size);
+    obj.vface_ptr = malloc(sizeof(int3_t) * obj.face_size);
+
+    if (obj.face_size > 0) {
+        obj.tcoord_ptr = malloc(sizeof(vec4_t) * obj.tcoord_size);
+        obj.tface_ptr = malloc(sizeof(int3_t) * obj.face_size);
+    }
+
+    // Load data
+    int has_tex = obj.tcoord_size > 0;
+    obj.vcoord_size = 0;
+    obj.face_size = 0;
+    obj.tcoord_size = 0;
+
+    for (int i = 0; i < file_lines; i++) {
+        pd->system->logToConsole("%s", file_buffer[i]);
+        switch (file_buffer[i][0]) {
+            case 'v':
+                if (file_buffer[i][1] == 't') {
+                    // Texture coordinate
+                    float x, y;
+                    sscanf(file_buffer[i], "vt %f %f", &x, &y);
+                    obj.tcoord_ptr[obj.tcoord_size] = (vec2_t){{x, y}};
+                    obj.tcoord_size++;
+                } else {
+                    // Vertex coordidate
+                    float x, y, z;
+                    sscanf(file_buffer[i], "v %f %f %f", &x, &y, &z);
+                    obj.vcoord_ptr[obj.vcoord_size] = (vec4_t){{x, y, z, 1}};
+                    obj.vcoord_size++;
+                }
+                break;
+
+            case 'f':
+                // Face
+                if (has_tex) {
+                    int x, y, z, tx, ty, tz;
+                    sscanf(file_buffer[i], "f %d/%d %d/%d %d/%d", &x, &tx, &y, &ty, &z, &tz);
+                    obj.vface_ptr[obj.face_size] = (int3_t){{x - 1, y - 1, z - 1}};
+                    obj.tface_ptr[obj.face_size] = (int3_t){{tx - 1, ty - 1, tz - 1}};
+                } else {
+                    int x, y, z;
+                    sscanf(file_buffer[i], "f %d %d %d", &x, &y, &z);
+                    obj.vface_ptr[obj.face_size] = (int3_t){{x - 1, y - 1, z - 1}};
+                }
+                obj.face_size++;
+                break;
+        }
+    }
 
     return obj;
 }

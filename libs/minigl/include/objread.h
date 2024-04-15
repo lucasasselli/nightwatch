@@ -9,11 +9,4 @@
 
 extern PlaydateAPI* pd;
 
-typedef struct {
-    vec4_t* vptr;
-    int3_t* fptr;
-    int vptr_size;
-    int fptr_size;
-} obj_data_t;
-
-obj_data_t obj_file_read(char* path);
+minigl_obj_t obj_file_read(char* path);

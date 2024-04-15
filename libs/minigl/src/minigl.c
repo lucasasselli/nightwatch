@@ -3,6 +3,8 @@
 char c_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
+minigl_cfg_t cfg;
+
 void vertex_scale(vec4_t* v, float k) {
     v->coord.x *= k;
     v->coord.y *= k;
@@ -38,8 +40,11 @@ void minigl_perspective(vec4_t* v, float camera_fov, float camera_ratio, float c
     v->coord.y += 0.5f * ((float)SCREEN_SIZE_Y);
 }
 
-static inline float edge_funct(vec4_t a, vec4_t b, vec4_t c) {
-    return (c.coord.x - a.coord.x) * (b.coord.y - a.coord.y) - (c.coord.y - a.coord.y) * (b.coord.x - a.coord.x);
+void minigl_set_texture(uint8_t** ptr, int size_x, int size_y) {
+    cfg.texture.mode = MINIGL_TEXTURE_2D;
+    cfg.texture.ptr = ptr;
+    cfg.texture.size_x = size_x;
+    cfg.texture.size_y = size_y;
 }
 
 void minigl_clear(int color, int depth) {
@@ -52,27 +57,59 @@ void minigl_clear(int color, int depth) {
     }
 }
 
-void minigl_draw(vec4_t* vptr, int3_t* fptr, int fptr_size) {
+static inline float edge_funct(vec4_t a, vec4_t b, vec4_t c) {
+    return (c.coord.x - a.coord.x) * (b.coord.y - a.coord.y) - (c.coord.y - a.coord.y) * (b.coord.x - a.coord.x);
+}
+
+static inline float interpolate(vec3_t w, float a, float b, float c) {
+    return (w.array[0] * a + w.array[1] * b + w.array[2] * c);
+}
+
+void minigl_draw(minigl_obj_t obj) {
     vec4_t v0, v1, v2;
-    float w0, w1, w2;
+    vec2_t t0, t1, t2;
+    vec3_t w;
+
+    if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+        if (obj.tcoord_size == 0) {
+            pd->system->error("Object has no texture data!");
+            return;
+        }
+
+        /*for (int f = 0; f < obj.face_size; f++) {
+            t0 = obj.tcoord_ptr[obj.tface_ptr[f].array[0]];
+            t1 = obj.tcoord_ptr[obj.tface_ptr[f].array[1]];
+            t2 = obj.tcoord_ptr[obj.tface_ptr[f].array[2]];
+
+            pd->system->logToConsole("%d %d %d", obj.tface_ptr[f].array[0], obj.tface_ptr[f].array[1], obj.tface_ptr[f].array[2]);
+            pd->system->logToConsole("%f %f", t0.coord.x, t0.coord.y);
+        }*/
+    }
 
     // FIXME: Need to improve performance!!!
-    for (int f = 0; f < fptr_size; f++) {
-        // Get vertices
-        v0 = vptr[fptr[f].array[0]];
-        v1 = vptr[fptr[f].array[1]];
-        v2 = vptr[fptr[f].array[2]];
+    for (int f = 0; f < obj.face_size; f++) {
+        // Get vertex coordinates
+        v0 = obj.vcoord_ptr[obj.vface_ptr[f].array[0]];
+        v1 = obj.vcoord_ptr[obj.vface_ptr[f].array[1]];
+        v2 = obj.vcoord_ptr[obj.vface_ptr[f].array[2]];
+
+        // Get texture coordinates
+        if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+            t0 = obj.tcoord_ptr[obj.tface_ptr[f].array[0]];
+            t1 = obj.tcoord_ptr[obj.tface_ptr[f].array[1]];
+            t2 = obj.tcoord_ptr[obj.tface_ptr[f].array[2]];
+        }
 
         // Culling
         // FIXME: Can be vec3
-        vec4_t p = {(v0.coord.x + v1.coord.x + v2.coord.x) / 3.0f, (v0.coord.y + v1.coord.y + v2.coord.y) / 3.0f, 0, 0};
+        vec4_t p = {{(v0.coord.x + v1.coord.x + v2.coord.x) / 3.0f, (v0.coord.y + v1.coord.y + v2.coord.y) / 3.0f, 0, 0}};
 
-        w0 = edge_funct(v1, v2, p);
-        w1 = edge_funct(v2, v0, p);
-        w2 = edge_funct(v0, v1, p);
+        w.array[0] = edge_funct(v1, v2, p);
+        w.array[1] = edge_funct(v2, v0, p);
+        w.array[2] = edge_funct(v0, v1, p);
 
         // TODO: Make vertex order programmable
-        if (w0 > 0 || w1 > 0 || w2 > 0) continue;
+        if (w.array[0] < 0 || w.array[1] < 0 || w.array[2] < 0) continue;
 
         // Calculate min bounding rectangle
         float mbr_min_x = fminf(v0.coord.x, fminf(v1.coord.x, v2.coord.x));
@@ -87,28 +124,54 @@ void minigl_draw(vec4_t* vptr, int3_t* fptr, int fptr_size) {
 
         float a = edge_funct(v0, v1, v2);
 
-        for (int i = mbr_min_x; i < mbr_max_x; i++) {
-            for (int j = mbr_min_y; j < mbr_max_y; j++) {
-                p = (vec4_t){i, j, 0, 1};
+        for (int j = mbr_min_y; j < mbr_max_y; j++) {
+            for (int i = mbr_min_x; i < mbr_max_x; i++) {
+                p = (vec4_t){{i, j, 0, 1}};
 
-                w0 = edge_funct(v1, v2, p);
-                w1 = edge_funct(v2, v0, p);
-                w2 = edge_funct(v0, v1, p);
+                w.array[0] = edge_funct(v1, v2, p);
+                w.array[1] = edge_funct(v2, v0, p);
+                w.array[2] = edge_funct(v0, v1, p);
 
                 // TODO: Make vertex order programmable
-                if (w0 <= 0 && w1 <= 0 && w2 <= 0) {
-                    // Compute Z
-                    w0 /= a;
-                    w1 /= a;
-                    w2 /= a;
+                // Draw the vertices if they are clockwise
+                if (w.array[0] >= 0 && w.array[1] >= 0 && w.array[2] >= 0) {
+                    // Calculate barycentric coord.
+                    w.array[0] /= a;
+                    w.array[1] /= a;
+                    w.array[2] /= a;
 
+                    // Interpolate the Z
                     // TODO: This is wrong
-                    float z = 1.0f / (w0 * (1.0f / v0.coord.z) + w1 * (1.0f / v1.coord.z) + w2 * (1.0f / v2.coord.z));
+                    float z = 1.0f / interpolate(w, 1.0f / v0.coord.z, 1.0f / v1.coord.z, 1.0f / v2.coord.z);
 
+                    // Depth test
                     // TODO: Make depth programmable
                     if (z > z_buff[j][i]) {
                         z_buff[j][i] = z;
-                        c_buff[j][i] = 1;
+
+                        if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+                            // Calculate barycentric coord. with Perpective correction
+                            w.array[0] /= v0.coord.z;
+                            w.array[1] /= v1.coord.z;
+                            w.array[2] /= v2.coord.z;
+
+                            float k = w.array[0] + w.array[1] + w.array[2];
+
+                            w.array[0] /= k;
+                            w.array[1] /= k;
+                            w.array[2] /= k;
+
+                            int tx = (int)(interpolate(w, t0.coord.x, t1.coord.x, t2.coord.x) * (float)(cfg.texture.size_x - 1));
+                            // TODO: Change at objload
+                            int ty = (int)((1.0f - interpolate(w, t0.coord.y, t1.coord.y, t2.coord.y)) * (float)(cfg.texture.size_y - 1));
+
+                            tx = tx < 0 ? 0 : tx >= cfg.texture.size_x ? cfg.texture.size_x - 1 : tx;
+                            ty = ty < 0 ? 0 : ty >= cfg.texture.size_y ? cfg.texture.size_y - 1 : ty;
+
+                            c_buff[j][i] = cfg.texture.ptr[ty][tx];
+                        } else {
+                            c_buff[j][i] = 1;
+                        }
                     }
                 }
             }
