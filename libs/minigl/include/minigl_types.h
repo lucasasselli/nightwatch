@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // ---------------------------------------------------------------------------
 // MATH
 // ---------------------------------------------------------------------------
@@ -54,13 +56,18 @@ typedef enum {
 
 typedef enum {
     MINIGL_TEXTURE_0D,  // Solid color
-    MINIGL_TEXTURE_1D,  // 1D Texture
-    MINIGL_TEXTURE_2D   // 2D Texture
+    MINIGL_TEXTURE_2D   // 2D texture
 } minigl_texture_mode_t;
 
 // ---------------------------------------------------------------------------
 // RENDERING
 // ---------------------------------------------------------------------------
+
+typedef struct {
+    uint8_t** ptr;
+    int size_x;
+    int size_y;
+} minigl_texture_t;
 
 typedef struct {
     vec4_t* vcoord_ptr;

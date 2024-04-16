@@ -40,11 +40,9 @@ void minigl_perspective(vec4_t* v, float camera_fov, float camera_ratio, float c
     v->coord.y += 0.5f * ((float)SCREEN_SIZE_Y);
 }
 
-void minigl_set_texture(uint8_t** ptr, int size_x, int size_y) {
-    cfg.texture.mode = MINIGL_TEXTURE_2D;
-    cfg.texture.ptr = ptr;
-    cfg.texture.size_x = size_x;
-    cfg.texture.size_y = size_y;
+void minigl_set_texture(minigl_texture_t t) {
+    cfg.texture_mode = MINIGL_TEXTURE_2D;
+    cfg.texture = t;
 }
 
 void minigl_clear(int color, int depth) {
@@ -70,20 +68,11 @@ void minigl_draw(minigl_obj_t obj) {
     vec2_t t0, t1, t2;
     vec3_t w;
 
-    if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+    if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
         if (obj.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");
             return;
         }
-
-        /*for (int f = 0; f < obj.face_size; f++) {
-            t0 = obj.tcoord_ptr[obj.tface_ptr[f].array[0]];
-            t1 = obj.tcoord_ptr[obj.tface_ptr[f].array[1]];
-            t2 = obj.tcoord_ptr[obj.tface_ptr[f].array[2]];
-
-            pd->system->logToConsole("%d %d %d", obj.tface_ptr[f].array[0], obj.tface_ptr[f].array[1], obj.tface_ptr[f].array[2]);
-            pd->system->logToConsole("%f %f", t0.coord.x, t0.coord.y);
-        }*/
     }
 
     // FIXME: Need to improve performance!!!
@@ -94,14 +83,13 @@ void minigl_draw(minigl_obj_t obj) {
         v2 = obj.vcoord_ptr[obj.vface_ptr[f].array[2]];
 
         // Get texture coordinates
-        if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+        if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
             t0 = obj.tcoord_ptr[obj.tface_ptr[f].array[0]];
             t1 = obj.tcoord_ptr[obj.tface_ptr[f].array[1]];
             t2 = obj.tcoord_ptr[obj.tface_ptr[f].array[2]];
         }
 
         // Culling
-        // FIXME: Can be vec3
         vec4_t p = {{(v0.coord.x + v1.coord.x + v2.coord.x) / 3.0f, (v0.coord.y + v1.coord.y + v2.coord.y) / 3.0f, 0, 0}};
 
         w.array[0] = edge_funct(v1, v2, p);
@@ -149,7 +137,7 @@ void minigl_draw(minigl_obj_t obj) {
                     if (z > z_buff[j][i]) {
                         z_buff[j][i] = z;
 
-                        if (cfg.texture.mode == MINIGL_TEXTURE_2D) {
+                        if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
                             // Calculate barycentric coord. with Perpective correction
                             w.array[0] /= v0.coord.z;
                             w.array[1] /= v1.coord.z;
@@ -183,6 +171,8 @@ void minigl_swap_frame(void) {
     for (int i = 0; i < SCREEN_SIZE_X; i++) {
         for (int j = 0; j < SCREEN_SIZE_Y; j++) {
             if (c_buff[j][i]) {
+                // TODO: Access the screen memory directly
+                // TODO: Extern to make platform agnostic
                 pd->graphics->drawLine(i, j, i, j, 1, kColorBlack);
             }
         }
