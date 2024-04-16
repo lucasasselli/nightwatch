@@ -88,7 +88,7 @@ static int update(void *userdata) {
 
     for (int i = 0; i < obj.vcoord_size; i++) {
         vertex_scale(&obj.vcoord_ptr[i], 1);
-        vertex_move(&obj.vcoord_ptr[i], 0, 0, -3, r);
+        vertex_move(&obj.vcoord_ptr[i], 0, 0, 0, r);
         // FIXME: This is wrong!
         vertex_move(&obj.vcoord_ptr[i], 0, 0, camera.pos.coord.y, camera.rot);
         minigl_perspective(&obj.vcoord_ptr[i], M_PI / 3, 0.6f, 1, 20);

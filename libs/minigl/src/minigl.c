@@ -108,7 +108,7 @@ void minigl_draw(minigl_obj_t obj) {
         mbr_min_x = mbr_min_x > 0 ? mbr_min_x : 0;
         mbr_max_x = mbr_max_x < SCREEN_SIZE_X ? mbr_max_x : SCREEN_SIZE_X;
         mbr_min_y = mbr_min_y > 0 ? mbr_min_y : 0;
-        mbr_max_y = mbr_max_y < SCREEN_SIZE_Y ? mbr_max_y : SCREEN_SIZE_X;
+        mbr_max_y = mbr_max_y < SCREEN_SIZE_Y ? mbr_max_y : SCREEN_SIZE_Y;
 
         float a = edge_funct(v0, v1, v2);
 

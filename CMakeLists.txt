@@ -27,10 +27,21 @@ if (TOOLCHAIN STREQUAL "armgcc")
         ${SOURCE_FILES}
         main.c)
 else()
-	add_library(${PLAYDATE_GAME_NAME} SHARED 
+    add_library(${PLAYDATE_GAME_NAME} SHARED 
         ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
+
+    add_custom_target(sim
+        DEPENDS ${PLAYDATE_GAME_NAME}
+        COMMAND ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${PLAYDATE_GAME_NAME}.pdx
+        COMMENT "Starting Simulator...")
+
+    add_custom_target(valgrind
+        DEPENDS ${PLAYDATE_GAME_NAME}
+        COMMAND valgrind ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${PLAYDATE_GAME_NAME}.pdx
+        COMMENT "Starting Valgrind...")
 endif()
+
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)
