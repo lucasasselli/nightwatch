@@ -56,12 +56,12 @@ minigl_obj_t obj_file_read(char *path) {
     }
 
     // Allocate memory
-    obj.vcoord_ptr = malloc(sizeof(vec4_t) * obj.vcoord_size);
-    obj.vface_ptr = malloc(sizeof(int3_t) * obj.face_size);
+    obj.vcoord_ptr = malloc(sizeof(vec4) * obj.vcoord_size);
+    obj.vface_ptr = malloc(sizeof(ivec3) * obj.face_size);
 
     if (obj.face_size > 0) {
-        obj.tcoord_ptr = malloc(sizeof(vec4_t) * obj.tcoord_size);
-        obj.tface_ptr = malloc(sizeof(int3_t) * obj.face_size);
+        obj.tcoord_ptr = malloc(sizeof(vec4) * obj.tcoord_size);
+        obj.tface_ptr = malloc(sizeof(ivec3) * obj.face_size);
     }
 
     // Load data
@@ -78,13 +78,17 @@ minigl_obj_t obj_file_read(char *path) {
                     // Texture coordinate
                     float x, y;
                     sscanf(file_buffer[i], "vt %f %f", &x, &y);
-                    obj.tcoord_ptr[obj.tcoord_size] = (vec2_t){{x, y}};
+                    obj.tcoord_ptr[obj.tcoord_size][0] = x;
+                    obj.tcoord_ptr[obj.tcoord_size][1] = y;
                     obj.tcoord_size++;
                 } else {
                     // Vertex coordidate
                     float x, y, z;
                     sscanf(file_buffer[i], "v %f %f %f", &x, &y, &z);
-                    obj.vcoord_ptr[obj.vcoord_size] = (vec4_t){{x, y, z, 1}};
+                    obj.vcoord_ptr[obj.vcoord_size][0] = x;
+                    obj.vcoord_ptr[obj.vcoord_size][1] = y;
+                    obj.vcoord_ptr[obj.vcoord_size][2] = z;
+                    obj.vcoord_ptr[obj.vcoord_size][3] = 1.0f;
                     obj.vcoord_size++;
                 }
                 break;
@@ -94,12 +98,18 @@ minigl_obj_t obj_file_read(char *path) {
                 if (has_tex) {
                     int x, y, z, tx, ty, tz;
                     sscanf(file_buffer[i], "f %d/%d %d/%d %d/%d", &x, &tx, &y, &ty, &z, &tz);
-                    obj.vface_ptr[obj.face_size] = (int3_t){{x - 1, y - 1, z - 1}};
-                    obj.tface_ptr[obj.face_size] = (int3_t){{tx - 1, ty - 1, tz - 1}};
+                    obj.vface_ptr[obj.face_size][0] = x - 1;
+                    obj.vface_ptr[obj.face_size][1] = y - 1;
+                    obj.vface_ptr[obj.face_size][2] = z - 1;
+                    obj.tface_ptr[obj.face_size][0] = tx - 1;
+                    obj.tface_ptr[obj.face_size][1] = ty - 1;
+                    obj.tface_ptr[obj.face_size][2] = tz - 1;
                 } else {
                     int x, y, z;
                     sscanf(file_buffer[i], "f %d %d %d", &x, &y, &z);
-                    obj.vface_ptr[obj.face_size] = (int3_t){{x - 1, y - 1, z - 1}};
+                    obj.vface_ptr[obj.face_size][0] = x - 1;
+                    obj.vface_ptr[obj.face_size][1] = y - 1;
+                    obj.vface_ptr[obj.face_size][2] = z - 1;
                 }
                 obj.face_size++;
                 break;

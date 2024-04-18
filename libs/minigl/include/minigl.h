@@ -21,11 +21,11 @@ typedef struct {
     minigl_texture_mode_t texture_mode;
 } minigl_cfg_t;
 
-void vertex_scale(vec4_t* v, float k);
+void vertex_scale(vec4* v, float k);
 
-void vertex_move(vec4_t* v, float x, float y, float z, float r);
+void vertex_move(vec4* v, float x, float y, float z, float r);
 
-void minigl_perspective(vec4_t* v, float camera_fov, float camera_ratio, float clip_near, float clip_far);
+void minigl_perspective(vec4* v, float camera_fov, float camera_ratio, float clip_near, float clip_far);
 
 void minigl_set_texture(minigl_texture_t t);
 

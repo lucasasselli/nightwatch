@@ -6,27 +6,28 @@
 #include "objread.h"
 #include "pd_api.h"
 
-static int update(void *userdata);
-void setup(PlaydateAPI *pd);
-const char *fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft";
-LCDFont *font = NULL;
+#define TEXT_WIDTH 86
+#define TEXT_HEIGHT 16
 
+// Constants
+const char *fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft";
+
+// API handle
 PlaydateAPI *pd;
 
 // Game state
 camera_t camera;
 
-float r = 0;
-#define TEXT_WIDTH 86
-#define TEXT_HEIGHT 16
-
-minigl_obj_t cube;
+// Resources
+LCDFont *font = NULL;
+minigl_obj_t obj_cube;
+minigl_texture_t tex_mario;
 
 #define samplepixel(data, x, y, rowbytes) (((data[(y) * rowbytes + (x) / 8] & (1 << (uint8_t)(7 - ((x) % 8)))) != 0) ? kColorBlack : kColorWhite)
 
 minigl_texture_t texture_read(char *path) {
     const char *error = NULL;
-    LCDBitmap *bm = pd->graphics->loadBitmap("res/textures/mario.png", &error);
+    LCDBitmap *bm = pd->graphics->loadBitmap(path, &error);
     if (error != NULL) {
         pd->system->error("%s", error);
     }
@@ -58,47 +59,73 @@ static int update(void *userdata) {
     pd->system->getButtonState(&pushed, NULL, NULL);
 
     if (pushed) {
-        pd->system->logToConsole("%x", pushed);
-        if (pushed & kButtonA) {
-        }
+        vec3 camera_delta;
         if (pushed & kButtonUp) {
-            camera.pos.coord.y += INPUT_CAMERA_SPEED;
+            glm_vec3_scale_as(camera.front, INPUT_CAMERA_TSPEED, camera_delta);
+            glm_vec3_add(camera.pos, camera_delta, camera.pos);
         }
         if (pushed & kButtonDown) {
-            camera.pos.coord.y -= INPUT_CAMERA_SPEED;
+            glm_vec3_scale_as(camera.front, INPUT_CAMERA_TSPEED, camera_delta);
+            glm_vec3_sub(camera.pos, camera_delta, camera.pos);
         }
         if (pushed & kButtonRight) {
-            camera.rot -= INPUT_CAMERA_SPEED;
+            camera.yaw += INPUT_CAMERA_RSPEED;
         }
         if (pushed & kButtonLeft) {
-            camera.rot += INPUT_CAMERA_SPEED;
+            camera.yaw -= INPUT_CAMERA_RSPEED;
         }
+        if (pushed & kButtonA) {
+            camera.pitch += INPUT_CAMERA_RSPEED;
+        }
+        if (pushed & kButtonB) {
+            camera.pitch -= INPUT_CAMERA_RSPEED;
+        }
+
+        vec3 direction;
+        direction[0] = cosf(glm_rad(camera.yaw)) * cosf(glm_rad(camera.pitch));
+        direction[1] = sinf(glm_rad(camera.pitch));
+        direction[2] = sinf(glm_rad(camera.yaw)) * cosf(glm_rad(camera.pitch));
+        glm_vec3_normalize_to(direction, camera.front);
+
+        // Log camera
+        pd->system->logToConsole("Camera pos: %f %f %f", camera.pos[0], camera.pos[1], camera.pos[2]);
+        pd->system->logToConsole("Camera dir: %f %f %f", camera.front[0], camera.front[1], camera.front[2]);
     }
 
     pd->graphics->clear(kColorWhite);
-    // pd->graphics->setFont(font);
-    // pd->graphics->drawText("Hello World!", strlen("Hello World!"),
-    // kASCIIEncoding, x, y);
 
-    minigl_obj_t obj = cube;
+    minigl_obj_t obj = obj_cube;
 
     // Copy the vertices
-    obj.vcoord_ptr = (vec4_t *)malloc(sizeof(vec4_t) * cube.vcoord_size);
-    memcpy(obj.vcoord_ptr, cube.vcoord_ptr, sizeof(vec4_t) * cube.vcoord_size);
+    obj.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_cube.vcoord_size);
+    memcpy(obj.vcoord_ptr, obj_cube.vcoord_ptr, sizeof(vec4) * obj_cube.vcoord_size);
 
+    mat4 proj;
+    mat4 view;
+    vec3 camera_center;
+
+    glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 10.0f, proj);
+    glm_vec3_add(camera.pos, camera.front, camera_center);
+    glm_lookat(camera.pos, camera_center, camera.up, view);
+
+    // Prepare the transformation matrix
+    mat4 trans;
+    glm_mat4_mul(proj, view, trans);
+
+    // Shade the vertices!
     for (int i = 0; i < obj.vcoord_size; i++) {
-        vertex_scale(&obj.vcoord_ptr[i], 1);
-        vertex_move(&obj.vcoord_ptr[i], 0, 0, 0, r);
-        // FIXME: This is wrong!
-        vertex_move(&obj.vcoord_ptr[i], 0, 0, camera.pos.coord.y, camera.rot);
-        minigl_perspective(&obj.vcoord_ptr[i], M_PI / 3, 0.6f, 1, 20);
+        // Apply transformation
+        glm_mat4_mulv(trans, obj.vcoord_ptr[i], obj.vcoord_ptr[i]);
+
+        // Convert to carthesian coord.
+        // FIXME: Keep w intact for frustrum based culling!
+        glm_vec4_divs(obj.vcoord_ptr[i], obj.vcoord_ptr[i][3], obj.vcoord_ptr[i]);
     }
 
-    minigl_clear(0, -1);
+    minigl_clear(0, -1.0f);
+    minigl_set_texture(tex_mario);  // TODO: Move
     minigl_draw(obj);
     minigl_swap_frame();
-
-    r += M_PI / 100;
 
     return 1;
 }
@@ -118,11 +145,24 @@ __declspec(dllexport)
         pd->display->setRefreshRate(30);
 
         // Load resources
-        cube = obj_file_read("res/models/cube.obj");
+        obj_cube = obj_file_read("res/models/cube.obj");
+        tex_mario = texture_read("res/textures/mario.png");
 
-        minigl_texture_t mario = texture_read("res/textures/mario.png");
+        const char *err;
+        font = pd->graphics->loadFont(fontpath, &err);
 
-        minigl_set_texture(mario);  // TODO: Move
+        if (font == NULL) {
+            pd->system->error("%s:%i Couldn't load font %s: %s", __FILE__, __LINE__, fontpath, err);
+        }
+        pd->graphics->setFont(font);
+
+        // Set camera
+        camera.yaw = -90.0;
+        camera.pitch = 0.0;
+        glm_vec3_copy((vec3){0.0f, 0.0f, 3.0f}, camera.pos);
+        glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, camera.front);
+        glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera.up);
+
         pd->system->logToConsole("Setup complete!");
     }
 

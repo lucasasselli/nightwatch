@@ -11,37 +11,42 @@ set(SDK $ENV{PLAYDATE_SDK_PATH})
 
 # Game Name Customization
 set(PLAYDATE_GAME_NAME hello_world)
-set(PLAYDATE_GAME_DEVICE hello_world_DEVICE)
 
-project(${PLAYDATE_GAME_NAME} C ASM)
+project(${TARGET_NAME} C ASM)
 
 file(GLOB SOURCE_FILES src/*.c)
 file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
-include_directories(${PLAYDATE_GAME_NAME} include)
-include_directories(${PLAYDATE_GAME_NAME} libs/minigl/include)
 
 if (TOOLCHAIN STREQUAL "armgcc")
+    set(TARGET_NAME ${PLAYDATE_GAME_NAME}_DEVICE)
 	add_executable(${PLAYDATE_GAME_DEVICE} 
         ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 else()
-    add_library(${PLAYDATE_GAME_NAME} SHARED 
+    set(TARGET_NAME ${PLAYDATE_GAME_NAME})
+    add_library(${TARGET_NAME} SHARED 
         ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 
     add_custom_target(sim
-        DEPENDS ${PLAYDATE_GAME_NAME}
-        COMMAND ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${PLAYDATE_GAME_NAME}.pdx
+        DEPENDS ${TARGET_NAME}
+        COMMAND ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx
         COMMENT "Starting Simulator...")
 
     add_custom_target(valgrind
-        DEPENDS ${PLAYDATE_GAME_NAME}
-        COMMAND valgrind ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${PLAYDATE_GAME_NAME}.pdx
+        DEPENDS ${TARGET_NAME}
+        COMMAND valgrind ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx
         COMMENT "Starting Valgrind...")
 endif()
 
+add_subdirectory(ext/cglm/)
+
+include_directories(${TARGET_NAME} include)
+include_directories(${TARGET_NAME} libs/minigl/include)
+
+target_link_libraries(${TARGET_NAME} PRIVATE cglm)
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)

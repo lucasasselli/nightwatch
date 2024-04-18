@@ -3,12 +3,15 @@
 #include "minigl_types.h"
 #include "pd_api.h"
 
-#define INPUT_MOUSE_SENSITIVITY 0.4f
-#define INPUT_CAMERA_SPEED 0.05f
+#define INPUT_CAMERA_TSPEED 0.1f
+#define INPUT_CAMERA_RSPEED 4.0f  // Deg per Frame
 
 extern PlaydateAPI* pd;
 
 typedef struct {
-    vec2_t pos;
-    float rot;
+    vec3 pos;
+    vec3 front;
+    vec3 up;
+    float yaw;
+    float pitch;
 } camera_t;
