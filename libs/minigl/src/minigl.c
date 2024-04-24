@@ -5,8 +5,8 @@ float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 minigl_cfg_t cfg;
 
-void minigl_set_texture(minigl_texture_t t) {
-    cfg.texture_mode = MINIGL_TEXTURE_2D;
+void minigl_set_tex(minigl_tex_t t) {
+    cfg.texture_mode = MINIGL_TEX_2D;
     cfg.texture = t;
 }
 
@@ -33,7 +33,7 @@ void minigl_draw(minigl_obj_t obj) {
     vec2 t0, t1, t2;
     vec3 w;
 
-    if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
+    if (cfg.texture_mode == MINIGL_TEX_2D) {
         if (obj.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");
             return;
@@ -48,7 +48,7 @@ void minigl_draw(minigl_obj_t obj) {
         glm_vec4_copy(obj.vcoord_ptr[obj.vface_ptr[f][2]], v[2]);
 
         // Get texture coordinates
-        if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
+        if (cfg.texture_mode == MINIGL_TEX_2D) {
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][0]], t0);
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][1]], t1);
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t2);
@@ -101,9 +101,7 @@ void minigl_draw(minigl_obj_t obj) {
                 // Draw the vertices if they are clockwise
                 if (w[0] <= 0 && w[1] <= 0 && w[2] <= 0) {
                     // Calculate barycentric coord.
-                    w[0] /= a;
-                    w[1] /= a;
-                    w[2] /= a;
+                    glm_vec3_divs(w, a, w);
 
                     // Interpolate the Z
                     // TODO: This is wrong
@@ -114,17 +112,14 @@ void minigl_draw(minigl_obj_t obj) {
                     if (z > z_buff[j][i]) {
                         z_buff[j][i] = z;
 
-                        if (cfg.texture_mode == MINIGL_TEXTURE_2D) {
+                        if (cfg.texture_mode == MINIGL_TEX_2D) {
                             // Calculate barycentric coord. with Perpective correction
                             w[0] /= v[0][2];
                             w[1] /= v[1][2];
                             w[2] /= v[2][2];
 
                             float k = w[0] + w[1] + w[2];
-
-                            w[0] /= k;
-                            w[1] /= k;
-                            w[2] /= k;
+                            glm_vec3_divs(w, k, w);
 
                             int tx = (int)(interpolate(w, t0[0], t1[0], t2[0]) * (float)(cfg.texture.size_x - 1));
                             int ty = (int)((interpolate(w, t0[1], t1[1], t2[1])) * (float)(cfg.texture.size_y - 1));
@@ -144,6 +139,7 @@ void minigl_draw(minigl_obj_t obj) {
 }
 
 void minigl_swap_frame(void) {
+    pd->graphics->clear(kColorWhite);
     for (int i = 0; i < SCREEN_SIZE_X; i++) {
         for (int j = 0; j < SCREEN_SIZE_Y; j++) {
             if (c_buff[j][i]) {

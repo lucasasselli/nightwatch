@@ -17,17 +17,11 @@ extern float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 // State objects
 typedef struct {
-    minigl_texture_t texture;
-    minigl_texture_mode_t texture_mode;
+    minigl_tex_t texture;
+    minigl_tex_mode_t texture_mode;
 } minigl_cfg_t;
 
-void vertex_scale(vec4* v, float k);
-
-void vertex_move(vec4* v, float x, float y, float z, float r);
-
-void minigl_perspective(vec4* v, float camera_fov, float camera_ratio, float clip_near, float clip_far);
-
-void minigl_set_texture(minigl_texture_t t);
+void minigl_set_tex(minigl_tex_t t);
 
 void minigl_clear(int color, int depth);
 

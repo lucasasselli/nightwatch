@@ -15,3 +15,11 @@ typedef struct {
     float yaw;
     float pitch;
 } camera_t;
+
+typedef struct {
+    camera_t camera;
+} game_state_t;
+
+void game_init(game_state_t* state);
+
+void handle_keys(game_state_t* state, PDButtons pushed);

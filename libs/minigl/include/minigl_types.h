@@ -16,9 +16,9 @@ typedef enum {
 } minigl_depth_funct_t;
 
 typedef enum {
-    MINIGL_TEXTURE_0D,  // Solid color
-    MINIGL_TEXTURE_2D   // 2D texture
-} minigl_texture_mode_t;
+    MINIGL_TEX_0D,  // Solid color
+    MINIGL_TEX_2D   // 2D texture
+} minigl_tex_mode_t;
 
 // ---------------------------------------------------------------------------
 // RENDERING
@@ -28,7 +28,7 @@ typedef struct {
     uint8_t** ptr;
     int size_x;
     int size_y;
-} minigl_texture_t;
+} minigl_tex_t;
 
 typedef struct {
     vec4* vcoord_ptr;

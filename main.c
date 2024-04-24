@@ -16,23 +16,25 @@ const char *fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft";
 PlaydateAPI *pd;
 
 // Game state
-camera_t camera;
+game_state_t gs;
+mat4 proj;
+mat4 view;
 
 // Resources
 LCDFont *font = NULL;
 minigl_obj_t obj_cube;
-minigl_texture_t tex_mario;
+minigl_tex_t tex_mario;
 
 #define samplepixel(data, x, y, rowbytes) (((data[(y) * rowbytes + (x) / 8] & (1 << (uint8_t)(7 - ((x) % 8)))) != 0) ? kColorBlack : kColorWhite)
 
-minigl_texture_t texture_read(char *path) {
+minigl_tex_t texture_read(char *path) {
     const char *error = NULL;
     LCDBitmap *bm = pd->graphics->loadBitmap(path, &error);
     if (error != NULL) {
         pd->system->error("%s", error);
     }
 
-    minigl_texture_t t;
+    minigl_tex_t t;
 
     int rowbytes;
     uint8_t *data;
@@ -47,66 +49,27 @@ minigl_texture_t texture_read(char *path) {
         }
     }
 
-    // TODO: Free bitmap
+    pd->graphics->freeBitmap(bm);
 
     return t;
 }
 
 static int update(void *userdata) {
-    PlaydateAPI *pd = userdata;
-
+    // Handle keys
     PDButtons pushed;
     pd->system->getButtonState(&pushed, NULL, NULL);
-
     if (pushed) {
-        vec3 camera_delta;
-        if (pushed & kButtonUp) {
-            glm_vec3_scale_as(camera.front, INPUT_CAMERA_TSPEED, camera_delta);
-            glm_vec3_add(camera.pos, camera_delta, camera.pos);
-        }
-        if (pushed & kButtonDown) {
-            glm_vec3_scale_as(camera.front, INPUT_CAMERA_TSPEED, camera_delta);
-            glm_vec3_sub(camera.pos, camera_delta, camera.pos);
-        }
-        if (pushed & kButtonRight) {
-            camera.yaw += INPUT_CAMERA_RSPEED;
-        }
-        if (pushed & kButtonLeft) {
-            camera.yaw -= INPUT_CAMERA_RSPEED;
-        }
-        if (pushed & kButtonA) {
-            camera.pitch += INPUT_CAMERA_RSPEED;
-        }
-        if (pushed & kButtonB) {
-            camera.pitch -= INPUT_CAMERA_RSPEED;
-        }
-
-        vec3 direction;
-        direction[0] = cosf(glm_rad(camera.yaw)) * cosf(glm_rad(camera.pitch));
-        direction[1] = sinf(glm_rad(camera.pitch));
-        direction[2] = sinf(glm_rad(camera.yaw)) * cosf(glm_rad(camera.pitch));
-        glm_vec3_normalize_to(direction, camera.front);
-
-        // Log camera
-        pd->system->logToConsole("Camera pos: %f %f %f", camera.pos[0], camera.pos[1], camera.pos[2]);
-        pd->system->logToConsole("Camera dir: %f %f %f", camera.front[0], camera.front[1], camera.front[2]);
+        handle_keys(&gs, pushed);
+        vec3 camera_center;
+        glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
+        glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
     }
-
-    pd->graphics->clear(kColorWhite);
 
     minigl_obj_t obj = obj_cube;
 
     // Copy the vertices
     obj.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_cube.vcoord_size);
     memcpy(obj.vcoord_ptr, obj_cube.vcoord_ptr, sizeof(vec4) * obj_cube.vcoord_size);
-
-    mat4 proj;
-    mat4 view;
-    vec3 camera_center;
-
-    glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 10.0f, proj);
-    glm_vec3_add(camera.pos, camera.front, camera_center);
-    glm_lookat(camera.pos, camera_center, camera.up, view);
 
     // Prepare the transformation matrix
     mat4 trans;
@@ -123,7 +86,7 @@ static int update(void *userdata) {
     }
 
     minigl_clear(0, -1.0f);
-    minigl_set_texture(tex_mario);  // TODO: Move
+    minigl_set_tex(tex_mario);
     minigl_draw(obj);
     minigl_swap_frame();
 
@@ -156,18 +119,15 @@ __declspec(dllexport)
         }
         pd->graphics->setFont(font);
 
-        // Set camera
-        camera.yaw = -90.0;
-        camera.pitch = 0.0;
-        glm_vec3_copy((vec3){0.0f, 0.0f, 3.0f}, camera.pos);
-        glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, camera.front);
-        glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera.up);
+        // Initialize
+        glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 10.0f, proj);
+        game_init(&gs);
 
         pd->system->logToConsole("Setup complete!");
     }
 
     if (event == kEventKeyPressed) {
-        // TODO:
+        // Unused
     }
 
     return 0;
