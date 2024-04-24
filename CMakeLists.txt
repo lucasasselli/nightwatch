@@ -42,11 +42,13 @@ else()
         COMMENT "Starting Valgrind...")
 endif()
 
-add_subdirectory(ext/cglm/)
+add_subdirectory(ext/cglm)
+add_subdirectory(ext/libspng)
 
 include_directories(${TARGET_NAME} include)
 include_directories(${TARGET_NAME} libs/minigl/include)
 
 target_link_libraries(${TARGET_NAME} PRIVATE cglm)
+target_link_libraries(${TARGET_NAME} PRIVATE spng)
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)

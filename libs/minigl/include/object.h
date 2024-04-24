@@ -1,11 +1,9 @@
 #pragma once
 
-#include <stdio.h>
-
 #include "minigl_types.h"
 #include "pd_api.h"
 
-#define OBJ_FILE_BUFFER_SIZE 1000
+#define OBJ_LINE_BUFFER_SIZE 50
 
 extern PlaydateAPI* pd;
 

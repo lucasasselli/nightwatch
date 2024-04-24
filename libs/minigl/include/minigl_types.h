@@ -20,15 +20,14 @@ typedef enum {
     MINIGL_TEX_2D   // 2D texture
 } minigl_tex_mode_t;
 
+typedef enum {
+    MINIGL_DITHER_OFF,
+    MINIGL_DITHER_ON
+} minigl_dither_mode_t;
+
 // ---------------------------------------------------------------------------
 // RENDERING
 // ---------------------------------------------------------------------------
-
-typedef struct {
-    uint8_t** ptr;
-    int size_x;
-    int size_y;
-} minigl_tex_t;
 
 typedef struct {
     vec4* vcoord_ptr;

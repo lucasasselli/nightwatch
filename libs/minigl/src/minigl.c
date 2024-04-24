@@ -1,6 +1,6 @@
 #include "minigl.h"
 
-char c_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+uint8_t c_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 minigl_cfg_t cfg;
@@ -8,6 +8,11 @@ minigl_cfg_t cfg;
 void minigl_set_tex(minigl_tex_t t) {
     cfg.texture_mode = MINIGL_TEX_2D;
     cfg.texture = t;
+}
+
+void minigl_set_dither(minigl_tex_t t) {
+    cfg.dither_mode = MINIGL_DITHER_ON;
+    cfg.dither = t;
 }
 
 void minigl_clear(int color, int depth) {
@@ -139,13 +144,14 @@ void minigl_draw(minigl_obj_t obj) {
 }
 
 void minigl_swap_frame(void) {
-    pd->graphics->clear(kColorWhite);
+    pd->graphics->clear(kColorBlack);
     for (int i = 0; i < SCREEN_SIZE_X; i++) {
         for (int j = 0; j < SCREEN_SIZE_Y; j++) {
-            if (c_buff[j][i]) {
+            // FIXME: Add no dither
+            if (c_buff[j][i] >= cfg.dither.ptr[j % cfg.dither.size_y][i % cfg.dither.size_x]) {
                 // TODO: Access the screen memory directly
                 // TODO: Extern to make platform agnostic
-                pd->graphics->drawLine(i, j, i, j, 1, kColorBlack);
+                pd->graphics->drawLine(i, j, i, j, 1, kColorWhite);
             }
         }
     }
