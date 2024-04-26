@@ -43,13 +43,13 @@ static int update(void *userdata) {
     glm_mat4_mul(proj, view, trans);
 
     // Shade the vertices!
+    // TODO: Simplify and wrap
     for (int i = 0; i < obj_my.vcoord_size; i++) {
         // Apply transformation
         glm_mat4_mulv(trans, obj_my.vcoord_ptr[i], obj_my_buffer.vcoord_ptr[i]);
 
         // Convert to carthesian coord.
-        // FIXME: Keep w intact for frustrum based culling!
-        glm_vec4_divs(obj_my_buffer.vcoord_ptr[i], obj_my_buffer.vcoord_ptr[i][3], obj_my_buffer.vcoord_ptr[i]);
+        glm_vec3_divs(obj_my_buffer.vcoord_ptr[i], obj_my_buffer.vcoord_ptr[i][3], obj_my_buffer.vcoord_ptr[i]);
     }
 
     minigl_clear(0, -1.0f);
@@ -76,7 +76,8 @@ __declspec(dllexport)
         // Load resources
 
         // Load model
-        obj_my = obj_file_read("res/models/cube.obj");
+        minigl_obj_read_file("res/models/cube.obj", &obj_my);
+
         // TODO: Create the buffer at object creation?
         obj_my_buffer = obj_my;
         obj_my_buffer.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_my.vcoord_size);

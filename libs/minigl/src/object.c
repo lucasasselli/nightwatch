@@ -2,22 +2,21 @@
 
 #include <stdlib.h>
 
-minigl_obj_t obj_file_read(char *path) {
-    // TODO: Add hooks to be agnostic to the Playdate library
+// TODO: Add hooks to be agnostic to the Playdate library
+int minigl_obj_read_file(char *path, minigl_obj_t *out) {
     // Get the file handle
     SDFile *f = pd->file->open(path, kFileRead);
     if (f == NULL) {
-        pd->system->error("Failed to open %s: %s", path, pd->file->geterr());
+        return 1;
     }
 
     char line_buffer[OBJ_LINE_BUFFER_SIZE];
     int char_index = 0;
 
     // Read file line by line into the buffer
-    minigl_obj_t obj;
-    obj.vcoord_size = 0;
-    obj.face_size = 0;
-    obj.tcoord_size = 0;
+    out->vcoord_size = 0;
+    out->face_size = 0;
+    out->tcoord_size = 0;
 
     char c;
 
@@ -32,16 +31,16 @@ minigl_obj_t obj_file_read(char *path) {
                 case 'v':
                     if (line_buffer[1] == 't') {
                         // Texture coordinate
-                        obj.tcoord_size++;
+                        out->tcoord_size++;
                     } else {
                         // Vertex coordidate
-                        obj.vcoord_size++;
+                        out->vcoord_size++;
                     }
                     break;
 
                 case 'f':
                     // Face
-                    obj.face_size++;
+                    out->face_size++;
                     break;
             }
 
@@ -53,19 +52,19 @@ minigl_obj_t obj_file_read(char *path) {
     }
 
     // Allocate memory
-    obj.vcoord_ptr = malloc(sizeof(vec4) * obj.vcoord_size);
-    obj.vface_ptr = malloc(sizeof(ivec3) * obj.face_size);
+    out->vcoord_ptr = malloc(sizeof(vec4) * out->vcoord_size);
+    out->vface_ptr = malloc(sizeof(ivec3) * out->face_size);
 
-    if (obj.face_size > 0) {
-        obj.tcoord_ptr = malloc(sizeof(vec4) * obj.tcoord_size);
-        obj.tface_ptr = malloc(sizeof(ivec3) * obj.face_size);
+    if (out->face_size > 0) {
+        out->tcoord_ptr = malloc(sizeof(vec4) * out->tcoord_size);
+        out->tface_ptr = malloc(sizeof(ivec3) * out->face_size);
     }
 
     // Load data
-    int has_tex = obj.tcoord_size > 0;
-    obj.vcoord_size = 0;
-    obj.face_size = 0;
-    obj.tcoord_size = 0;
+    int has_tex = out->tcoord_size > 0;
+    out->vcoord_size = 0;
+    out->face_size = 0;
+    out->tcoord_size = 0;
 
     pd->file->seek(f, 0, SEEK_SET);
 
@@ -82,18 +81,18 @@ minigl_obj_t obj_file_read(char *path) {
                         // Texture coordinate
                         float x, y;
                         sscanf(line_buffer, "vt %f %f", &x, &y);
-                        obj.tcoord_ptr[obj.tcoord_size][0] = x;
-                        obj.tcoord_ptr[obj.tcoord_size][1] = y;
-                        obj.tcoord_size++;
+                        out->tcoord_ptr[out->tcoord_size][0] = x;
+                        out->tcoord_ptr[out->tcoord_size][1] = y;
+                        out->tcoord_size++;
                     } else {
                         // Vertex coordidate
                         float x, y, z;
                         sscanf(line_buffer, "v %f %f %f", &x, &y, &z);
-                        obj.vcoord_ptr[obj.vcoord_size][0] = x;
-                        obj.vcoord_ptr[obj.vcoord_size][1] = y;
-                        obj.vcoord_ptr[obj.vcoord_size][2] = z;
-                        obj.vcoord_ptr[obj.vcoord_size][3] = 1.0f;
-                        obj.vcoord_size++;
+                        out->vcoord_ptr[out->vcoord_size][0] = x;
+                        out->vcoord_ptr[out->vcoord_size][1] = y;
+                        out->vcoord_ptr[out->vcoord_size][2] = z;
+                        out->vcoord_ptr[out->vcoord_size][3] = 1.0f;
+                        out->vcoord_size++;
                     }
                     break;
 
@@ -102,20 +101,20 @@ minigl_obj_t obj_file_read(char *path) {
                     if (has_tex) {
                         int x, y, z, tx, ty, tz;
                         sscanf(line_buffer, "f %d/%d %d/%d %d/%d", &x, &tx, &y, &ty, &z, &tz);
-                        obj.vface_ptr[obj.face_size][0] = x - 1;
-                        obj.vface_ptr[obj.face_size][1] = y - 1;
-                        obj.vface_ptr[obj.face_size][2] = z - 1;
-                        obj.tface_ptr[obj.face_size][0] = tx - 1;
-                        obj.tface_ptr[obj.face_size][1] = ty - 1;
-                        obj.tface_ptr[obj.face_size][2] = tz - 1;
+                        out->vface_ptr[out->face_size][0] = x - 1;
+                        out->vface_ptr[out->face_size][1] = y - 1;
+                        out->vface_ptr[out->face_size][2] = z - 1;
+                        out->tface_ptr[out->face_size][0] = tx - 1;
+                        out->tface_ptr[out->face_size][1] = ty - 1;
+                        out->tface_ptr[out->face_size][2] = tz - 1;
                     } else {
                         int x, y, z;
                         sscanf(line_buffer, "f %d %d %d", &x, &y, &z);
-                        obj.vface_ptr[obj.face_size][0] = x - 1;
-                        obj.vface_ptr[obj.face_size][1] = y - 1;
-                        obj.vface_ptr[obj.face_size][2] = z - 1;
+                        out->vface_ptr[out->face_size][0] = x - 1;
+                        out->vface_ptr[out->face_size][1] = y - 1;
+                        out->vface_ptr[out->face_size][2] = z - 1;
                     }
-                    obj.face_size++;
+                    out->face_size++;
                     break;
             }
 
@@ -128,5 +127,5 @@ minigl_obj_t obj_file_read(char *path) {
 
     pd->file->close(f);
 
-    return obj;
+    return 0;
 }

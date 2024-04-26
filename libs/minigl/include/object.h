@@ -7,4 +7,4 @@
 
 extern PlaydateAPI* pd;
 
-minigl_obj_t obj_file_read(char* path);
+int minigl_obj_read_file(char* path, minigl_obj_t* out);

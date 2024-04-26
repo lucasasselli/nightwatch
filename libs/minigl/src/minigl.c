@@ -25,11 +25,11 @@ void minigl_clear(int color, int depth) {
     }
 }
 
-static inline float edge_funct(vec4 a, vec4 b, vec4 c) {
+static inline float _edge_funct(vec4 a, vec4 b, vec4 c) {
     return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]);
 }
 
-static inline float interpolate(vec3 w, float a, float b, float c) {
+static inline float _interpolate(vec3 w, float a, float b, float c) {
     return (w[0] * a + w[1] * b + w[2] * c);
 }
 
@@ -47,6 +47,10 @@ void minigl_draw(minigl_obj_t obj) {
 
     // FIXME: Need to improve performance!!!
     for (int f = 0; f < obj.face_size; f++) {
+        //---------------------------------------------------------------------------
+        // Indexing
+        //---------------------------------------------------------------------------
+
         // Get vertex coordinates
         glm_vec4_copy(obj.vcoord_ptr[obj.vface_ptr[f][0]], v[0]);
         glm_vec4_copy(obj.vcoord_ptr[obj.vface_ptr[f][1]], v[1]);
@@ -59,27 +63,42 @@ void minigl_draw(minigl_obj_t obj) {
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t2);
         }
 
-        // Culling
+        //---------------------------------------------------------------------------
+        // Culling/Clipping
+        //---------------------------------------------------------------------------
+
+        // Trivial reject
+        if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
+            (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
+            (v[0][2] < -1.0f && v[1][2] < -1.0f && v[2][2] < -1.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f) ||
+            (v[0][3] <= 0.0f && v[1][3] <= 0.0f && v[2][3] <= 0.0f))
+            continue;
+
         vec4 p = GLM_VEC3_ZERO_INIT;
         p[0] = (v[0][0] + v[1][0] + v[2][0]) / 3.0f;
         p[1] = (v[0][1] + v[1][1] + v[2][1]) / 3.0f;
 
-        w[0] = edge_funct(v[1], v[2], p);
-        w[1] = edge_funct(v[2], v[0], p);
-        w[2] = edge_funct(v[0], v[1], p);
-
-        // Cull bases on frustrum TODO
+        w[0] = _edge_funct(v[1], v[2], p);
+        w[1] = _edge_funct(v[2], v[0], p);
+        w[2] = _edge_funct(v[0], v[1], p);
 
         // TODO: Make vertex order programmable
         if (w[0] > 0 || w[1] > 0 || w[2] > 0) continue;
 
-        // Cover to screen size
+        //---------------------------------------------------------------------------
+        // Convert to Viewport
+        //---------------------------------------------------------------------------
+
         for (int i = 0; i < 3; i++) {
             v[i][0] *= 0.5f * SCREEN_SIZE_X;
             v[i][0] += 0.5f * SCREEN_SIZE_X;
             v[i][1] *= 0.5f * SCREEN_SIZE_Y;
             v[i][1] += 0.5f * SCREEN_SIZE_Y;
         }
+
+        //---------------------------------------------------------------------------
+        // Rasterization
+        //---------------------------------------------------------------------------
 
         // Calculate min bounding rectangle
         float mbr_min_x = fminf(v[0][0], fminf(v[1][0], v[2][0]));
@@ -92,15 +111,15 @@ void minigl_draw(minigl_obj_t obj) {
         mbr_min_y = mbr_min_y > 0 ? mbr_min_y : 0;
         mbr_max_y = mbr_max_y < SCREEN_SIZE_Y ? mbr_max_y : SCREEN_SIZE_Y;
 
-        float a = edge_funct(v[0], v[1], v[2]);
+        float a = _edge_funct(v[0], v[1], v[2]);
 
         for (int j = mbr_min_y; j < mbr_max_y; j++) {
             for (int i = mbr_min_x; i < mbr_max_x; i++) {
                 glm_vec4_copy((vec4){i, j, 0, 1}, p);
 
-                w[0] = edge_funct(v[1], v[2], p);
-                w[1] = edge_funct(v[2], v[0], p);
-                w[2] = edge_funct(v[0], v[1], p);
+                w[0] = _edge_funct(v[1], v[2], p);
+                w[1] = _edge_funct(v[2], v[0], p);
+                w[2] = _edge_funct(v[0], v[1], p);
 
                 // TODO: Make vertex order programmable
                 // Draw the vertices if they are clockwise
@@ -110,13 +129,14 @@ void minigl_draw(minigl_obj_t obj) {
 
                     // Interpolate the Z
                     // TODO: This is wrong
-                    float z = 1.0f / interpolate(w, 1.0f / v[0][2], 1.0f / v[1][2], 1.0f / v[2][2]);
+                    float z = 1.0f / _interpolate(w, 1.0f / v[0][2], 1.0f / v[1][2], 1.0f / v[2][2]);
 
                     // Depth test
-                    // TODO: Make depth programmable
+                    // TODO: Make depth test programmable
                     if (z > z_buff[j][i]) {
                         z_buff[j][i] = z;
 
+                        // FIXME: Conditional statements at this level are poison!!!
                         if (cfg.texture_mode == MINIGL_TEX_2D) {
                             // Calculate barycentric coord. with Perpective correction
                             w[0] /= v[0][2];
@@ -126,8 +146,8 @@ void minigl_draw(minigl_obj_t obj) {
                             float k = w[0] + w[1] + w[2];
                             glm_vec3_divs(w, k, w);
 
-                            int tx = (int)(interpolate(w, t0[0], t1[0], t2[0]) * (float)(cfg.texture.size_x - 1));
-                            int ty = (int)((interpolate(w, t0[1], t1[1], t2[1])) * (float)(cfg.texture.size_y - 1));
+                            int tx = (int)(_interpolate(w, t0[0], t1[0], t2[0]) * (float)(cfg.texture.size_x - 1));
+                            int ty = (int)(_interpolate(w, t0[1], t1[1], t2[1]) * (float)(cfg.texture.size_y - 1));
 
                             tx = tx < 0 ? 0 : tx >= cfg.texture.size_x ? cfg.texture.size_x - 1 : tx;
                             ty = ty < 0 ? 0 : ty >= cfg.texture.size_y ? cfg.texture.size_y - 1 : ty;
