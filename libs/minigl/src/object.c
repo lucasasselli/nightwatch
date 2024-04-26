@@ -73,7 +73,6 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
         if (c == '\n' || c == EOF) {
             // Found EOL
             line_buffer[char_index] = '\0';
-            pd->system->logToConsole("%s", line_buffer);
 
             switch (line_buffer[0]) {
                 case 'v':

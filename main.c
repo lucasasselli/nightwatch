@@ -23,7 +23,7 @@ mat4 view;
 // Resources
 LCDFont *font = NULL;
 minigl_obj_t obj_my;
-minigl_obj_t obj_my_buffer;  // FIXME: We need some way to generate it behind the scene
+minigl_obj_t geometry_buffer;  // FIXME: We need some way to generate it behind the scene
 minigl_tex_t tex_my;
 minigl_tex_t tex_dither;
 
@@ -46,14 +46,14 @@ static int update(void *userdata) {
     // TODO: Simplify and wrap
     for (int i = 0; i < obj_my.vcoord_size; i++) {
         // Apply transformation
-        glm_mat4_mulv(trans, obj_my.vcoord_ptr[i], obj_my_buffer.vcoord_ptr[i]);
+        glm_mat4_mulv(trans, obj_my.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i]);
 
         // Convert to carthesian coord.
-        glm_vec3_divs(obj_my_buffer.vcoord_ptr[i], obj_my_buffer.vcoord_ptr[i][3], obj_my_buffer.vcoord_ptr[i]);
+        glm_vec3_divs(geometry_buffer.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i][3], geometry_buffer.vcoord_ptr[i]);
     }
 
     minigl_clear(0, -1.0f);
-    minigl_draw(obj_my_buffer);
+    minigl_draw(geometry_buffer);
     minigl_swap_frame();
 
     return 1;
@@ -78,16 +78,17 @@ __declspec(dllexport)
         // Load model
         minigl_obj_read_file("res/models/cube.obj", &obj_my);
 
-        // TODO: Create the buffer at object creation?
-        obj_my_buffer = obj_my;
-        obj_my_buffer.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_my.vcoord_size);
-
         minigl_tex_read_file("res/textures/cube.tex", &tex_my);
         minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
 
         minigl_set_dither(tex_dither);
         minigl_set_tex(tex_my);
 
+        // Create a buffer for processed geometry
+        geometry_buffer = obj_my;
+        geometry_buffer.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_my.vcoord_size);
+
+        // Load fonts
         const char *err;
         font = pd->graphics->loadFont(fontpath, &err);
 
