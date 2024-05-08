@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cglm/cglm.h> /* for inline */
-#include <stdint.h>
 
 // ---------------------------------------------------------------------------
 // CONFIGURATION
@@ -24,17 +23,3 @@ typedef enum {
     MINIGL_DITHER_OFF,
     MINIGL_DITHER_ON
 } minigl_dither_mode_t;
-
-// ---------------------------------------------------------------------------
-// RENDERING
-// ---------------------------------------------------------------------------
-
-typedef struct {
-    vec4* vcoord_ptr;
-    vec2* tcoord_ptr;
-    ivec3* vface_ptr;
-    ivec3* tface_ptr;
-    int vcoord_size;
-    int tcoord_size;
-    int face_size;
-} minigl_obj_t;

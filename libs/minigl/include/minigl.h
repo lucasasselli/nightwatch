@@ -8,6 +8,8 @@
 #define SCREEN_SIZE_X 400
 #define SCREEN_SIZE_Y 240
 
+#define PERSP_CORRECT
+
 // TODO: Make the library plaform agnostic
 extern PlaydateAPI* pd;
 
@@ -27,7 +29,7 @@ void minigl_set_tex(minigl_tex_t t);
 
 void minigl_set_dither(minigl_tex_t t);
 
-void minigl_clear(int color, int depth);
+void minigl_clear(uint8_t color, int depth);
 
 void minigl_draw(minigl_obj_t obj);
 

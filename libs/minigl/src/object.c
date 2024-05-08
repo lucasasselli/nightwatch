@@ -81,7 +81,7 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
                         float x, y;
                         sscanf(line_buffer, "vt %f %f", &x, &y);
                         out->tcoord_ptr[out->tcoord_size][0] = x;
-                        out->tcoord_ptr[out->tcoord_size][1] = y;
+                        out->tcoord_ptr[out->tcoord_size][1] = 1.0f - y;  // Flip texture
                         out->tcoord_size++;
                     } else {
                         // Vertex coordidate
@@ -127,4 +127,42 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
     pd->file->close(f);
 
     return 0;
+}
+
+void minigl_obj_copy(minigl_obj_t in, minigl_obj_t *out) {
+    *out = in;
+
+    out->vcoord_ptr = (vec4 *)malloc(in.vcoord_size * sizeof(vec4));
+    memcpy(out->vcoord_ptr, in.vcoord_ptr, in.vcoord_size * sizeof(vec4));
+}
+
+void minigl_obj_copy_trans(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
+    // Copy all fields from in obj
+    *out = in;
+
+    // Allocate
+    out->vcoord_ptr = (vec4 *)malloc(in.vcoord_size * sizeof(vec4));
+    for (int i = 0; i < in.vcoord_size; i++) {
+        // Apply transformation
+        glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
+
+        pd->system->logToConsole("%e %e %e %e", out->vcoord_ptr[i][0], out->vcoord_ptr[i][1], out->vcoord_ptr[i][2], out->vcoord_ptr[i][3]);
+    }
+}
+
+void minigl_obj_transform(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
+    out->tcoord_ptr = in.tcoord_ptr;
+    out->vface_ptr = in.vface_ptr;
+    out->tface_ptr = in.tface_ptr;
+    out->vcoord_size = in.vcoord_size;
+    out->tcoord_size = in.tcoord_size;
+    out->face_size = in.face_size;
+
+    for (int i = 0; i < in.vcoord_size; i++) {
+        // Apply transformation
+        glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
+
+        // Convert to carthesian coord.
+        glm_vec3_divs(out->vcoord_ptr[i], out->vcoord_ptr[i][3], out->vcoord_ptr[i]);
+    }
 }

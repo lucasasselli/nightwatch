@@ -1,9 +1,9 @@
 #include "game.h"
 
 void game_init(game_state_t* state) {
-    state->camera.yaw = -90.0;
-    state->camera.pitch = 0.0;
-    glm_vec3_copy((vec3){0.0f, 0.0f, 3.0f}, state->camera.pos);
+    state->camera.yaw = -90.0f;
+    state->camera.pitch = 0.0f;
+    glm_vec3_copy((vec3){0.0f, 1.0f, 1.0f}, state->camera.pos);
     glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, state->camera.front);
     glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, state->camera.up);
 }
@@ -26,14 +26,6 @@ void handle_keys(game_state_t* state, PDButtons pushed) {
     if (pushed & kButtonLeft) {
         state->camera.yaw -= INPUT_CAMERA_RSPEED;
     }
-    if (pushed & kButtonA) {
-        state->camera.pitch += INPUT_CAMERA_RSPEED;
-    }
-    if (pushed & kButtonB) {
-        state->camera.pitch -= INPUT_CAMERA_RSPEED;
-    }
-
-    // FIXME: Clamp yaw
 
     // Update the direction
     vec3 direction;

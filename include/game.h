@@ -1,6 +1,7 @@
 #pragma once
 
-#include "minigl_types.h"
+#include <cglm/cglm.h>
+
 #include "pd_api.h"
 
 #define INPUT_CAMERA_TSPEED 0.1f

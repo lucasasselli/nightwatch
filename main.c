@@ -1,7 +1,9 @@
+#include <cglm/cglm.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "game.h"
+#include "map.h"
 #include "minigl.h"
 #include "object.h"
 #include "pd_api.h"
@@ -27,20 +29,38 @@ minigl_obj_t geometry_buffer;  // FIXME: We need some way to generate it behind 
 minigl_tex_t tex_my;
 minigl_tex_t tex_dither;
 
+float rot;
+
+void view_update(void) {
+    // Update camera poistion
+    vec3 camera_center;
+    glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
+    glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
+}
+
 static int update(void *userdata) {
     // Handle keys
     PDButtons pushed;
     pd->system->getButtonState(&pushed, NULL, NULL);
     if (pushed) {
         handle_keys(&gs, pushed);
-        vec3 camera_center;
-        glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
-        glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
+        view_update();
     }
+
+    minigl_clear(0.0f, 1.0f);
 
     // Prepare the transformation matrix
     mat4 trans;
     glm_mat4_mul(proj, view, trans);
+
+    // Draw map
+    map_draw(trans);
+
+    // FIXME: Move outside
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
+    glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(rot), (vec3){0.0f, 1.0f, 0.0f});
+
+    glm_mat4_mul(trans, model, trans);
 
     // Shade the vertices!
     // TODO: Simplify and wrap
@@ -52,9 +72,11 @@ static int update(void *userdata) {
         glm_vec3_divs(geometry_buffer.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i][3], geometry_buffer.vcoord_ptr[i]);
     }
 
-    minigl_clear(0, -1.0f);
+    minigl_set_tex(tex_my);
     minigl_draw(geometry_buffer);
     minigl_swap_frame();
+
+    rot++;
 
     return 1;
 }
@@ -82,7 +104,10 @@ __declspec(dllexport)
         minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
 
         minigl_set_dither(tex_dither);
-        minigl_set_tex(tex_my);
+
+        // Setup map
+        map_init();
+        map_generate();
 
         // Create a buffer for processed geometry
         geometry_buffer = obj_my;
@@ -98,8 +123,9 @@ __declspec(dllexport)
         pd->graphics->setFont(font);
 
         // Initialize
-        glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 10.0f, proj);
         game_init(&gs);
+        glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 100.0f, proj);
+        view_update();  // Setup view matrix
 
         pd->system->logToConsole("Setup complete!");
     }

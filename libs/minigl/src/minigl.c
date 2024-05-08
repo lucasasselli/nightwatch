@@ -15,11 +15,11 @@ void minigl_set_dither(minigl_tex_t t) {
     cfg.dither = t;
 }
 
-void minigl_clear(int color, int depth) {
+void minigl_clear(uint8_t color, int depth) {
     // Flush buffer
     for (int i = 0; i < SCREEN_SIZE_X; i++) {
         for (int j = 0; j < SCREEN_SIZE_Y; j++) {
-            c_buff[j][i] = (char)color;
+            c_buff[j][i] = (uint8_t)color;
             z_buff[j][i] = depth;
         }
     }
@@ -35,8 +35,9 @@ static inline float _interpolate(vec3 w, float a, float b, float c) {
 
 void minigl_draw(minigl_obj_t obj) {
     vec4 v[3];
-    vec2 t0, t1, t2;
+    vec2 t[3];
     vec3 w;
+    vec4 temp;
 
     if (cfg.texture_mode == MINIGL_TEX_2D) {
         if (obj.tcoord_size == 0) {
@@ -44,6 +45,9 @@ void minigl_draw(minigl_obj_t obj) {
             return;
         }
     }
+
+    // NOTE:
+    // https://redirect.cs.umbc.edu/~olano/papers/2dh-tri/
 
     // FIXME: Need to improve performance!!!
     for (int f = 0; f < obj.face_size; f++) {
@@ -58,9 +62,9 @@ void minigl_draw(minigl_obj_t obj) {
 
         // Get texture coordinates
         if (cfg.texture_mode == MINIGL_TEX_2D) {
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][0]], t0);
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][1]], t1);
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t2);
+            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][0]], t[0]);
+            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][1]], t[1]);
+            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t[2]);
         }
 
         //---------------------------------------------------------------------------
@@ -71,7 +75,7 @@ void minigl_draw(minigl_obj_t obj) {
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
             (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
             (v[0][2] < -1.0f && v[1][2] < -1.0f && v[2][2] < -1.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f) ||
-            (v[0][3] <= 0.0f && v[1][3] <= 0.0f && v[2][3] <= 0.0f))
+            (v[0][3] <= 0.0f || v[1][3] <= 0.0f || v[2][3] <= 0.0f))
             continue;
 
         vec4 p = GLM_VEC3_ZERO_INIT;
@@ -82,18 +86,29 @@ void minigl_draw(minigl_obj_t obj) {
         w[1] = _edge_funct(v[2], v[0], p);
         w[2] = _edge_funct(v[0], v[1], p);
 
-        // TODO: Make vertex order programmable
-        if (w[0] > 0 || w[1] > 0 || w[2] > 0) continue;
+        int cw_wind_order = (w[0] > 0.0f || w[1] > 0.0f || w[2] > 0.0f);
+
+        // if (cw_wind_order) continue;
+
+        if (cw_wind_order) {
+            glm_vec4_copy(v[0], temp);
+            glm_vec4_copy(v[2], v[0]);
+            glm_vec4_copy(temp, v[2]);
+
+            glm_vec2_copy(t[0], temp);
+            glm_vec2_copy(t[2], t[0]);
+            glm_vec2_copy(temp, t[2]);
+        }
 
         //---------------------------------------------------------------------------
         // Convert to Viewport
         //---------------------------------------------------------------------------
 
         for (int i = 0; i < 3; i++) {
-            v[i][0] *= 0.5f * SCREEN_SIZE_X;
-            v[i][0] += 0.5f * SCREEN_SIZE_X;
-            v[i][1] *= 0.5f * SCREEN_SIZE_Y;
-            v[i][1] += 0.5f * SCREEN_SIZE_Y;
+            v[i][0] *= 0.5f * ((float)SCREEN_SIZE_X);
+            v[i][0] += 0.5f * ((float)SCREEN_SIZE_X);
+            v[i][1] *= 0.5f * ((float)SCREEN_SIZE_Y);
+            v[i][1] += 0.5f * ((float)SCREEN_SIZE_Y);
         }
 
         //---------------------------------------------------------------------------
@@ -106,12 +121,20 @@ void minigl_draw(minigl_obj_t obj) {
         float mbr_min_y = fminf(v[0][1], fminf(v[1][1], v[2][1]));
         float mbr_max_y = fmaxf(v[0][1], fmaxf(v[1][1], v[2][1]));
 
-        mbr_min_x = mbr_min_x > 0 ? mbr_min_x : 0;
+        mbr_min_x = mbr_min_x > 0.0f ? mbr_min_x : 0.0f;
         mbr_max_x = mbr_max_x < SCREEN_SIZE_X ? mbr_max_x : SCREEN_SIZE_X;
-        mbr_min_y = mbr_min_y > 0 ? mbr_min_y : 0;
+        mbr_min_y = mbr_min_y > 0.0f ? mbr_min_y : 0.0f;
         mbr_max_y = mbr_max_y < SCREEN_SIZE_Y ? mbr_max_y : SCREEN_SIZE_Y;
 
-        float a = _edge_funct(v[0], v[1], v[2]);
+        float area = _edge_funct(v[0], v[1], v[2]);
+
+#ifdef PERSP_CORRECT
+        for (int i = 0; i < 3; i++) {
+            t[i][0] /= v[i][2];
+            t[i][1] /= v[i][2];
+            v[i][2] = 1.0f / v[i][2];
+        }
+#endif
 
         for (int j = mbr_min_y; j < mbr_max_y; j++) {
             for (int i = mbr_min_x; i < mbr_max_x; i++) {
@@ -123,38 +146,35 @@ void minigl_draw(minigl_obj_t obj) {
 
                 // TODO: Make vertex order programmable
                 // Draw the vertices if they are clockwise
-                if (w[0] <= 0 && w[1] <= 0 && w[2] <= 0) {
+                if ((w[0] <= 0.0f && w[1] <= 0.0f && w[2] <= 0.0f)) {
                     // Calculate barycentric coord.
-                    glm_vec3_divs(w, a, w);
+                    glm_vec3_divs(w, area, w);
 
                     // Interpolate the Z
-                    // TODO: This is wrong
-                    float z = 1.0f / _interpolate(w, 1.0f / v[0][2], 1.0f / v[1][2], 1.0f / v[2][2]);
+                    float z = 1.0f / _interpolate(w, v[0][2], v[1][2], v[2][2]);
 
                     // Depth test
                     // TODO: Make depth test programmable
-                    if (z > z_buff[j][i]) {
+                    if (z < z_buff[j][i]) {
                         z_buff[j][i] = z;
 
                         // FIXME: Conditional statements at this level are poison!!!
                         if (cfg.texture_mode == MINIGL_TEX_2D) {
-                            // Calculate barycentric coord. with Perpective correction
-                            w[0] /= v[0][2];
-                            w[1] /= v[1][2];
-                            w[2] /= v[2][2];
+                            // Interpolate texture coordinates
+                            int tx = (int)(_interpolate(w, t[0][0], t[1][0], t[2][0]) * (float)(cfg.texture.size_x - 1));
+                            int ty = (int)(_interpolate(w, t[0][1], t[1][1], t[2][1]) * (float)(cfg.texture.size_y - 1));
 
-                            float k = w[0] + w[1] + w[2];
-                            glm_vec3_divs(w, k, w);
-
-                            int tx = (int)(_interpolate(w, t0[0], t1[0], t2[0]) * (float)(cfg.texture.size_x - 1));
-                            int ty = (int)(_interpolate(w, t0[1], t1[1], t2[1]) * (float)(cfg.texture.size_y - 1));
+#ifdef PERSP_CORRECT
+                            tx *= z;
+                            ty *= z;
+#endif
 
                             tx = tx < 0 ? 0 : tx >= cfg.texture.size_x ? cfg.texture.size_x - 1 : tx;
                             ty = ty < 0 ? 0 : ty >= cfg.texture.size_y ? cfg.texture.size_y - 1 : ty;
 
                             c_buff[j][i] = cfg.texture.ptr[ty][tx];
                         } else {
-                            c_buff[j][i] = 1;
+                            c_buff[j][i] = 255;
                         }
                     }
                 }
@@ -165,13 +185,13 @@ void minigl_draw(minigl_obj_t obj) {
 
 void minigl_swap_frame(void) {
     pd->graphics->clear(kColorBlack);
-    for (int i = 0; i < SCREEN_SIZE_X; i++) {
-        for (int j = 0; j < SCREEN_SIZE_Y; j++) {
+    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
+        for (int x = 0; x < SCREEN_SIZE_X; x++) {
             // FIXME: Add no dither
-            if (c_buff[j][i] >= cfg.dither.ptr[j % cfg.dither.size_y][i % cfg.dither.size_x]) {
+            if (c_buff[y][x] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]) {
                 // TODO: Access the screen memory directly
                 // TODO: Extern to make platform agnostic
-                pd->graphics->drawLine(i, j, i, j, 1, kColorWhite);
+                pd->graphics->drawLine(x, SCREEN_SIZE_Y - y - 1, x, SCREEN_SIZE_Y - y - 1, 1, kColorWhite);
             }
         }
     }
