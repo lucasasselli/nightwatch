@@ -67,9 +67,6 @@ static int update(void *userdata) {
     for (int i = 0; i < obj_my.vcoord_size; i++) {
         // Apply transformation
         glm_mat4_mulv(trans, obj_my.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i]);
-
-        // Convert to carthesian coord.
-        glm_vec3_divs(geometry_buffer.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i][3], geometry_buffer.vcoord_ptr[i]);
     }
 
     minigl_set_tex(tex_my);

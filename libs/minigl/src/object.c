@@ -161,8 +161,5 @@ void minigl_obj_transform(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
     for (int i = 0; i < in.vcoord_size; i++) {
         // Apply transformation
         glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
-
-        // Convert to carthesian coord.
-        glm_vec3_divs(out->vcoord_ptr[i], out->vcoord_ptr[i][3], out->vcoord_ptr[i]);
     }
 }

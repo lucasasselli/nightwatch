@@ -27,13 +27,13 @@ void map_init(void) {
 
     // Create floor
     mat4 trans = GLM_MAT4_IDENTITY_INIT;
-    // glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
-    glm_translate(trans, (vec3){0.0f, -0.5f, 0.0f});
+    glm_translate(trans, (vec3){0.0f, -2.0f, 0.0f});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(_obj_tile_wall0, trans, &_obj_tile_floor);
 
     // Load texture
-    minigl_tex_read_file("res/textures/test.tex", &_tex_tile_floor0);
+    minigl_tex_read_file("res/textures/floor0.tex", &_tex_tile_floor0);
 
     // FIXME: hardcoded buffer
     _obj_buf.vcoord_ptr = (vec4*)malloc(sizeof(vec4) * 50);
