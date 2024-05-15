@@ -1,34 +1,36 @@
 #pragma once
 
-#include <assert.h>
-#include <locale.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <time.h>
-
-#include "utils.h"
 
 #define MAP_SIZE 64
 #define MAP_MAX_ROOMS 16
 #define MAP_RAND_EFFORT 50
+#define MAP_TILE_MAX_ITEMS 10
 
 typedef enum {
-    TILE_EMPTY,
     TILE_FLOOR,
-    TILE_WALL_NS,
-    TILE_WALL_EW,
+    TILE_WALL_N,
+    TILE_WALL_E,
+    TILE_WALL_S,
+    TILE_WALL_W,
     TILE_DOOR_NS,
-    TILE_DOOR_EW,
-    TILE_CORNER0,
-    TILE_CORNER1,
-    TILE_CORNER2,
-    TILE_CORNER3
-} map_tile_t;
+    TILE_DOOR_EW
+} map_item_type_t;
+
+typedef enum {
+    STYLE0,
+    STYLE1
+} map_item_style_t;
+
+typedef struct {
+    map_item_type_t type;
+    map_item_style_t style;
+} map_item_t;
 
 typedef enum {
     ROOM_BASE,      // Simple room
     ROOM_CORRIDOR,  // Narrow room
-} RoomType;
+} map_room_type_t;
 
 #define ROOM_TYPE_SIZE 2
 
@@ -40,7 +42,7 @@ typedef union {
 } RoomSize;
 
 typedef struct {
-    RoomType type;
+    map_room_type_t type;
     int x;
     int y;
     RoomSize size;
@@ -49,12 +51,15 @@ typedef struct {
 } map_room_t;
 
 typedef struct {
+    map_item_t *items;
+    int item_cnt;
+} map_tile_t;
+
+typedef struct {
     map_tile_t **grid;
     map_room_t *rooms;
     int room_cnt;
 } map_t;
-
-char mapgen_tile_char(map_tile_t tile);
 
 void mapgen_init(map_t *map);
 

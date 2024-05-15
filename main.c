@@ -1,6 +1,7 @@
 #include <cglm/cglm.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "game.h"
 #include "map.h"
@@ -88,9 +89,24 @@ __declspec(dllexport)
 
         pd->system->logToConsole("Begin setup...");
 
+        //---------------------------------------------------------------------------
         // Device config
+        //---------------------------------------------------------------------------
+
         pd->system->setUpdateCallback(update, pd);
         pd->display->setRefreshRate(30);
+
+        //---------------------------------------------------------------------------
+        // Game resources
+        //---------------------------------------------------------------------------
+
+        //---------------------------------------------------------------------------
+        // Game config
+        //---------------------------------------------------------------------------
+
+        int seed = time(NULL);
+        debug("SEED: %d\n", seed);
+        srand(seed);
 
         // Load resources
 
@@ -104,8 +120,6 @@ __declspec(dllexport)
 
         // Setup map
         map_init();
-        map_gen_grid();
-        map_gen_poly();
 
         // Create a buffer for processed geometry
         geometry_buffer = obj_my;

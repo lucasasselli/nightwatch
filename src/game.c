@@ -36,4 +36,6 @@ void handle_keys(game_state_t* state, PDButtons pushed) {
     direction[1] = sinf(glm_rad(state->camera.pitch));
     direction[2] = sinf(glm_rad(state->camera.yaw)) * cosf(glm_rad(state->camera.pitch));
     glm_vec3_normalize_to(direction, state->camera.front);
+
+    debug("Camera: %fl %f\n", state->camera.pos[0], state->camera.pos[2]);
 }

@@ -1,24 +1,52 @@
 #include "mapgen.h"
 
-char mapgen_tile_char(map_tile_t tile) {
-    switch (tile) {
-        case TILE_EMPTY:
-            return ' ';
-        case TILE_FLOOR:
-            return '.';
-        case TILE_CORNER0:
-        case TILE_CORNER1:
-        case TILE_CORNER2:
-        case TILE_CORNER3:
-            return '+';
-        case TILE_WALL_NS:
-            return '|';
-        case TILE_WALL_EW:
-            return '-';
-        case TILE_DOOR_NS:
-        case TILE_DOOR_EW:
-            return 'D';
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "utils.h"
+
+char tile_to_char(map_tile_t tile) {
+    if (tile.item_cnt == 0) {
+        return ' ';
+    } else if (tile.item_cnt > 1) {
+        return '+';
+    } else {
+        switch (tile.items[0].type) {
+            case TILE_FLOOR:
+                return '.';
+            case TILE_WALL_N:
+            case TILE_WALL_S:
+                return '-';
+            case TILE_WALL_E:
+            case TILE_WALL_W:
+                return '|';
+            case TILE_DOOR_NS:
+            case TILE_DOOR_EW:
+                return 'D';
+        }
     }
+}
+
+void tile_item_add(map_t *map, map_item_type_t type, int x, int y) {
+    map_item_t item;
+    item.type = type;
+    item.style = STYLE0;  // FIXME: Pick the style from the room!
+    map_tile_t *tile = &map->grid[y][x];
+
+    if (type == TILE_DOOR_EW || type == TILE_DOOR_NS) {
+        tile->item_cnt = 0;  // Doors replace walls
+    }
+
+    if (tile->item_cnt == 1) {
+        if (tile->items[tile->item_cnt].type == TILE_DOOR_EW || tile->items[tile->item_cnt].type == TILE_DOOR_NS) {
+            return;  // Don't replace doors
+        }
+    }
+
+    tile->items[tile->item_cnt] = item;
+    tile->item_cnt++;
+    assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
 }
 
 void mapgen_init(map_t *map) {
@@ -26,9 +54,11 @@ void mapgen_init(map_t *map) {
     map->room_cnt = 0;
     map->grid = malloc(sizeof(map_tile_t *) * MAP_SIZE);
     for (int y = 0; y < MAP_SIZE; y++) {
-        map->grid[y] = (map_tile_t *)malloc(sizeof(map_tile_t) * MAP_SIZE);
+        map->grid[y] = malloc(sizeof(map_tile_t) * MAP_SIZE);
         for (int x = 0; x < MAP_SIZE; x++) {
-            map->grid[y][x] = TILE_EMPTY;
+            // Initialize the tile
+            map->grid[y][x].item_cnt = 0;  // No item by default
+            map->grid[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
         }
     }
 }
@@ -78,36 +108,39 @@ void mapgen_grid_update(map_t *map) {
             case ROOM_BASE:
                 for (int y = room.y; y < (room.y + room.size.y); y++) {
                     for (int x = room.x; x < (room.x + room.size.x); x++) {
-                        map_tile_t t = TILE_FLOOR;
-
                         bool west_side = (x == room.x);
                         bool east_side = (x == (room.x + room.size.x - 1));
                         bool north_side = (y == room.y);
                         bool south_side = (y == (room.y + room.size.y - 1));
 
-                        if (north_side || south_side) t = TILE_WALL_EW;
+                        if (room.way_in.x == x && room.way_in.y == y) {
+                            // Add doors
+                            if (north_side || south_side) {
+                                tile_item_add(map, TILE_DOOR_NS, x, y);
+                            }
+                            if (east_side || west_side) {
+                                tile_item_add(map, TILE_DOOR_EW, x, y);
+                            }
+                        } else {
+                            // Add walls
+                            if (north_side) {
+                                tile_item_add(map, TILE_WALL_N, x, y);
+                            }
+                            if (east_side) {
+                                tile_item_add(map, TILE_WALL_E, x, y);
+                            }
+                            if (south_side) {
+                                tile_item_add(map, TILE_WALL_S, x, y);
+                            }
+                            if (west_side) {
+                                tile_item_add(map, TILE_WALL_W, x, y);
+                            }
 
-                        if (east_side || west_side) t = TILE_WALL_NS;
-
-                        if (west_side && north_side) t = TILE_CORNER0;
-
-                        if (east_side && north_side) t = TILE_CORNER1;
-
-                        if (west_side && south_side) t = TILE_CORNER2;
-
-                        if (east_side && south_side) t = TILE_CORNER3;
-
-                        if (map->grid[y][x] == TILE_EMPTY) map->grid[y][x] = t;
-                    }
-                }
-
-                // Add way_in
-                if (room.way_in.x >= 0 && room.way_in.y >= 0) {
-                    if (map->grid[room.way_in.y][room.way_in.x] == TILE_WALL_NS) {
-                        map->grid[room.way_in.y][room.way_in.x] = TILE_DOOR_NS;
-                    }
-                    if (map->grid[room.way_in.y][room.way_in.x] == TILE_WALL_EW) {
-                        map->grid[room.way_in.y][room.way_in.x] = TILE_DOOR_EW;
+                            // FIXME: We need to think about something smarter for the floor
+                            if (!north_side && !east_side && !south_side && !west_side) {
+                                tile_item_add(map, TILE_FLOOR, x, y);
+                            }
+                        }
                     }
                 }
                 break;
@@ -118,7 +151,7 @@ void mapgen_grid_update(map_t *map) {
 void mapgen_grid_print(map_t map) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            printf("%c ", mapgen_tile_char(map.grid[y][x]));
+            printf("%c ", tile_to_char(map.grid[y][x]));
         }
         printf("\n");
     }
