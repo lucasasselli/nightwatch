@@ -104,7 +104,8 @@ __declspec(dllexport)
 
         // Setup map
         map_init();
-        map_generate();
+        map_gen_grid();
+        map_gen_poly();
 
         // Create a buffer for processed geometry
         geometry_buffer = obj_my;

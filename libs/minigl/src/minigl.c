@@ -41,6 +41,10 @@ void minigl_draw(minigl_obj_t obj) {
 
     vec3 b;
 
+    if (obj.face_size == 0) {
+        return;  // Nothing to do!
+    }
+
     if (cfg.texture_mode == MINIGL_TEX_2D) {
         if (obj.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");

@@ -142,11 +142,10 @@ void minigl_obj_copy_trans(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
 
     // Allocate
     out->vcoord_ptr = (vec4 *)malloc(in.vcoord_size * sizeof(vec4));
-    for (int i = 0; i < in.vcoord_size; i++) {
-        // Apply transformation
-        glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
 
-        pd->system->logToConsole("%e %e %e %e", out->vcoord_ptr[i][0], out->vcoord_ptr[i][1], out->vcoord_ptr[i][2], out->vcoord_ptr[i][3]);
+    // Apply transformation
+    for (int i = 0; i < in.vcoord_size; i++) {
+        glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
     }
 }
 
@@ -158,8 +157,8 @@ void minigl_obj_transform(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
     out->tcoord_size = in.tcoord_size;
     out->face_size = in.face_size;
 
+    // Apply transformation
     for (int i = 0; i < in.vcoord_size; i++) {
-        // Apply transformation
         glm_mat4_mulv(trans, in.vcoord_ptr[i], out->vcoord_ptr[i]);
     }
 }

@@ -42,6 +42,8 @@ else()
         COMMENT "Starting Valgrind...")
 endif()
 
+add_definitions(-DDEBUG)
+
 add_subdirectory(ext/cglm)
 add_subdirectory(ext/libspng)
 
