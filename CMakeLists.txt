@@ -11,22 +11,35 @@ set(SDK $ENV{PLAYDATE_SDK_PATH})
 
 # Game Name Customization
 set(PLAYDATE_GAME_NAME hello_world)
+set(PLAYDATE_GAME_DEVICE ${PLAYDATE_GAME_NAME}_DEVICE)
 
-project(${TARGET_NAME} C ASM)
+project(${PLAYDATE_GAME_NAME} C ASM)
 
 file(GLOB SOURCE_FILES src/*.c)
 file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
+set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 
 if (TOOLCHAIN STREQUAL "armgcc")
-    set(TARGET_NAME ${PLAYDATE_GAME_NAME}_DEVICE)
-	add_executable(${PLAYDATE_GAME_DEVICE} 
+    set(SPNG_SHARED OFF CACHE BOOL "")
+    set(CGLM_SHARED OFF CACHE BOOL "")
+
+    add_compile_options(-mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1)
+
+    set(TARGET_NAME ${PLAYDATE_GAME_DEVICE})
+    add_executable(${TARGET_NAME}
+        ${PROJECT_SOURCE_DIR}/ext/libspng/spng/spng.c
         ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
+
+    target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "")
+
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
+        ${PROJECT_SOURCE_DIR}/ext/libspng/spng/spng.c
         ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
@@ -38,19 +51,24 @@ else()
 
     add_custom_target(valgrind
         DEPENDS ${TARGET_NAME}
-        COMMAND valgrind ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx
+        COMMAND valgrind 
+            --leak-check=full --track-origins=yes
+            ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx
         COMMENT "Starting Valgrind...")
 endif()
 
 add_definitions(-DDEBUG)
+add_definitions(-DSPNG_USE_MINIZ)
 
 add_subdirectory(ext/cglm)
-add_subdirectory(ext/libspng)
+add_subdirectory(ext/miniz)
 
-include_directories(${TARGET_NAME} include)
+include_directories(${TARGET_NAME} ext/libspng/spng)
 include_directories(${TARGET_NAME} libs/minigl/include)
+include_directories(${TARGET_NAME} ext/miniz)
+include_directories(${TARGET_NAME} include)
 
-target_link_libraries(${TARGET_NAME} PRIVATE cglm)
-target_link_libraries(${TARGET_NAME} PRIVATE spng)
+target_link_libraries(${TARGET_NAME} PUBLIC cglm)
+target_link_libraries(${TARGET_NAME} PUBLIC miniz)
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)

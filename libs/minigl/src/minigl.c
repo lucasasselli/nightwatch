@@ -27,11 +27,11 @@ void minigl_clear(uint8_t color, int depth) {
     }
 }
 
-static inline float edge(vec4 a, vec4 b, vec4 c) {
+MINIGL_INLINE float edge(vec4 a, vec4 b, vec4 c) {
     return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]);
 }
 
-static inline float interpolate(vec3 w, float a, float b, float c) {
+MINIGL_INLINE float interpolate(vec3 w, float a, float b, float c) {
     return (w[0] * a + w[1] * b + w[2] * c);
 }
 
@@ -61,6 +61,7 @@ void minigl_draw(minigl_obj_t obj) {
         // Get vertex coordinates
         bool drop = false;
 
+        // FIXME: move out
         for (int i = 0; i < 3; i++) {
             glm_vec4_copy(obj.vcoord_ptr[obj.vface_ptr[f][i]], v[i]);
 
@@ -103,7 +104,7 @@ void minigl_draw(minigl_obj_t obj) {
 
         int cw_wind_order = (b[0] > 0.0f || b[1] > 0.0f || b[2] > 0.0f);
 
-        // if (cw_wind_order) continue;
+        if (cw_wind_order) continue;
 
         if (cw_wind_order) {
             vec4 temp;
@@ -150,9 +151,6 @@ void minigl_draw(minigl_obj_t obj) {
                 // Calculate the fragment coordinates
                 // FIXME: add 0.5 offset?
                 glm_vec4_copy((vec4){x, y, 0, 1}, p);
-
-                // auto interpolate = [](const auto a[3], auto p, const vec3 &coord) {
-                // return coord.x*a[0].*p + coord.y*a[1].*p + coord.z*a[2].*p; };
 
                 b[0] = edge(v[1], v[2], p);
                 b[1] = edge(v[2], v[0], p);

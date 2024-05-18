@@ -26,11 +26,9 @@ mat4 view;
 // Resources
 LCDFont *font = NULL;
 minigl_obj_t obj_my;
-minigl_obj_t geometry_buffer;  // FIXME: We need some way to generate it behind the scene
-minigl_tex_t tex_my;
 minigl_tex_t tex_dither;
 
-float rot;
+unsigned int update_cnt = 0;
 
 void view_update(void) {
     // Update camera poistion
@@ -57,24 +55,13 @@ static int update(void *userdata) {
     // Draw map
     map_draw(trans);
 
-    // FIXME: Move outside
-    mat4 model = GLM_MAT4_IDENTITY_INIT;
-    glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(rot), (vec3){0.0f, 1.0f, 0.0f});
-
-    glm_mat4_mul(trans, model, trans);
-
-    // Shade the vertices!
-    // TODO: Simplify and wrap
-    for (int i = 0; i < obj_my.vcoord_size; i++) {
-        // Apply transformation
-        glm_mat4_mulv(trans, obj_my.vcoord_ptr[i], geometry_buffer.vcoord_ptr[i]);
-    }
-
-    minigl_set_tex(tex_my);
-    minigl_draw(geometry_buffer);
     minigl_swap_frame();
 
-    rot++;
+    update_cnt++;
+
+#ifdef DEBUG
+    pd->system->drawFPS(0, 0);
+#endif
 
     return 1;
 }
@@ -104,7 +91,8 @@ __declspec(dllexport)
         // Game config
         //---------------------------------------------------------------------------
 
-        int seed = time(NULL);
+        // int seed = time(NULL);
+        int seed = 0;
         debug("SEED: %d\n", seed);
         srand(seed);
 
@@ -113,17 +101,12 @@ __declspec(dllexport)
         // Load model
         minigl_obj_read_file("res/models/cube.obj", &obj_my);
 
-        minigl_tex_read_file("res/textures/cube.tex", &tex_my);
         minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
 
         minigl_set_dither(tex_dither);
 
         // Setup map
         map_init();
-
-        // Create a buffer for processed geometry
-        geometry_buffer = obj_my;
-        geometry_buffer.vcoord_ptr = (vec4 *)malloc(sizeof(vec4) * obj_my.vcoord_size);
 
         // Load fonts
         const char *err;

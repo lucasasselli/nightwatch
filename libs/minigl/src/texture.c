@@ -15,17 +15,22 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
     size_t file_size = pd->file->tell(f);
     pd->file->seek(f, 0, SEEK_SET);
 
-    unsigned char *png_data = (unsigned char *)malloc(file_size);
+    uint8_t *png_data = (uint8_t *)malloc(sizeof(uint8_t) * file_size);
     pd->file->read(f, png_data, file_size);
+    pd->file->close(f);
 
     // Create an spng context
     spng_ctx *ctx = spng_ctx_new(0);
     if (!ctx) {
+        pd->system->logToConsole("Png context error!");
         return 1;
     }
 
     // Set the input buffer
-    spng_set_png_buffer(ctx, png_data, file_size);
+    if (spng_set_png_buffer(ctx, png_data, file_size)) {
+        pd->system->logToConsole("Png buffer error!");
+        return 1;
+    }
 
     // Decode to 8-bit RGBA
     size_t out_size;
@@ -41,9 +46,10 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
     out->size_y = ihdr.height;
 
     // Allocate the temp buffer
-    unsigned char *temp = (unsigned char *)malloc(out_size);
+    uint8_t *temp = (uint8_t *)malloc(sizeof(uint8_t) * out_size);
     spng_decode_image(ctx, temp, out_size, SPNG_FMT_RGB8, 0);
 
+    // Allocate final texture memory location
     out->ptr = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
     for (int j = 0; j < out->size_y; j++) {
         out->ptr[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
@@ -63,11 +69,12 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
         out->ptr[y][x] = (uint8_t)lum;
     }
 
+    pd->system->logToConsole("Done loading %s!", path);
+
     // Free resources
     spng_ctx_free(ctx);
     free(png_data);
     free(temp);
-    pd->file->close(f);
 
     return 0;
 }

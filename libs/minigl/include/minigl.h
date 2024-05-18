@@ -8,6 +8,7 @@
 #define SCREEN_SIZE_X 400
 #define SCREEN_SIZE_Y 240
 
+#define MINIGL_INLINE static inline __attribute((always_inline))
 #define PERSP_CORRECT
 
 // TODO: Make the library plaform agnostic

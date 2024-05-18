@@ -39,7 +39,7 @@ void tile_item_add(map_t *map, map_item_type_t type, int x, int y) {
     }
 
     if (tile->item_cnt == 1) {
-        if (tile->items[tile->item_cnt].type == TILE_DOOR_EW || tile->items[tile->item_cnt].type == TILE_DOOR_NS) {
+        if (tile->items[0].type == TILE_DOOR_EW || tile->items[0].type == TILE_DOOR_NS) {
             return;  // Don't replace doors
         }
     }
