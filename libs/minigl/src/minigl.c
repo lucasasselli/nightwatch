@@ -45,12 +45,14 @@ void minigl_draw(minigl_obj_t obj) {
         return;  // Nothing to do!
     }
 
+#ifdef DEBUG
     if (cfg.texture_mode == MINIGL_TEX_2D) {
         if (obj.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");
             return;
         }
     }
+#endif
 
     // FIXME: Need to improve performance!!!
     for (int f = 0; f < obj.face_size; f++) {
@@ -104,7 +106,7 @@ void minigl_draw(minigl_obj_t obj) {
 
         int cw_wind_order = (b[0] > 0.0f || b[1] > 0.0f || b[2] > 0.0f);
 
-        if (cw_wind_order) continue;
+        // if (cw_wind_order) continue;
 
         if (cw_wind_order) {
             vec4 temp;
@@ -198,19 +200,6 @@ void minigl_draw(minigl_obj_t obj) {
                 } else {
                     c_buff[y][x] = 1;
                 }
-            }
-        }
-    }
-}
-
-void minigl_swap_frame(void) {
-    pd->graphics->clear(kColorBlack);
-    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
-        for (int x = 0; x < SCREEN_SIZE_X; x++) {
-            if (c_buff[y][x]) {
-                // TODO: Access the screen memory directly
-                // TODO: Extern to make platform agnostic
-                pd->graphics->drawLine(x, SCREEN_SIZE_Y - y - 1, x, SCREEN_SIZE_Y - y - 1, 1, kColorWhite);
             }
         }
     }

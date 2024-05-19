@@ -96,6 +96,18 @@ bool mapgen_room_check_collision(map_t *map, map_room_t room) {
     return !match;
 }
 
+void grid_add_item_col(map_t *map, map_item_type_t type, int x, int y, int size) {
+    for (int i = 0; i < size; i++) {
+        tile_item_add(map, type, x, y + i);
+    }
+}
+
+void grid_add_item_row(map_t *map, map_item_type_t type, int x, int y, int size) {
+    for (int i = 0; i < size; i++) {
+        tile_item_add(map, type, x + i, y);
+    }
+}
+
 void mapgen_grid_update(map_t *map) {
     for (int i = 0; i < map->room_cnt; i++) {
         map_room_t room = map->rooms[i];
@@ -106,43 +118,29 @@ void mapgen_grid_update(map_t *map) {
         switch (room.type) {
             case ROOM_CORRIDOR:
             case ROOM_BASE:
-                for (int y = room.y; y < (room.y + room.size.y); y++) {
-                    for (int x = room.x; x < (room.x + room.size.x); x++) {
-                        bool west_side = (x == room.x);
-                        bool east_side = (x == (room.x + room.size.x - 1));
-                        bool north_side = (y == room.y);
-                        bool south_side = (y == (room.y + room.size.y - 1));
+                // Walls
+                grid_add_item_row(map, TILE_WALL_N, room.x + 1, room.y, room.size.x - 2);
+                grid_add_item_row(map, TILE_WALL_S, room.x + 1, room.y + room.size.y - 1, room.size.x - 2);
+                grid_add_item_col(map, TILE_WALL_E, room.x + room.size.x - 1, room.y + 1, room.size.y - 2);
+                grid_add_item_col(map, TILE_WALL_W, room.x, room.y + 1, room.size.y - 2);
 
-                        if (room.way_in.x == x && room.way_in.y == y) {
-                            // Add doors
-                            if (north_side || south_side) {
-                                tile_item_add(map, TILE_DOOR_NS, x, y);
-                            }
-                            if (east_side || west_side) {
-                                tile_item_add(map, TILE_DOOR_EW, x, y);
-                            }
-                        } else {
-                            // Add walls
-                            if (north_side) {
-                                tile_item_add(map, TILE_WALL_N, x, y);
-                            }
-                            if (east_side) {
-                                tile_item_add(map, TILE_WALL_E, x, y);
-                            }
-                            if (south_side) {
-                                tile_item_add(map, TILE_WALL_S, x, y);
-                            }
-                            if (west_side) {
-                                tile_item_add(map, TILE_WALL_W, x, y);
-                            }
-
-                            // FIXME: We need to think about something smarter for the floor
-                            if (!north_side && !east_side && !south_side && !west_side) {
-                                tile_item_add(map, TILE_FLOOR, x, y);
-                            }
-                        }
+                // Floor
+                for (int y = 1; y < room.size.y - 1; y++) {
+                    for (int x = 1; x < room.size.x - 1; x++) {
+                        tile_item_add(map, TILE_FLOOR, room.x + x, room.y + y);
                     }
                 }
+
+                // Doors
+                if (room.way_in.x > 0 && room.way_in.y > 0) {
+                    if (room.way_in.x == room.x || room.way_in.x == (room.x + room.size.x - 1)) {
+                        tile_item_add(map, TILE_DOOR_EW, room.way_in.x, room.way_in.y);
+                    }
+                    if (room.way_in.y == room.y || room.way_in.y == (room.y + room.size.y - 1)) {
+                        tile_item_add(map, TILE_DOOR_NS, room.way_in.x, room.way_in.y);
+                    }
+                }
+
                 break;
         }
     }

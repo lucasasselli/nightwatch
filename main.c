@@ -8,6 +8,7 @@
 #include "minigl.h"
 #include "object.h"
 #include "pd_api.h"
+#include "utils.h"
 
 #define TEXT_WIDTH 86
 #define TEXT_HEIGHT 16
@@ -25,7 +26,6 @@ mat4 view;
 
 // Resources
 LCDFont *font = NULL;
-minigl_obj_t obj_my;
 minigl_tex_t tex_dither;
 
 unsigned int update_cnt = 0;
@@ -35,6 +35,18 @@ void view_update(void) {
     vec3 camera_center;
     glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
     glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
+}
+
+void screen_update(void) {
+    pd->graphics->clear(kColorBlack);
+    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
+        for (int x = 0; x < SCREEN_SIZE_X; x++) {
+            if (c_buff[y][x]) {
+                // TODO: Access the screen memory directly
+                pd->graphics->drawLine(x, SCREEN_SIZE_Y - y - 1, x, SCREEN_SIZE_Y - y - 1, 1, kColorWhite);
+            }
+        }
+    }
 }
 
 static int update(void *userdata) {
@@ -53,9 +65,12 @@ static int update(void *userdata) {
     glm_mat4_mul(proj, view, trans);
 
     // Draw map
-    map_draw(trans);
+    map_draw(trans, gs.camera);
 
-    minigl_swap_frame();
+    // Update the screen
+    screen_update();
+
+    minimap_draw(300, 0, gs.camera);
 
     update_cnt++;
 
@@ -87,6 +102,8 @@ __declspec(dllexport)
         // Game resources
         //---------------------------------------------------------------------------
 
+        minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
+
         //---------------------------------------------------------------------------
         // Game config
         //---------------------------------------------------------------------------
@@ -95,13 +112,6 @@ __declspec(dllexport)
         int seed = 0;
         debug("SEED: %d\n", seed);
         srand(seed);
-
-        // Load resources
-
-        // Load model
-        minigl_obj_read_file("res/models/cube.obj", &obj_my);
-
-        minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
 
         minigl_set_dither(tex_dither);
 
@@ -123,10 +133,6 @@ __declspec(dllexport)
         view_update();  // Setup view matrix
 
         pd->system->logToConsole("Setup complete!");
-    }
-
-    if (event == kEventKeyPressed) {
-        // Unused
     }
 
     return 0;
