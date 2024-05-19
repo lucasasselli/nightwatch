@@ -96,7 +96,7 @@ void map_init(void) {
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, -(MAP_TILE_SIZE / 2.0f), 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
-    glm_scale_uni(trans, MAP_TILE_SIZE);
+    glm_scale_uni(trans, MAP_TILE_SIZE * MAP_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_floor);
 
     // Create ceiling
@@ -108,13 +108,13 @@ void map_init(void) {
     // Wall N
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.0f, +(MAP_TILE_SIZE / 2.0f)});
-    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_n);
 
     // Wall S
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.0f, -(MAP_TILE_SIZE / 2.0f)});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_s);
 
@@ -160,12 +160,6 @@ void map_init(void) {
     minimap_gen();
 }
 
-void item_draw_floor(mat4 trans, int x, int y) {
-    minigl_set_tex(tex_floor0);
-    minigl_obj_transform(obj_floor, trans, &obj_buffer);
-    minigl_draw(obj_buffer);
-}
-
 void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
     mat4 t = GLM_MAT4_IDENTITY_INIT;
     glm_translate(t, (vec3){MAP_TILE_SIZE * x, 0.0f, MAP_TILE_SIZE * y});
@@ -173,9 +167,6 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
 
     switch (item.type) {
         case TILE_FLOOR:
-            minigl_set_tex(tex_floor0);
-            minigl_obj_transform(obj_floor, t, &obj_buffer);
-            minigl_draw(obj_buffer);
             break;
         case TILE_WALL_N:
             minigl_set_tex(tex_wall0);
@@ -203,7 +194,6 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
             minigl_draw(obj_buffer);
             minigl_obj_transform(obj_wall_e, t, &obj_buffer);
             minigl_draw(obj_buffer);
-            item_draw_floor(t, x, y);
             break;
         case TILE_DOOR_EW:
             minigl_set_tex(tex_wall0);
@@ -211,8 +201,6 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
             minigl_draw(obj_buffer);
             minigl_obj_transform(obj_wall_s, t, &obj_buffer);
             minigl_draw(obj_buffer);
-
-            item_draw_floor(t, x, y);
             break;
     }
 }
@@ -226,6 +214,14 @@ void map_draw(mat4 trans, camera_t camera) {
             }
         }
     }
+
+    // TODO: Draw one big floor!
+    // Draw floor
+    /*
+    minigl_set_tex(tex_floor0);
+    minigl_obj_transform(obj_floor, trans, &obj_buffer);
+    minigl_draw(obj_buffer);
+    */
 }
 
 void minimap_draw(int x, int y, camera_t camera) {

@@ -15,8 +15,8 @@
 extern PlaydateAPI* pd;
 
 // TODO: Create object
-extern uint8_t c_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
-extern float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+extern uint8_t c_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
+extern float z_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
 
 // State objects
 typedef struct {

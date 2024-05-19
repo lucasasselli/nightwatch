@@ -37,6 +37,8 @@ if (TOOLCHAIN STREQUAL "armgcc")
 else()
     set(BUILD_SHARED_LIBS ON CACHE BOOL "")
 
+    add_definitions(-DDEBUG_PERF)
+
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
         ${PROJECT_SOURCE_DIR}/ext/libspng/spng/spng.c
