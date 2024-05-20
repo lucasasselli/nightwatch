@@ -23,7 +23,7 @@ PlaydateAPI *pd;
 game_state_t gs;
 map_t map;
 mat4 proj;
-mat4 view;
+mat4 trans;
 
 // Resources
 LCDFont *font = NULL;
@@ -34,8 +34,10 @@ unsigned int update_cnt = 0;
 void view_update(void) {
     // Update camera poistion
     vec3 camera_center;
+    mat4 view;
     glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
     glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
+    glm_mat4_mul(proj, view, trans);
 }
 
 void screen_update(void) {
@@ -75,10 +77,6 @@ static int update(void *userdata) {
 #endif
 
     minigl_clear(0.0f, 1.0f);
-
-    // Prepare the transformation matrix
-    mat4 trans;
-    glm_mat4_mul(proj, view, trans);
 
     // Draw map
     map_draw(map, trans, gs.camera);
