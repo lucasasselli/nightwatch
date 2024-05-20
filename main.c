@@ -21,6 +21,7 @@ PlaydateAPI *pd;
 
 // Game state
 game_state_t gs;
+map_t map;
 mat4 proj;
 mat4 view;
 
@@ -80,7 +81,7 @@ static int update(void *userdata) {
     glm_mat4_mul(proj, view, trans);
 
     // Draw map
-    map_draw(trans, gs.camera);
+    map_draw(map, trans, gs.camera);
 
     // Update the screen
     screen_update();
@@ -90,7 +91,11 @@ static int update(void *userdata) {
 #ifdef DEBUG_PERF
     if (clock_gettime(CLOCK_REALTIME, &stop) == -1) {
     }
-    debug("Update Time: %d", difftimespec_ns(stop, start));
+    if (update_cnt % 100 == 0) {
+        debug("Update Time: %d", difftimespec_ns(stop, start));
+        minigl_perf_print();
+    }
+    minigl_perf_clear();
 #endif
 
     update_cnt++;
@@ -110,7 +115,7 @@ __declspec(dllexport)
     if (event == kEventInit) {
         pd = _pd;
 
-        pd->system->logToConsole("Begin setup...");
+        debug("Begin setup...");
 
         //---------------------------------------------------------------------------
         // Device config
@@ -125,20 +130,6 @@ __declspec(dllexport)
 
         minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
 
-        //---------------------------------------------------------------------------
-        // Game config
-        //---------------------------------------------------------------------------
-
-        // int seed = time(NULL);
-        int seed = 0;
-        debug("SEED: %d\n", seed);
-        srand(seed);
-
-        minigl_set_dither(tex_dither);
-
-        // Setup map
-        map_init();
-
         // Load fonts
         const char *err;
         font = pd->graphics->loadFont(fontpath, &err);
@@ -148,12 +139,52 @@ __declspec(dllexport)
         }
         pd->graphics->setFont(font);
 
-        // Initialize
+        //---------------------------------------------------------------------------
+        // Game config
+        //---------------------------------------------------------------------------
+
+        // int seed = time(NULL);
+        int seed = 0;
+        debug("SEED: %d", seed);
+        srand(seed);
+
+        minigl_set_dither(tex_dither);
+
+        mapgen_init(&map);
+        mapgen_gen(&map);
+
+        // Setup map
+        map_init();
+
+        // Setup minimap
+        minimap_init();
+        minimap_gen(map);
+
+        // Initialize game
         game_init(&gs);
-        glm_perspective(glm_rad(60), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 100.0f, proj);
+
+        // Pick a random starting position in the map
+        bool good = false;
+        do {
+            int x = rand() % MAP_SIZE;
+            int y = rand() % MAP_SIZE;
+            map_tile_t tile = map.grid[y][x];
+
+            // Check if position is good
+            if (tile.item_cnt == 1) {
+                if (tile.items[0].type == TILE_FLOOR) {
+                    good = true;
+                }
+            }
+
+            gs.camera.pos[0] = x * MAP_TILE_SIZE;
+            gs.camera.pos[2] = y * MAP_TILE_SIZE;
+        } while (!good);
+
+        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 30.0f, proj);
         view_update();  // Setup view matrix
 
-        pd->system->logToConsole("Setup complete!");
+        debug("Setup complete!");
     }
 
     return 0;

@@ -7,6 +7,8 @@
 #define INPUT_CAMERA_TSPEED 0.5f
 #define INPUT_CAMERA_RSPEED 5.0f  // Deg per Frame
 
+#define CAMERA_FOV 60
+
 extern PlaydateAPI* pd;
 
 typedef struct {

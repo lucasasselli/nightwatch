@@ -21,11 +21,13 @@ minigl_tex_t tex_ceil0;
 
 minigl_obj_t obj_buffer;
 
-map_t map;
-
 LCDBitmap* minimap;
 LCDBitmap* minimap_mask;
 LCDBitmap* ico_player;
+
+void minimap_init(void) {
+    ico_player = pd->graphics->loadBitmap("res/icons/minimap_player.pdi", NULL);
+}
 
 void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_data, int bitmap_rowbytes) {
     // Object
@@ -60,7 +62,7 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
     }
 }
 
-void minimap_gen(void) {
+void minimap_gen(map_t map) {
     minimap = pd->graphics->newBitmap(MAP_SIZE * MINIMAP_TILE_SIZE, MAP_SIZE * MINIMAP_TILE_SIZE, kColorBlack);
     minimap_mask = pd->graphics->newBitmap(MAP_SIZE * MINIMAP_TILE_SIZE, MAP_SIZE * MINIMAP_TILE_SIZE, kColorBlack);
 
@@ -140,24 +142,6 @@ void map_init(void) {
     minigl_tex_read_file("res/textures/floor0.tex", &tex_floor0);
     minigl_tex_read_file("res/textures/ceil0.tex", &tex_ceil0);
     minigl_tex_read_file("res/textures/wall0.tex", &tex_wall0);
-
-    //---------------------------------------------------------------------------
-    // Map Grid
-    //---------------------------------------------------------------------------
-
-    mapgen_init(&map);
-    mapgen_gen(&map);
-
-#ifdef DEBUG
-    mapgen_grid_print(map);
-#endif
-
-    //---------------------------------------------------------------------------
-    // Mini map
-    //---------------------------------------------------------------------------
-    ico_player = pd->graphics->loadBitmap("res/icons/minimap_player.pdi", NULL);
-
-    minimap_gen();
 }
 
 void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
@@ -205,12 +189,30 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
     }
 }
 
-void map_draw(mat4 trans, camera_t camera) {
+void map_draw(map_t map, mat4 trans, camera_t camera) {
     for (int y = 0; y < MAP_DRAW_SIZE; y++) {
         for (int x = 0; x < MAP_DRAW_SIZE; x++) {
-            map_tile_t tile = map.grid[y][x];
-            for (int i = 0; i < tile.item_cnt; i++) {
-                map_item_draw(tile.items[i], trans, x, y);
+            // NOTE: Use the cross product of the position-tile vector and the
+            // camera direction to check if the tile is within the FOV.
+            vec2 t;
+            t[0] = x * MAP_TILE_SIZE - camera.pos[0];
+            t[1] = y * MAP_TILE_SIZE - camera.pos[2];
+            glm_vec2_normalize(t);
+
+            vec2 d;
+            d[0] = camera.front[0];
+            d[1] = camera.front[2];
+            // glm_vec2_normalize(d);
+
+            float a = glm_vec2_dot(t, d);
+
+            // NOTE: FOV should be divided by two, but since tile are discrete,
+            // we need to use a larger angle
+            if (a >= cosf(glm_rad(CAMERA_FOV))) {
+                map_tile_t tile = map.grid[y][x];
+                for (int i = 0; i < tile.item_cnt; i++) {
+                    map_item_draw(tile.items[i], trans, x, y);
+                }
             }
         }
     }

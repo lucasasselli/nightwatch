@@ -30,6 +30,10 @@ void minigl_set_tex(minigl_tex_t t);
 
 void minigl_set_dither(minigl_tex_t t);
 
+void minigl_perf_print(void);
+
+void minigl_perf_clear(void);
+
 void minigl_clear(uint8_t color, int depth);
 
 void minigl_draw(minigl_obj_t obj);

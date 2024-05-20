@@ -1,11 +1,21 @@
 #include "minigl.h"
 
 #include "cglm/types.h"
+#include "utils.h"
 
 uint8_t c_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
 float z_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
 
 minigl_cfg_t cfg;
+
+typedef enum {
+    PERF_CLIP,
+    PERF_CULL,
+    PERF_POLY,
+    PERF_FRAG
+} perf_event_t;
+
+int perf_cnt[4];
 
 void minigl_set_tex(minigl_tex_t t) {
     cfg.texture_mode = MINIGL_TEX_2D;
@@ -23,6 +33,27 @@ void minigl_clear(uint8_t color, int depth) {
         c_buff[i] = (uint8_t)color;
         z_buff[i] = depth;
     }
+}
+
+void minigl_perf_event(perf_event_t e) {
+#ifdef DEBUG_PERF
+    perf_cnt[e]++;
+#endif
+}
+
+void minigl_perf_clear(void) {
+    for (int i = 0; i < 4; i++) {
+        perf_cnt[i] = 0;
+    }
+}
+
+void minigl_perf_print(void) {
+#ifdef DEBUG_PERF
+    debug("Clip count: %d", perf_cnt[PERF_CLIP]);
+    debug("Cull count: %d", perf_cnt[PERF_CULL]);
+    debug("Poly count: %d", perf_cnt[PERF_POLY]);
+    debug("Frag count: %d", perf_cnt[PERF_FRAG]);
+#endif
 }
 
 MINIGL_INLINE float edge(vec4 a, vec4 b, vec4 c) {
@@ -72,7 +103,10 @@ void minigl_draw(minigl_obj_t obj) {
             v[i][2] *= v[i][3];
         }
 
-        if (drop) continue;
+        if (drop) {
+            minigl_perf_event(PERF_CLIP);
+            continue;
+        }
 
         //---------------------------------------------------------------------------
         // Culling/Clipping
@@ -80,8 +114,10 @@ void minigl_draw(minigl_obj_t obj) {
 
         // Trivial reject
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
-            (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f))
+            (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f)) {
+            minigl_perf_event(PERF_CLIP);
             continue;
+        }
 
         vec4 p = GLM_VEC3_ZERO_INIT;
         p[0] = (v[0][0] + v[1][0] + v[2][0]) / 3.0f;
@@ -132,6 +168,8 @@ void minigl_draw(minigl_obj_t obj) {
         // Rasterization
         //---------------------------------------------------------------------------
 
+        minigl_perf_event(PERF_POLY);
+
         // Calculate min bounding rectangle
         float mbr_min_x = fminf(v[0][0], fminf(v[1][0], v[2][0]));
         float mbr_max_x = fmaxf(v[0][0], fmaxf(v[1][0], v[2][0]));
@@ -148,6 +186,8 @@ void minigl_draw(minigl_obj_t obj) {
 
         for (int y = mbr_min_y; y < mbr_max_y; y++) {
             for (int x = mbr_min_x; x < mbr_max_x; x++) {
+                minigl_perf_event(PERF_FRAG);
+
                 int buff_i = y * SCREEN_SIZE_X + x;
                 // Calculate the fragment coordinates
                 // FIXME: add 0.5 offset?
