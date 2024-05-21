@@ -70,8 +70,8 @@ void minimap_gen(map_t map) {
     int bitmap_rowbytes = 0;
     pd->graphics->getBitmapData(minimap, NULL, NULL, &bitmap_rowbytes, NULL, &bitmap_data);
 
-    for (int y = 0; y < MAP_DRAW_SIZE; y++) {
-        for (int x = 0; x < MAP_DRAW_SIZE; x++) {
+    for (int y = 0; y < MAP_SIZE; y++) {
+        for (int x = 0; x < MAP_SIZE; x++) {
             map_tile_t tile = map.grid[y][x];
             for (int i = 0; i < tile.item_cnt; i++) {
                 minimap_item_draw(tile.items[i], MINIMAP_TILE_SIZE * x, MINIMAP_TILE_SIZE * y, bitmap_data, bitmap_rowbytes);
@@ -190,19 +190,29 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
 }
 
 void map_draw(map_t map, mat4 trans, camera_t camera) {
-    for (int y = 0; y < MAP_DRAW_SIZE; y++) {
-        for (int x = 0; x < MAP_DRAW_SIZE; x++) {
+    ivec2 x_range;
+    x_range[0] = (int)(camera.pos[0] / MAP_TILE_SIZE) - MAP_DRAW_SIZE / 2;
+    x_range[1] = x_range[0] + MAP_DRAW_SIZE;
+    glm_ivec2_clamp(x_range, 0, MAP_SIZE);
+
+    ivec2 y_range;
+    y_range[0] = (int)(camera.pos[2] / MAP_TILE_SIZE) - MAP_DRAW_SIZE / 2;
+    y_range[1] = y_range[0] + MAP_DRAW_SIZE;
+    glm_ivec2_clamp(y_range, 0, MAP_SIZE);
+
+    vec2 d;
+    d[0] = camera.front[0];
+    d[1] = camera.front[2];
+    // glm_vec2_normalize(d);
+
+    for (int y = y_range[0]; y < y_range[1]; y++) {
+        for (int x = x_range[0]; x < x_range[1]; x++) {
             // NOTE: Use the cross product of the position-tile vector and the
             // camera direction to check if the tile is within the FOV.
             vec2 t;
             t[0] = x * MAP_TILE_SIZE - camera.pos[0];
             t[1] = y * MAP_TILE_SIZE - camera.pos[2];
             glm_vec2_normalize(t);
-
-            vec2 d;
-            d[0] = camera.front[0];
-            d[1] = camera.front[2];
-            // glm_vec2_normalize(d);
 
             float a = glm_vec2_dot(t, d);
 

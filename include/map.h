@@ -5,7 +5,7 @@
 #include "game.h"
 #include "mapgen.h"
 
-#define MAP_DRAW_SIZE MAP_SIZE
+#define MAP_DRAW_SIZE 13
 #define MAP_TILE_SIZE 4.0f
 
 #define MINIMAP_TILE_SIZE 4

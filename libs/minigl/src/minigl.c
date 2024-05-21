@@ -64,6 +64,27 @@ MINIGL_INLINE float interpolate(vec3 w, float a, float b, float c) {
     return (w[0] * a + w[1] * b + w[2] * c);
 }
 
+MINIGL_INLINE float minf3_clamp(float a, float b, float c, float min, float max) {
+    float x;
+    x = a < b ? a : b;
+    x = x < c ? x : c;
+
+    x = x > min ? x : min;
+    x = x < max ? x : max;
+
+    return x;
+}
+
+MINIGL_INLINE float maxf3_clamp(float a, float b, float c, float min, float max) {
+    float x;
+    x = a > b ? a : b;
+    x = x > c ? x : c;
+
+    x = x > min ? x : min;
+    x = x < max ? x : max;
+    return x;
+}
+
 void minigl_draw(minigl_obj_t obj) {
     vec4 v[3];
     vec2 t[3];
@@ -119,7 +140,7 @@ void minigl_draw(minigl_obj_t obj) {
             continue;
         }
 
-        vec4 p = GLM_VEC3_ZERO_INIT;
+        vec4 p;
         p[0] = (v[0][0] + v[1][0] + v[2][0]) / 3.0f;
         p[1] = (v[0][1] + v[1][1] + v[2][1]) / 3.0f;
 
@@ -171,16 +192,10 @@ void minigl_draw(minigl_obj_t obj) {
         minigl_perf_event(PERF_POLY);
 
         // Calculate min bounding rectangle
-        float mbr_min_x = fminf(v[0][0], fminf(v[1][0], v[2][0]));
-        float mbr_max_x = fmaxf(v[0][0], fmaxf(v[1][0], v[2][0]));
-        float mbr_min_y = fminf(v[0][1], fminf(v[1][1], v[2][1]));
-        float mbr_max_y = fmaxf(v[0][1], fmaxf(v[1][1], v[2][1]));
-
-        // Clip X and Y
-        mbr_min_x = mbr_min_x > 0.0f ? mbr_min_x : 0.0f;
-        mbr_max_x = mbr_max_x < SCREEN_SIZE_X ? mbr_max_x : SCREEN_SIZE_X;
-        mbr_min_y = mbr_min_y > 0.0f ? mbr_min_y : 0.0f;
-        mbr_max_y = mbr_max_y < SCREEN_SIZE_Y ? mbr_max_y : SCREEN_SIZE_Y;
+        float mbr_min_x = minf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
+        float mbr_max_x = maxf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
+        float mbr_min_y = minf3_clamp(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
+        float mbr_max_y = maxf3_clamp(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
 
         float area = edge(v[0], v[1], v[2]);
 
@@ -191,7 +206,7 @@ void minigl_draw(minigl_obj_t obj) {
                 int buff_i = y * SCREEN_SIZE_X + x;
                 // Calculate the fragment coordinates
                 // FIXME: add 0.5 offset?
-                vec4 p = GLM_VEC3_ZERO_INIT;
+                vec4 p;
                 p[0] = x;
                 p[1] = y;
 
@@ -218,6 +233,7 @@ void minigl_draw(minigl_obj_t obj) {
                 if (cfg.texture_mode == MINIGL_TEX_2D) {
                     // Interpolate texture coordinates
                     int tex_u, tex_v;
+
 #ifdef PERSP_CORRECT
                     // NOTE: https://stackoverflow.com/questions/24441631/how-exactly-does-opengl-do-perspectively-correct-linear-interpolation
                     // Interpolate W

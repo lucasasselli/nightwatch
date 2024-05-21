@@ -24,7 +24,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
     set(SPNG_SHARED OFF CACHE BOOL "")
     set(CGLM_SHARED OFF CACHE BOOL "")
 
-    add_compile_options(-mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1)
+    add_compile_options(-mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1 -O3)
 
     set(TARGET_NAME ${PLAYDATE_GAME_DEVICE})
     add_executable(${TARGET_NAME}
