@@ -153,34 +153,40 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
         case TILE_FLOOR:
             break;
         case TILE_WALL_N:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(128);
             minigl_obj_transform(obj_wall_n, t, &obj_buffer);
             minigl_draw(obj_buffer);
             break;
         case TILE_WALL_E:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(96);
             minigl_obj_transform(obj_wall_e, t, &obj_buffer);
             minigl_draw(obj_buffer);
             break;
         case TILE_WALL_S:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(128);
             minigl_obj_transform(obj_wall_s, t, &obj_buffer);
             minigl_draw(obj_buffer);
             break;
         case TILE_WALL_W:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(96);
             minigl_obj_transform(obj_wall_w, t, &obj_buffer);
             minigl_draw(obj_buffer);
             break;
         case TILE_DOOR_NS:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(96);
             minigl_obj_transform(obj_wall_w, t, &obj_buffer);
             minigl_draw(obj_buffer);
             minigl_obj_transform(obj_wall_e, t, &obj_buffer);
             minigl_draw(obj_buffer);
             break;
         case TILE_DOOR_EW:
-            minigl_set_tex(tex_wall0);
+            // minigl_set_tex(tex_wall0);
+            minigl_set_color(128);
             minigl_obj_transform(obj_wall_n, t, &obj_buffer);
             minigl_draw(obj_buffer);
             minigl_obj_transform(obj_wall_s, t, &obj_buffer);

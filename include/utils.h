@@ -26,3 +26,9 @@ int rand_range(int min, int max);
 int mini(int a, int b);
 
 int maxi(int a, int b);
+
+void meas_time_start(int id);
+
+void meas_time_stop(int id);
+
+void meas_time_print(int id, const char* msg);

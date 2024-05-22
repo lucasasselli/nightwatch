@@ -40,24 +40,21 @@ void view_update(void) {
     glm_mat4_mul(proj, view, trans);
 }
 
+// FIXME: Write directly on the screen buffer?
 void screen_update(void) {
     uint8_t *frame = pd->graphics->getFrame();
     int i = 0;
     for (int y = 0; y < SCREEN_SIZE_Y; y++) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
             if (c_buff[i]) {
-                clearpixel(frame, x, SCREEN_SIZE_Y - y - 1, 52);
+                clearpixel(frame, x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
             } else {
-                setpixel(frame, x, SCREEN_SIZE_Y - y - 1, 52);
+                setpixel(frame, x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
             }
             i++;
         }
     }
     pd->graphics->markUpdatedRows(0, LCD_ROWS - 1);
-}
-
-int64_t difftimespec_ns(const struct timespec after, const struct timespec before) {
-    return ((int64_t)after.tv_sec - (int64_t)before.tv_sec) * (int64_t)1000000000 + ((int64_t)after.tv_nsec - (int64_t)before.tv_nsec);
 }
 
 static int update(void *userdata) {
@@ -69,28 +66,35 @@ static int update(void *userdata) {
         view_update();
     }
 
-#ifdef DEBUG_PERF
-    struct timespec start, stop;
+    meas_time_start(0);
 
-    if (clock_gettime(CLOCK_REALTIME, &start) == -1) {
-    }
-#endif
-
+    meas_time_start(1);
     minigl_clear(0.0f, 1.0f);
+    meas_time_stop(1);
 
     // Draw map
+    meas_time_start(2);
     map_draw(map, trans, gs.camera);
+    meas_time_stop(2);
 
     // Update the screen
+    meas_time_start(3);
     screen_update();
+    meas_time_stop(3);
 
+    meas_time_start(4);
     minimap_draw(300, 0, gs.camera);
+    meas_time_stop(4);
+
+    meas_time_stop(0);
 
 #ifdef DEBUG_PERF
-    if (clock_gettime(CLOCK_REALTIME, &stop) == -1) {
-    }
     if (update_cnt % 100 == 0) {
-        debug("Update Time: %d", difftimespec_ns(stop, start));
+        meas_time_print(1, "Buffer flush ");
+        meas_time_print(2, "Map draw     ");
+        meas_time_print(3, "Screen update");
+        meas_time_print(4, "Minimap draw ");
+        meas_time_print(0, "Full         ");
         minigl_perf_print();
     }
     minigl_perf_clear();

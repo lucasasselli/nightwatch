@@ -27,11 +27,15 @@ void minigl_set_dither(minigl_tex_t t) {
     cfg.dither = t;
 }
 
+void minigl_set_color(uint8_t color) {
+    cfg.texture_mode = MINIGL_TEX_0D;
+    cfg.draw_color = color;
+}
+
 void minigl_clear(uint8_t color, int depth) {
-    // Flush buffer
     for (int i = 0; i < SCREEN_SIZE_X * SCREEN_SIZE_Y; i++) {
-        c_buff[i] = (uint8_t)color;
-        z_buff[i] = depth;
+        c_buff[i] = (uint8_t)color;  // Clear color buffer
+        z_buff[i] = depth;           // Clear z buffer
     }
 }
 
@@ -64,6 +68,24 @@ MINIGL_INLINE float interpolate(vec3 w, float a, float b, float c) {
     return (w[0] * a + w[1] * b + w[2] * c);
 }
 
+MINIGL_INLINE int clampi(int x, int min, int max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+}
+
+MINIGL_INLINE void vec2_swap(float* a, float* b) {
+    glm_swapf(&a[0], &b[0]);
+    glm_swapf(&a[1], &b[1]);
+}
+
+MINIGL_INLINE void vec4_swap(float* a, float* b) {
+    glm_swapf(&a[0], &b[0]);
+    glm_swapf(&a[1], &b[1]);
+    glm_swapf(&a[2], &b[2]);
+    glm_swapf(&a[3], &b[3]);
+}
+
 MINIGL_INLINE float minf3_clamp(float a, float b, float c, float min, float max) {
     float x;
     x = a < b ? a : b;
@@ -85,14 +107,41 @@ MINIGL_INLINE float maxf3_clamp(float a, float b, float c, float min, float max)
     return x;
 }
 
-void minigl_draw(minigl_obj_t obj) {
+MINIGL_INLINE void draw_scanline(int x1, int x2, float z1, float z2, int y) {
+    x1 = clampi(x1, 0, SCREEN_SIZE_X - 1);
+    x2 = clampi(x2, 0, SCREEN_SIZE_X - 1);
+
+    // Swap x1 and x2
+    if (x2 < x1) {
+        int t = x1;
+        x1 = x2;
+        x2 = t;
+    }
+
+    for (int x = x1; x < x2; x++) {
+        minigl_perf_event(PERF_FRAG);
+
+        int buff_i = y * SCREEN_SIZE_X + x;
+
+        float t = (float)(x - x1) / (x2 - x1);
+        float z = (1 - t) * z1 + t * z2;
+
+        if (z < -1.0f || z > 1.0f || z > z_buff[buff_i]) continue;
+        z_buff[buff_i] = z;
+
+        c_buff[buff_i] = cfg.draw_color;
+        c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+    }
+}
+
+MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode) {
     vec4 v[3];
     vec2 t[3];
 
     vec3 b;
 
 #ifdef DEBUG
-    if (cfg.texture_mode == MINIGL_TEX_2D) {
+    if (tex_mode == MINIGL_TEX_2D) {
         if (obj.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");
             return;
@@ -152,25 +201,23 @@ void minigl_draw(minigl_obj_t obj) {
         int cw_wind_order = (b[0] > 0.0f || b[1] > 0.0f || b[2] > 0.0f);
 
         // FIXME: Allow programmable backface Culling
-        // if (cw_wind_order) continue;
+        if (cw_wind_order) {
+            minigl_perf_event(PERF_CULL);
+            continue;
+        }
 
         // Get texture coordinates
-        if (cfg.texture_mode == MINIGL_TEX_2D) {
+        if (tex_mode == MINIGL_TEX_2D) {
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][0]], t[0]);
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][1]], t[1]);
             glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t[2]);
         }
 
         if (cw_wind_order) {
-            vec4 temp;
-            glm_vec4_copy(v[0], temp);
-            glm_vec4_copy(v[2], v[0]);
-            glm_vec4_copy(temp, v[2]);
+            vec4_swap(v[0], v[2]);
 
-            if (cfg.texture_mode == MINIGL_TEX_2D) {
-                glm_vec2_copy(t[0], temp);
-                glm_vec2_copy(t[2], t[0]);
-                glm_vec2_copy(temp, t[2]);
+            if (tex_mode == MINIGL_TEX_2D) {
+                vec2_swap(t[0], t[2]);
             }
         }
 
@@ -191,6 +238,40 @@ void minigl_draw(minigl_obj_t obj) {
 
         minigl_perf_event(PERF_POLY);
 
+#ifdef MINIGL_SCANLINE
+
+        // Sort vertices by y-coordinate
+        if (v[0][1] > v[1][1]) vec4_swap(v[0], v[1]);
+        if (v[0][1] > v[2][1]) vec4_swap(v[0], v[2]);
+        if (v[1][1] > v[2][1]) vec4_swap(v[1], v[2]);
+
+        float slope1 = (float)(v[1][0] - v[0][0]) / (v[1][1] - v[0][1]);
+        float slope2 = (float)(v[2][0] - v[0][0]) / (v[2][1] - v[0][1]);
+        float slope3 = (float)(v[2][0] - v[1][0]) / (v[2][1] - v[1][1]);
+
+        // Initialize scanline
+        int y0 = clampi(v[0][1], 0, SCREEN_SIZE_Y - 1);
+        int y1 = clampi(v[1][1], 0, SCREEN_SIZE_Y - 1);
+        int y2 = clampi(v[2][1], 0, SCREEN_SIZE_Y - 1);
+        int y = y0;
+
+        // Draw scanline
+        if (!isinf(slope1) && !isinf(slope2)) {
+            for (; y <= y1; y++) {
+                int x1 = v[0][0] + slope1 * (y - v[0][1]);
+                int x2 = v[0][0] + slope2 * (y - v[0][1]);
+                draw_scanline(x1, x2, v[1][2], v[2][2], y);
+            }
+        }
+
+        if (!isinf(slope2) && !isinf(slope3)) {
+            for (; y <= y2; y++) {
+                int x1 = v[1][0] + slope3 * (y - v[1][1]);
+                int x2 = v[0][0] + slope2 * (y - v[0][1]);
+                draw_scanline(x1, x2, v[1][2], v[0][2], y);
+            }
+        }
+#else
         // Calculate min bounding rectangle
         float mbr_min_x = minf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
         float mbr_max_x = maxf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
@@ -204,8 +285,8 @@ void minigl_draw(minigl_obj_t obj) {
                 minigl_perf_event(PERF_FRAG);
 
                 int buff_i = y * SCREEN_SIZE_X + x;
+
                 // Calculate the fragment coordinates
-                // FIXME: add 0.5 offset?
                 vec4 p;
                 p[0] = x;
                 p[1] = y;
@@ -229,12 +310,11 @@ void minigl_draw(minigl_obj_t obj) {
                 if (z < -1.0f || z > 1.0f || z > z_buff[buff_i]) continue;
                 z_buff[buff_i] = z;
 
-                // FIXME: Conditional statements at this level are poison!!!
-                if (cfg.texture_mode == MINIGL_TEX_2D) {
+                if (tex_mode == MINIGL_TEX_2D) {
                     // Interpolate texture coordinates
                     int tex_u, tex_v;
 
-#ifdef PERSP_CORRECT
+#ifdef MINIGL_PERSP_CORRECT
                     // NOTE: https://stackoverflow.com/questions/24441631/how-exactly-does-opengl-do-perspectively-correct-linear-interpolation
                     // Interpolate W
                     for (int i = 0; i < 3; i++) {
@@ -251,13 +331,22 @@ void minigl_draw(minigl_obj_t obj) {
                     tex_v = tex_v < 0 ? 0 : tex_v >= cfg.texture.size_y ? cfg.texture.size_y - 1 : tex_v;
 
                     c_buff[buff_i] = cfg.texture.ptr[tex_v][tex_u];
-
-                    // FIXME: Add option to disable dither
-                    c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
                 } else {
-                    c_buff[buff_i] = 1;
+                    c_buff[buff_i] = cfg.draw_color;
                 }
+                // FIXME: Add option to disable dither
+                // FIXME: Should we do this at frame swap?
+                c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
             }
         }
+#endif
+    }
+}
+
+void minigl_draw(minigl_obj_t obj) {
+    if (cfg.texture_mode == MINIGL_TEX_2D) {
+        draw(obj, MINIGL_TEX_2D);
+    } else if (cfg.texture_mode == MINIGL_TEX_0D) {
+        draw(obj, MINIGL_TEX_0D);
     }
 }
