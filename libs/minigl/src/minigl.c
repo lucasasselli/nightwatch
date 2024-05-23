@@ -92,7 +92,7 @@ MINIGL_INLINE void vec4_swap(float* a, float* b) {
     glm_swapf(&a[3], &b[3]);
 }
 
-MINIGL_INLINE float minf3_clamp(float a, float b, float c, float min, float max) {
+MINIGL_INLINE float min3_clampf(float a, float b, float c, float min, float max) {
     float x;
     x = a < b ? a : b;
     x = x < c ? x : c;
@@ -103,7 +103,7 @@ MINIGL_INLINE float minf3_clamp(float a, float b, float c, float min, float max)
     return x;
 }
 
-MINIGL_INLINE float maxf3_clamp(float a, float b, float c, float min, float max) {
+MINIGL_INLINE float max3_clampf(float a, float b, float c, float min, float max) {
     float x;
     x = a > b ? a : b;
     x = x > c ? x : c;
@@ -113,31 +113,29 @@ MINIGL_INLINE float maxf3_clamp(float a, float b, float c, float min, float max)
     return x;
 }
 
-MINIGL_INLINE void draw_scanline(int x1, int x2, float z1, float z2, int y) {
-    x1 = clampi(x1, 0, SCREEN_SIZE_X - 1);
-    x2 = clampi(x2, 0, SCREEN_SIZE_X - 1);
+MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const int y) {
+    x1 = clampf(x1, 0, SCREEN_SIZE_X - 1);
+    x2 = clampf(x2, 0, SCREEN_SIZE_X - 1);
 
     // Swap x1 and x2
     if (x2 < x1) {
-        int t = x1;
-        x1 = x2;
-        x2 = t;
+        glm_swapf(&x1, &x2);
     }
 
-    for (int x = x1; x < x2; x++) {
-        minigl_perf_event(PERF_FRAG);
+    int buff_off = y * SCREEN_SIZE_X;
 
-        int buff_i = y * SCREEN_SIZE_X + x;
+    for (int x = floorf(x1); x < ceilf(x2); x++) {
+        minigl_perf_event(PERF_FRAG);
 
         // FIXME: Z calculation is slow
         float t = (float)(x - x1) / (x2 - x1);
         float z = (1 - t) * z1 + t * z2;
 
-        if (z > z_buff[buff_i]) continue;
-        z_buff[buff_i] = z;
+        if (z > z_buff[buff_off + x]) continue;
+        z_buff[buff_off + x] = z;
 
-        c_buff[buff_i] = cfg.draw_color;
-        c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+        c_buff[buff_off + x] = cfg.draw_color;
+        c_buff[buff_off + x] = (c_buff[buff_off + x] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
     }
 }
 
@@ -284,10 +282,10 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
         }
 #else
         // Calculate min bounding rectangle
-        float mbr_min_x = minf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
-        float mbr_max_x = maxf3_clamp(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
-        float mbr_min_y = minf3_clamp(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
-        float mbr_max_y = maxf3_clamp(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
+        float mbr_min_x = min3_clampf(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
+        float mbr_max_x = max3_clampf(v[0][0], v[1][0], v[2][0], 0.0f, SCREEN_SIZE_X);
+        float mbr_min_y = min3_clampf(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
+        float mbr_max_y = max3_clampf(v[0][1], v[1][1], v[2][1], 0.0f, SCREEN_SIZE_Y);
 
         float area = edge(v[0], v[1], v[2]);
 
