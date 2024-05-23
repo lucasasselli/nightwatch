@@ -74,6 +74,12 @@ MINIGL_INLINE int clampi(int x, int min, int max) {
     return x;
 }
 
+MINIGL_INLINE float clampf(float x, float min, float max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+}
+
 MINIGL_INLINE void vec2_swap(float* a, float* b) {
     glm_swapf(&a[0], &b[0]);
     glm_swapf(&a[1], &b[1]);
@@ -239,35 +245,34 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
         minigl_perf_event(PERF_POLY);
 
 #ifdef MINIGL_SCANLINE
-
         // Sort vertices by y-coordinate
         if (v[0][1] > v[1][1]) vec4_swap(v[0], v[1]);
         if (v[0][1] > v[2][1]) vec4_swap(v[0], v[2]);
         if (v[1][1] > v[2][1]) vec4_swap(v[1], v[2]);
 
-        float slope1 = (float)(v[1][0] - v[0][0]) / (v[1][1] - v[0][1]);
-        float slope2 = (float)(v[2][0] - v[0][0]) / (v[2][1] - v[0][1]);
-        float slope3 = (float)(v[2][0] - v[1][0]) / (v[2][1] - v[1][1]);
+        float slope1 = (v[1][0] - v[0][0]) / (v[1][1] - v[0][1]);
+        float slope2 = (v[2][0] - v[0][0]) / (v[2][1] - v[0][1]);
+        float slope3 = (v[2][0] - v[1][0]) / (v[2][1] - v[1][1]);
 
         // Initialize scanline
-        int y0 = clampi(v[0][1], 0, SCREEN_SIZE_Y - 1);
-        int y1 = clampi(v[1][1], 0, SCREEN_SIZE_Y - 1);
-        int y2 = clampi(v[2][1], 0, SCREEN_SIZE_Y - 1);
-        int y = y0;
+        float y0 = clampf(v[0][1], 0, SCREEN_SIZE_Y - 1);
+        float y1 = clampf(v[1][1], 0, SCREEN_SIZE_Y - 1);
+        float y2 = clampf(v[2][1], 0, SCREEN_SIZE_Y - 1);
+        float y = y0;
 
         // Draw scanline
         if (!isinf(slope1) && !isinf(slope2)) {
-            for (; y <= y1; y++) {
-                int x1 = v[0][0] + slope1 * (y - v[0][1]);
-                int x2 = v[0][0] + slope2 * (y - v[0][1]);
+            for (; y <= y1; y += 1.0f) {
+                int x1 = nearbyintf(v[0][0] + slope1 * (((float)y) - v[0][1]));
+                int x2 = nearbyintf(v[0][0] + slope2 * (((float)y) - v[0][1]));
                 draw_scanline(x1, x2, v[1][2], v[2][2], y);
             }
         }
 
         if (!isinf(slope2) && !isinf(slope3)) {
-            for (; y <= y2; y++) {
-                int x1 = v[1][0] + slope3 * (y - v[1][1]);
-                int x2 = v[0][0] + slope2 * (y - v[0][1]);
+            for (; y <= y2; y += 1.0f) {
+                int x1 = nearbyintf(v[1][0] + slope3 * (y - v[1][1]));
+                int x2 = nearbyintf(v[0][0] + slope2 * (y - v[0][1]));
                 draw_scanline(x1, x2, v[1][2], v[0][2], y);
             }
         }
