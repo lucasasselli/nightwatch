@@ -129,10 +129,11 @@ MINIGL_INLINE void draw_scanline(int x1, int x2, float z1, float z2, int y) {
 
         int buff_i = y * SCREEN_SIZE_X + x;
 
+        // FIXME: Z calculation is slow
         float t = (float)(x - x1) / (x2 - x1);
         float z = (1 - t) * z1 + t * z2;
 
-        if (z < -1.0f || z > 1.0f || z > z_buff[buff_i]) continue;
+        if (z > z_buff[buff_i]) continue;
         z_buff[buff_i] = z;
 
         c_buff[buff_i] = cfg.draw_color;
@@ -190,7 +191,8 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
         // Trivial reject
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
-            (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f)) {
+            (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
+            (v[0][2] < -1.0f && v[1][2] < -1.0f && v[2][2] < -1.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
             minigl_perf_event(PERF_CLIP);
             continue;
         }
@@ -262,18 +264,22 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
         // Draw scanline
         if (!isinf(slope1) && !isinf(slope2)) {
+            float x1 = v[0][0] + slope1 * (y - v[0][1]);
+            float x2 = v[0][0] + slope2 * (y - v[0][1]);
             for (; y <= y1; y += 1.0f) {
-                int x1 = nearbyintf(v[0][0] + slope1 * (((float)y) - v[0][1]));
-                int x2 = nearbyintf(v[0][0] + slope2 * (((float)y) - v[0][1]));
                 draw_scanline(x1, x2, v[1][2], v[2][2], y);
+                x1 += slope1;
+                x2 += slope2;
             }
         }
 
         if (!isinf(slope2) && !isinf(slope3)) {
+            float x1 = v[1][0] + slope3 * (y - v[1][1]);
+            float x2 = v[0][0] + slope2 * (y - v[0][1]);
             for (; y <= y2; y += 1.0f) {
-                int x1 = nearbyintf(v[1][0] + slope3 * (y - v[1][1]));
-                int x2 = nearbyintf(v[0][0] + slope2 * (y - v[0][1]));
                 draw_scanline(x1, x2, v[1][2], v[0][2], y);
+                x1 += slope3;
+                x2 += slope2;
             }
         }
 #else
@@ -312,7 +318,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
                 // Depth test
                 // TODO: Make depth test programmable
-                if (z < -1.0f || z > 1.0f || z > z_buff[buff_i]) continue;
+                if (z > z_buff[buff_i]) continue;
                 z_buff[buff_i] = z;
 
                 if (tex_mode == MINIGL_TEX_2D) {
