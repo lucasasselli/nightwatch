@@ -7,8 +7,7 @@
 #include "utils.h"
 
 // Geometry
-minigl_obj_t obj_floor;
-minigl_obj_t obj_ceil;
+minigl_obj_t obj_light;
 minigl_obj_t obj_wall_n;
 minigl_obj_t obj_wall_e;
 minigl_obj_t obj_wall_s;
@@ -88,49 +87,49 @@ void map_init(void) {
     // Geometry
     //---------------------------------------------------------------------------
 
+    const float WALL_Y_OFF = 1.0f;
+
     // Load tile object
     minigl_obj_t tile_base;
     minigl_obj_read_file("res/models/tile.obj", &tile_base);
 
     mat4 trans;
 
-    // Create floor
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, -(MAP_TILE_SIZE / 2.0f), 0.0f});
-    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
-    glm_scale_uni(trans, MAP_TILE_SIZE * MAP_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_floor);
-
     // Create ceiling
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, (MAP_TILE_SIZE / 2.0f), 0.0f});
-    glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_ceil);
+    glm_translate(trans, (vec3){0.0f, MAP_TILE_SIZE + WALL_Y_OFF, 0.0f});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
+    // glm_scale_uni(trans, MAP_TILE_SIZE);
+    minigl_obj_copy_trans(tile_base, trans, &obj_light);
 
     // Wall N
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 0.0f, +(MAP_TILE_SIZE / 2.0f)});
+    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, +(MAP_TILE_SIZE / 2.0f)});
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_n);
 
     // Wall S
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 0.0f, -(MAP_TILE_SIZE / 2.0f)});
+    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, -(MAP_TILE_SIZE / 2.0f)});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_s);
 
     // Wall E
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-(MAP_TILE_SIZE / 2.0f), 0.0f, 0.0f});
+    glm_translate(trans, (vec3){-(MAP_TILE_SIZE / 2.0f), WALL_Y_OFF, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_e);
 
     // Wall W
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){+(MAP_TILE_SIZE / 2.0f), 0.0f, 0.0f});
+    glm_translate(trans, (vec3){+(MAP_TILE_SIZE / 2.0f), WALL_Y_OFF, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(tile_base, trans, &obj_wall_w);
 
@@ -151,6 +150,9 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
 
     switch (item.type) {
         case TILE_FLOOR:
+            minigl_set_color(255);
+            minigl_obj_transform(obj_light, t, &obj_buffer);
+            minigl_draw(obj_buffer);
             break;
         case TILE_WALL_N:
             // minigl_set_tex(tex_wall0);
