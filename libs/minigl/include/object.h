@@ -2,8 +2,6 @@
 
 #include <cglm/cglm.h> /* for inline */
 
-#include "pd_api.h"
-
 #define OBJ_LINE_BUFFER_SIZE 50
 
 typedef struct {
@@ -26,8 +24,6 @@ typedef struct {
     int tcoord_size;
     int face_size;
 } minigl_obj_buf_t;
-
-extern PlaydateAPI* pd;
 
 int minigl_obj_read_file(char* path, minigl_obj_t* out);
 

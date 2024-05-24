@@ -8,6 +8,7 @@
 #include "minigl.h"
 #include "object.h"
 #include "pd_api.h"
+#include "pd_system.h"
 #include "utils.h"
 
 #define TEXT_WIDTH 86

@@ -1,34 +1,31 @@
 #include "texture.h"
 
+#include "system.h"
+
 // TODO: Add hooks to be agnostic to the Playdate library
 int minigl_tex_read_file(char *path, minigl_tex_t *out) {
     // Get the file handle
-    SDFile *f = pd->file->open(path, kFileRead);
+    FILE *f = minigl_fopen(path, "r");
     if (f == NULL) {
-        // FIXME
-        const char *err = pd->file->geterr();
-        pd->system->logToConsole("Can't open %s %s", path, err);
         return 1;
     }
 
-    pd->file->seek(f, 0, SEEK_END);
-    size_t file_size = pd->file->tell(f);
-    pd->file->seek(f, 0, SEEK_SET);
+    minigl_fseek(f, 0, SEEK_END);
+    size_t file_size = minigl_ftell(f);
+    minigl_fseek(f, 0, SEEK_SET);
 
     uint8_t *png_data = (uint8_t *)malloc(sizeof(uint8_t) * file_size);
-    pd->file->read(f, png_data, file_size);
-    pd->file->close(f);
+    minigl_fread(png_data, file_size, f);
+    minigl_fclose(f);
 
     // Create an spng context
     spng_ctx *ctx = spng_ctx_new(0);
     if (!ctx) {
-        pd->system->logToConsole("Png context error!");
         return 1;
     }
 
     // Set the input buffer
     if (spng_set_png_buffer(ctx, png_data, file_size)) {
-        pd->system->logToConsole("Png buffer error!");
         return 1;
     }
 
@@ -68,8 +65,6 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
         float lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
         out->ptr[y][x] = (uint8_t)lum;
     }
-
-    pd->system->logToConsole("Done loading %s!", path);
 
     // Free resources
     spng_ctx_free(ctx);

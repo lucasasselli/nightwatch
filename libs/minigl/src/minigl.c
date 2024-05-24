@@ -359,3 +359,58 @@ void minigl_draw(minigl_obj_buf_t buf) {
         draw(buf, MINIGL_TEX_0D);
     }
 }
+
+int minigl_frame_to_file(char* path) {
+    int ret = 0;
+
+    size_t buf_size = SCREEN_SIZE_X * SCREEN_SIZE_Y * 2;
+    uint8_t* buf = malloc(buf_size);
+
+    // Create a context
+    spng_ctx* ctx = spng_ctx_new(0);
+    if (!ctx) {
+        return 1;
+    }
+
+    spng_set_option(ctx, SPNG_ENCODE_TO_BUFFER, 1);
+
+    // Set IHDR parameters
+    struct spng_ihdr ihdr;
+    ihdr.width = 200;
+    ihdr.height = 300;
+    ihdr.bit_depth = 8;
+    ihdr.color_type = SPNG_FMT_RGBA8;
+    ihdr.compression_method = 0;
+    ihdr.filter_method = 0;
+    ihdr.interlace_method = 0;
+
+    spng_set_ihdr(ctx, &ihdr);
+
+    for (size_t i = 0; i < buf_size; i += 2) {
+        int x = i / 2;
+
+        buf[i + 0] = c_buff[x];
+        buf[i + 1] = 255;
+    }
+
+    ret = spng_encode_image(ctx, buf, buf_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+
+    size_t png_size;
+    void* png_buf = NULL;
+
+    /* Get the internal buffer of the finished PNG */
+    png_buf = spng_get_png_buffer(ctx, &png_size, &ret);
+
+    // Save the image to a file
+    FILE* file = fopen(path, "wb");
+    if (file) {
+        fwrite(png_buf, 1, png_size, file);
+        fclose(file);
+    }
+
+    // Free context memory
+    spng_ctx_free(ctx);
+    free(buf);
+
+    return 0;
+}

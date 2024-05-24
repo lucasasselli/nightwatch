@@ -43,3 +43,5 @@ void minigl_perf_clear(void);
 void minigl_clear(uint8_t color, int depth);
 
 void minigl_draw(minigl_obj_buf_t obj);
+
+int minigl_frame_to_file(char* path);

@@ -1,11 +1,14 @@
 #include "object.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+#include "system.h"
 
 // TODO: Add hooks to be agnostic to the Playdate library
 int minigl_obj_read_file(char *path, minigl_obj_t *out) {
     // Get the file handle
-    SDFile *f = pd->file->open(path, kFileRead);
+    void *f = minigl_fopen(path, "r");
     if (f == NULL) {
         return 1;
     }
@@ -20,7 +23,7 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
 
     char c;
 
-    while (pd->file->read(f, (void *)&c, 1)) {
+    while (minigl_fread((void *)&c, 1, f)) {
         line_buffer[char_index] = c;
         if (c == '\n' || c == EOF) {
             // Found EOL
@@ -66,9 +69,9 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
     out->face_size = 0;
     out->tcoord_size = 0;
 
-    pd->file->seek(f, 0, SEEK_SET);
+    minigl_fseek(f, 0, SEEK_SET);
 
-    while (pd->file->read(f, (void *)&c, 1)) {
+    while (minigl_fread((void *)&c, 1, f)) {
         line_buffer[char_index] = c;
         if (c == '\n' || c == EOF) {
             // Found EOL
@@ -124,7 +127,7 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
         }
     }
 
-    pd->file->close(f);
+    minigl_fclose(f);
 
     return 0;
 }
