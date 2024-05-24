@@ -139,7 +139,7 @@ MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const i
     }
 }
 
-MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode) {
+MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_mode) {
     vec4 v[3];
     vec2 t[3];
 
@@ -147,7 +147,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
 #ifdef DEBUG
     if (tex_mode == MINIGL_TEX_2D) {
-        if (obj.tcoord_size == 0) {
+        if (buf.tcoord_size == 0) {
             pd->system->error("Object has no texture data!");
             return;
         }
@@ -155,7 +155,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 #endif
 
     // FIXME: Need to improve performance!!!
-    for (int f = 0; f < obj.face_size; f++) {
+    for (int f = 0; f < buf.face_size; f++) {
         //---------------------------------------------------------------------------
         // Indexing
         //---------------------------------------------------------------------------
@@ -165,7 +165,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
         // FIXME: move out
         for (int i = 0; i < 3; i++) {
-            glm_vec4_copy(obj.vcoord_ptr[obj.vface_ptr[f][i]], v[i]);
+            glm_vec4_copy(buf.vcoord_ptr[buf.vface_ptr[f][i]], v[i]);
 
             if (v[i][3] <= 0) {
                 drop = true;
@@ -203,7 +203,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
         b[1] = edge(v[2], v[0], p);
         b[2] = edge(v[0], v[1], p);
 
-        // NOTE: Obj file have counter-clock wise wind order
+        // NOTE: buf file have counter-clock wise wind order
         int cw_wind_order = (b[0] > 0.0f || b[1] > 0.0f || b[2] > 0.0f);
 
         // FIXME: Allow programmable backface Culling
@@ -214,9 +214,9 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
 
         // Get texture coordinates
         if (tex_mode == MINIGL_TEX_2D) {
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][0]], t[0]);
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][1]], t[1]);
-            glm_vec2_copy(obj.tcoord_ptr[obj.tface_ptr[f][2]], t[2]);
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][0]], t[0]);
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][1]], t[1]);
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][2]], t[2]);
         }
 
         if (cw_wind_order) {
@@ -352,10 +352,10 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
     }
 }
 
-void minigl_draw(minigl_obj_t obj) {
+void minigl_draw(minigl_obj_buf_t buf) {
     if (cfg.texture_mode == MINIGL_TEX_2D) {
-        draw(obj, MINIGL_TEX_2D);
+        draw(buf, MINIGL_TEX_2D);
     } else if (cfg.texture_mode == MINIGL_TEX_0D) {
-        draw(obj, MINIGL_TEX_0D);
+        draw(buf, MINIGL_TEX_0D);
     }
 }

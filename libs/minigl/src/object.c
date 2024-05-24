@@ -131,7 +131,6 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
 
 void minigl_obj_copy(minigl_obj_t in, minigl_obj_t *out) {
     *out = in;
-
     out->vcoord_ptr = (vec4 *)malloc(in.vcoord_size * sizeof(vec4));
     memcpy(out->vcoord_ptr, in.vcoord_ptr, in.vcoord_size * sizeof(vec4));
 }
@@ -149,7 +148,24 @@ void minigl_obj_copy_trans(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
     }
 }
 
-void minigl_obj_transform(minigl_obj_t in, mat4 trans, minigl_obj_t *out) {
+void minigl_obj_trans(minigl_obj_t *in, mat4 trans) {
+    // Apply transformation
+    for (int i = 0; i < in->vcoord_size; i++) {
+        glm_mat4_mulv(trans, in->vcoord_ptr[i], in->vcoord_ptr[i]);
+    }
+}
+
+minigl_obj_buf_t minigl_obj_buf_init(size_t size) {
+    minigl_obj_buf_t buf;
+    buf.vcoord_ptr = (vec4 *)malloc(size * sizeof(vec4));
+    return buf;
+}
+
+void minigl_obj_buf_free(minigl_obj_buf_t buf) {
+    free(buf.vcoord_ptr);
+}
+
+void minigl_obj_to_obj_buf_trans(minigl_obj_t in, mat4 trans, minigl_obj_buf_t *out) {
     out->tcoord_ptr = in.tcoord_ptr;
     out->vface_ptr = in.vface_ptr;
     out->tface_ptr = in.tface_ptr;

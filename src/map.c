@@ -19,7 +19,7 @@ minigl_tex_t tex_floor0;
 minigl_tex_t tex_wall0;
 minigl_tex_t tex_ceil0;
 
-minigl_obj_t obj_buffer;
+minigl_obj_buf_t buf;
 
 LCDBitmap* minimap;
 LCDBitmap* minimap_mask;
@@ -73,8 +73,7 @@ void minimap_gen(map_t map) {
 }
 
 void map_init(void) {
-    // FIXME: hardcoded buffer
-    obj_buffer.vcoord_ptr = (vec4*)malloc(sizeof(vec4) * 50);
+    buf = minigl_obj_buf_init(50);
 
     //---------------------------------------------------------------------------
     // Geometry
@@ -131,7 +130,7 @@ void map_init(void) {
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, -1.25f, 0.0f});
     glm_scale(trans, (vec3){1.0f, 1.0f, 1.0});
-    minigl_obj_transform(obj_base, trans, &obj_base);
+    minigl_obj_trans(&obj_base, trans);
 
     //---------------------------------------------------------------------------
     // Textures
@@ -152,42 +151,42 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
         case TILE_FLOOR:
             // Draw light
             minigl_set_color(255);
-            minigl_obj_transform(obj_light, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_light, t, &buf);
+            minigl_draw(buf);
             break;
         case TILE_BASE:
             minigl_set_color(255);
-            minigl_obj_transform(obj_base, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_base, t, &buf);
+            minigl_draw(buf);
             break;
         case TILE_WALL_N:
             // minigl_set_tex(tex_wall0);
             minigl_set_color(128);
-            minigl_obj_transform(obj_wall_n, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_wall_n, t, &buf);
+            minigl_draw(buf);
             break;
         case TILE_WALL_E:
             // minigl_set_tex(tex_wall0);
             minigl_set_color(96);
-            minigl_obj_transform(obj_wall_e, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_wall_e, t, &buf);
+            minigl_draw(buf);
             break;
         case TILE_WALL_S:
             // minigl_set_tex(tex_wall0);
             minigl_set_color(128);
-            minigl_obj_transform(obj_wall_s, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_wall_s, t, &buf);
+            minigl_draw(buf);
             break;
         case TILE_WALL_W:
             // minigl_set_tex(tex_wall0);
             minigl_set_color(96);
-            minigl_obj_transform(obj_wall_w, t, &obj_buffer);
-            minigl_draw(obj_buffer);
+            minigl_obj_to_obj_buf_trans(obj_wall_w, t, &buf);
+            minigl_draw(buf);
             break;
     }
 }
 
-void map_draw(map_t map, mat4 trans, camera_t camera) {
+void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
     ivec2 x_range;
     x_range[0] = (int)(camera.pos[0] / MAP_TILE_SIZE) - MAP_DRAW_SIZE / 2;
     x_range[1] = x_range[0] + MAP_DRAW_SIZE;
@@ -229,12 +228,12 @@ void map_draw(map_t map, mat4 trans, camera_t camera) {
     // Draw floor
     /*
     minigl_set_tex(tex_floor0);
-    minigl_obj_transform(obj_floor, trans, &obj_buffer);
-    minigl_draw(obj_buffer);
+    minigl_obj_transform(obj_floor, trans, &buf);
+    minigl_draw(buf);
     */
 }
 
-void minimap_draw(int x, int y, camera_t camera) {
+void minimap_draw(int x, int y, minigl_camera_t camera) {
     int off_x = ((int)camera.pos[0]) - MINIMAP_SIZE_X / 2;
     int off_y = ((int)camera.pos[2]) - MINIMAP_SIZE_Y / 2;
 

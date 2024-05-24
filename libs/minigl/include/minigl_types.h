@@ -29,3 +29,15 @@ typedef enum {
     MINIGL_DITHER_OFF,
     MINIGL_DITHER_ON
 } minigl_dither_mode_t;
+
+// ---------------------------------------------------------------------------
+// OTHER
+// ---------------------------------------------------------------------------
+
+typedef struct {
+    vec3 pos;
+    vec3 front;
+    vec3 up;
+    float yaw;
+    float pitch;
+} minigl_camera_t;
