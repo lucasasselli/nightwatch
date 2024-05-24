@@ -209,7 +209,7 @@ MINIGL_INLINE void draw(const minigl_obj_t obj, const minigl_tex_mode_t tex_mode
         // FIXME: Allow programmable backface Culling
         if (cw_wind_order) {
             minigl_perf_event(PERF_CULL);
-            continue;
+            // continue;
         }
 
         // Get texture coordinates

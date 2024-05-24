@@ -154,6 +154,7 @@ __declspec(dllexport)
 
         mapgen_init(&map);
         mapgen_gen(&map);
+        mapgen_grid_print(map);
 
         // Setup map
         map_init();
@@ -173,8 +174,8 @@ __declspec(dllexport)
             map_tile_t tile = map.grid[y][x];
 
             // Check if position is good
-            if (tile.item_cnt == 1) {
-                if (tile.items[0].type == TILE_FLOOR) {
+            for (int i = 0; i < tile.item_cnt; i++) {
+                if (tile.items[i].type == TILE_FLOOR) {
                     good = true;
                 }
             }
@@ -183,7 +184,7 @@ __declspec(dllexport)
             gs.camera.pos[2] = y * MAP_TILE_SIZE;
         } while (!good);
 
-        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 30.0f, proj);
+        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 40.0f, proj);
         view_update();  // Setup view matrix
 
         debug("Setup complete!");

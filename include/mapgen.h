@@ -3,28 +3,21 @@
 #include <stdbool.h>
 
 #define MAP_SIZE 64
-#define MAP_MAX_ROOMS 16
+#define MAP_MAX_ROOMS 5
 #define MAP_RAND_EFFORT 50
 #define MAP_TILE_MAX_ITEMS 10
 
 typedef enum {
     TILE_FLOOR,
+    TILE_BASE,
     TILE_WALL_N,
     TILE_WALL_E,
     TILE_WALL_S,
-    TILE_WALL_W,
-    TILE_DOOR_NS,
-    TILE_DOOR_EW
+    TILE_WALL_W
 } map_item_type_t;
-
-typedef enum {
-    STYLE0,
-    STYLE1
-} map_item_style_t;
 
 typedef struct {
     map_item_type_t type;
-    map_item_style_t style;
 } map_item_t;
 
 typedef enum {
@@ -32,8 +25,9 @@ typedef enum {
     ROOM_CORRIDOR,  // Narrow room
 } map_room_type_t;
 
-#define ROOM_TYPE_SIZE 2
+#define ROOM_TYPE_SIZE 1
 
+// FIXME: Replace with Ivec2
 typedef union {
     struct {
         int x, y;
