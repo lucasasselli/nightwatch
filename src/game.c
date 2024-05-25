@@ -6,8 +6,7 @@
 void game_init(game_state_t* state) {
     state->camera.yaw = -90.0f;
     state->camera.pitch = 0.0f;
-    // FIXME
-    glm_vec3_copy((vec3){MAP_TILE_SIZE * MAP_SIZE / 2, 1.0f, MAP_TILE_SIZE * MAP_SIZE / 2}, state->camera.pos);
+    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, state->camera.pos);
     glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, state->camera.front);
     glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, state->camera.up);
 }
