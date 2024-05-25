@@ -6,7 +6,6 @@
 #include "game.h"
 #include "map.h"
 #include "minigl.h"
-#include "object.h"
 #include "pd_api.h"
 #include "pd_system.h"
 #include "utils.h"
@@ -56,6 +55,16 @@ void screen_update(void) {
         }
     }
     pd->graphics->markUpdatedRows(0, LCD_ROWS - 1);
+}
+
+void minigl_perf_print(void) {
+    minigl_perf_data_t perf_data = minigl_perf_get();
+#ifdef DEBUG_PERF
+    debug("Clip count: %d", perf_data.clip);
+    debug("Cull count: %d", perf_data.cull);
+    debug("Poly count: %d", perf_data.poly);
+    debug("Frag count: %d", perf_data.frag);
+#endif
 }
 
 static int update(void *userdata) {

@@ -1,21 +1,14 @@
 #include "minigl.h"
 
+#include <math.h>
+
 #include "cglm/types.h"
-#include "utils.h"
 
 uint8_t c_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
 float z_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
 
-minigl_cfg_t cfg;
-
-typedef enum {
-    PERF_CLIP,
-    PERF_CULL,
-    PERF_POLY,
-    PERF_FRAG
-} perf_event_t;
-
-int perf_cnt[4];
+minigl_cfg_t cfg = {0};
+minigl_perf_data_t perf_data;
 
 void minigl_set_tex(minigl_tex_t t) {
     cfg.texture_mode = MINIGL_TEX_2D;
@@ -23,7 +16,6 @@ void minigl_set_tex(minigl_tex_t t) {
 }
 
 void minigl_set_dither(minigl_tex_t t) {
-    cfg.dither_mode = MINIGL_DITHER_ON;
     cfg.dither = t;
 }
 
@@ -39,25 +31,20 @@ void minigl_clear(uint8_t color, int depth) {
     }
 }
 
-void minigl_perf_event(perf_event_t e) {
+void minigl_perf_event(minigl_perf_event_t e) {
 #ifdef DEBUG_PERF
-    perf_cnt[e]++;
+    perf_data.array[e]++;
 #endif
 }
 
 void minigl_perf_clear(void) {
     for (int i = 0; i < 4; i++) {
-        perf_cnt[i] = 0;
+        perf_data.array[i] = 0;
     }
 }
 
-void minigl_perf_print(void) {
-#ifdef DEBUG_PERF
-    debug("Clip count: %d", perf_cnt[PERF_CLIP]);
-    debug("Cull count: %d", perf_cnt[PERF_CULL]);
-    debug("Poly count: %d", perf_cnt[PERF_POLY]);
-    debug("Frag count: %d", perf_cnt[PERF_FRAG]);
-#endif
+minigl_perf_data_t minigl_perf_get(void) {
+    return perf_data;
 }
 
 MINIGL_INLINE float edge(vec4 a, vec4 b, vec4 c) {
@@ -147,10 +134,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
 
 #ifdef DEBUG
     if (tex_mode == MINIGL_TEX_2D) {
-        if (buf.tcoord_size == 0) {
-            pd->system->error("Object has no texture data!");
-            return;
-        }
+        assert(buf.tcoord_size > 0);
     }
 #endif
 
@@ -343,11 +327,13 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
                 } else {
                     c_buff[buff_i] = cfg.draw_color;
                 }
-                // FIXME: Add option to disable dither
                 // FIXME: Should we do this at frame swap?
+#ifdef MINIGL_DITHERING
                 c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
             }
+#endif
         }
+    }
 #endif
     }
 }
@@ -358,59 +344,4 @@ void minigl_draw(minigl_obj_buf_t buf) {
     } else if (cfg.texture_mode == MINIGL_TEX_0D) {
         draw(buf, MINIGL_TEX_0D);
     }
-}
-
-int minigl_frame_to_file(char* path) {
-    int ret = 0;
-
-    size_t buf_size = SCREEN_SIZE_X * SCREEN_SIZE_Y * 2;
-    uint8_t* buf = malloc(buf_size);
-
-    // Create a context
-    spng_ctx* ctx = spng_ctx_new(0);
-    if (!ctx) {
-        return 1;
-    }
-
-    spng_set_option(ctx, SPNG_ENCODE_TO_BUFFER, 1);
-
-    // Set IHDR parameters
-    struct spng_ihdr ihdr;
-    ihdr.width = 200;
-    ihdr.height = 300;
-    ihdr.bit_depth = 8;
-    ihdr.color_type = SPNG_FMT_RGBA8;
-    ihdr.compression_method = 0;
-    ihdr.filter_method = 0;
-    ihdr.interlace_method = 0;
-
-    spng_set_ihdr(ctx, &ihdr);
-
-    for (size_t i = 0; i < buf_size; i += 2) {
-        int x = i / 2;
-
-        buf[i + 0] = c_buff[x];
-        buf[i + 1] = 255;
-    }
-
-    ret = spng_encode_image(ctx, buf, buf_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
-
-    size_t png_size;
-    void* png_buf = NULL;
-
-    /* Get the internal buffer of the finished PNG */
-    png_buf = spng_get_png_buffer(ctx, &png_size, &ret);
-
-    // Save the image to a file
-    FILE* file = fopen(path, "wb");
-    if (file) {
-        fwrite(png_buf, 1, png_size, file);
-        fclose(file);
-    }
-
-    // Free context memory
-    spng_ctx_free(ctx);
-    free(buf);
-
-    return 0;
 }
