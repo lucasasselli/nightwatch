@@ -53,7 +53,9 @@ typedef struct {
 
 void minigl_set_tex(minigl_tex_t t);
 
+#ifndef MINIGL_NO_DITHERING
 void minigl_set_dither(minigl_tex_t t);
+#endif
 
 void minigl_set_color(uint8_t color);
 

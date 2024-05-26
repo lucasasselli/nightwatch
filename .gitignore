@@ -1,6 +1,7 @@
 build
 build-sim
 build-dev
+tools
 Source
 *.pdx
 compile_commands.json

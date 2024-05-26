@@ -6,18 +6,18 @@
 #include "texture.h"
 #include "utils.h"
 
+#define BB_SPRITE_SIZE 36
+
 // Geometry
 minigl_obj_t obj_light;
 minigl_obj_t obj_wall_n;
 minigl_obj_t obj_wall_e;
 minigl_obj_t obj_wall_s;
 minigl_obj_t obj_wall_w;
-minigl_obj_t obj_base;
+minigl_obj_t obj_statue;
 
 // Textures
-minigl_tex_t tex_floor0;
-minigl_tex_t tex_wall0;
-minigl_tex_t tex_ceil0;
+minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 minigl_obj_buf_t buf;
 
@@ -82,9 +82,11 @@ void map_init(void) {
     const float WALL_Y_OFF = 1.0f;
 
     // Load tile object
-    minigl_obj_t tile_base;
-    minigl_obj_read_file("res/models/tile.obj", &tile_base);
-    minigl_obj_read_file("res/models/cube.obj", &obj_base);
+    minigl_obj_t obj_tile;
+    minigl_obj_t obj_wall;
+
+    minigl_obj_read_file("res/models/tile.obj", &obj_tile);
+    minigl_obj_read_file("res/models/wall.obj", &obj_wall);
 
     mat4 trans;
 
@@ -92,15 +94,14 @@ void map_init(void) {
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, MAP_TILE_SIZE + WALL_Y_OFF, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
-    // glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_light);
+    minigl_obj_copy_trans(obj_tile, trans, &obj_light);
 
     // Wall N
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, -(MAP_TILE_SIZE / 2.0f)});
     glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_wall_n);
+    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_n);
 
     // Wall S
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -108,7 +109,7 @@ void map_init(void) {
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
     glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_wall_s);
+    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_s);
 
     // Wall E
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -116,7 +117,7 @@ void map_init(void) {
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
     glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_wall_e);
+    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_e);
 
     // Wall W
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -124,27 +125,78 @@ void map_init(void) {
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
     glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
-    minigl_obj_copy_trans(tile_base, trans, &obj_wall_w);
+    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_w);
 
-    // Base
+    // Statue
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, -1.25f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, 1.0f, 1.0});
-    minigl_obj_trans(&obj_base, trans);
+    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, 0.0f});
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_scale_uni(trans, MAP_TILE_SIZE);
+    minigl_obj_copy_trans(obj_tile, trans, &obj_statue);
 
     //---------------------------------------------------------------------------
     // Textures
     //---------------------------------------------------------------------------
 
-    // Load texture
-    minigl_tex_read_file("res/textures/floor0.tex", &tex_floor0);
-    minigl_tex_read_file("res/textures/ceil0.tex", &tex_ceil0);
-    minigl_tex_read_file("res/textures/wall0.tex", &tex_wall0);
+    char tex_path[50];
+
+    for (int i = 0; i < BB_SPRITE_SIZE; i++) {
+        sprintf(tex_path, "res/sprites/venus/venus_%02d.tex", i);
+        minigl_tex_read_file(tex_path, &tex_venus[i]);
+    }
 }
 
-void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
+float vec2_angle(vec2 a, vec2 b) {
+    float dot = glm_vec2_dot(a, b);
+    float det = a[0] * b[1] - a[1] * b[0];
+    return atan2f(det, dot);
+}
+
+void map_tile_to_world(ivec2 tile, vec2 world) {
+    world[0] = (((float)tile[0]) + 0.5f);
+    world[1] = (((float)tile[0]) + 0.5f);
+}
+
+void vec2_pos_to_tile(int x, int y, vec3 pos, vec2 out) {
+    out[0] = (((float)x) + 0.5f) * MAP_TILE_SIZE - pos[0];
+    out[1] = (((float)y) + 0.5f) * MAP_TILE_SIZE - pos[2];
+    glm_vec2_normalize(out);
+}
+
+void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, int y) {
     mat4 t = GLM_MAT4_IDENTITY_INIT;
     glm_translate(t, (vec3){MAP_TILE_SIZE * x, 0.0f, MAP_TILE_SIZE * y});
+
+    int bb_tex_i = 0;
+    if (item.type == TILE_STATUE) {
+        vec2 camera_dir2;
+        camera_dir2[0] = camera.front[0];
+        camera_dir2[1] = camera.front[2];
+        // glm_vec2_normalize(camera_dir2);
+
+        // FIXME:
+        vec2 poly_dir2;
+        poly_dir2[0] = 0.0f;
+        poly_dir2[1] = -1.0f;
+        // glm_vec2_normalize(poly_dir2);
+
+        vec2 pos_to_tile_dir;
+        vec2_pos_to_tile(x, y, camera.pos, pos_to_tile_dir);
+
+        float bb_poly_a = vec2_angle(poly_dir2, camera_dir2);
+        float bb_tex_a = vec2_angle(poly_dir2, pos_to_tile_dir);
+
+        glm_rotate_at(t, (vec3){0.0f, 0.0f, 0.0f}, -bb_poly_a, (vec3){0.0f, 1.0f, 0.0f});
+
+        glm_make_deg(&bb_tex_a);
+        if (bb_tex_a > 0) {
+            bb_tex_i = (int)(fabs(bb_tex_a) / 10);
+        } else {
+            bb_tex_i = (BB_SPRITE_SIZE - 1) - (int)(fabs(bb_tex_a) / 10);
+        }
+
+        assert(bb_tex_i >= 0 && bb_tex_i < BB_SPRITE_SIZE);
+    }
     glm_mat4_mul(trans, t, t);
 
     switch (item.type) {
@@ -154,9 +206,9 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
             minigl_obj_to_obj_buf_trans(obj_light, t, &buf);
             minigl_draw(buf);
             break;
-        case TILE_BASE:
-            minigl_set_color(255);
-            minigl_obj_to_obj_buf_trans(obj_base, t, &buf);
+        case TILE_STATUE:
+            minigl_set_tex(tex_venus[bb_tex_i]);
+            minigl_obj_to_obj_buf_trans(obj_statue, t, &buf);
             minigl_draw(buf);
             break;
         case TILE_WALL_N:
@@ -187,50 +239,31 @@ void map_item_draw(map_item_t item, mat4 trans, int x, int y) {
 }
 
 void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
-    ivec2 x_range;
-    x_range[0] = (int)(camera.pos[0] / MAP_TILE_SIZE) - MAP_DRAW_SIZE / 2;
-    x_range[1] = x_range[0] + MAP_DRAW_SIZE;
-    glm_ivec2_clamp(x_range, 0, MAP_SIZE);
+    vec2 camera_dir;
+    camera_dir[0] = camera.front[0];
+    camera_dir[1] = camera.front[2];
+    glm_vec2_normalize(camera_dir);
 
-    ivec2 y_range;
-    y_range[0] = (int)(camera.pos[2] / MAP_TILE_SIZE) - MAP_DRAW_SIZE / 2;
-    y_range[1] = y_range[0] + MAP_DRAW_SIZE;
-    glm_ivec2_clamp(y_range, 0, MAP_SIZE);
-
-    vec2 d;
-    d[0] = camera.front[0];
-    d[1] = camera.front[2];
-    // glm_vec2_normalize(d);
-
-    for (int y = y_range[0]; y < y_range[1]; y++) {
-        for (int x = x_range[0]; x < x_range[1]; x++) {
+    for (int y = 0; y < MAP_SIZE; y++) {
+        for (int x = 0; x < MAP_SIZE; x++) {
             // NOTE: Use the cross product of the position-tile vector and the
             // camera direction to check if the tile is within the FOV.
-            vec2 t;
-            t[0] = x * MAP_TILE_SIZE - camera.pos[0];
-            t[1] = y * MAP_TILE_SIZE - camera.pos[2];
-            glm_vec2_normalize(t);
+            vec2 pos_to_tile_dir;
+            vec2_pos_to_tile(x, y, camera.pos, pos_to_tile_dir);
 
-            float a = glm_vec2_dot(t, d);
+            float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
 
             // NOTE: FOV should be divided by two, but since tile are discrete,
             // we need to use a larger angle
-            if (a >= cosf(glm_rad(CAMERA_FOV))) {
+            // FIXME: There's something wrong!!!
+            if (a >= cosf(glm_rad(CAMERA_FOV / 2.0f) || true)) {
                 map_tile_t tile = map.grid[y][x];
                 for (int i = 0; i < tile.item_cnt; i++) {
-                    map_item_draw(tile.items[i], trans, x, y);
+                    map_item_draw(tile.items[i], camera, trans, x, y);
                 }
             }
         }
     }
-
-    // TODO: Draw one big floor!
-    // Draw floor
-    /*
-    minigl_set_tex(tex_floor0);
-    minigl_obj_transform(obj_floor, trans, &buf);
-    minigl_draw(buf);
-    */
 }
 
 void minimap_draw(int x, int y, minigl_camera_t camera) {

@@ -1,5 +1,6 @@
 #include "minigl.h"
 
+#include <assert.h>
 #include <math.h>
 
 #include "cglm/types.h"
@@ -122,7 +123,7 @@ MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const i
         z_buff[buff_off + x] = z;
 
         c_buff[buff_off + x] = cfg.draw_color;
-        c_buff[buff_off + x] = (c_buff[buff_off + x] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+        c_buff[buff_off + x] = (c_buff[buff_off + x] >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
     }
 }
 
@@ -298,10 +299,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
                 // Interpolate Z
                 float z = interpolate(b, v[0][2], v[1][2], v[2][2]);
 
-                // Depth test
-                // TODO: Make depth test programmable
-                if (z > z_buff[buff_i]) continue;
-                z_buff[buff_i] = z;
+                uint8_t color;
 
                 if (tex_mode == MINIGL_TEX_2D) {
                     // Interpolate texture coordinates
@@ -323,17 +321,26 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
                     tex_u = tex_u < 0 ? 0 : tex_u >= cfg.texture.size_x ? cfg.texture.size_x - 1 : tex_u;
                     tex_v = tex_v < 0 ? 0 : tex_v >= cfg.texture.size_y ? cfg.texture.size_y - 1 : tex_v;
 
-                    c_buff[buff_i] = cfg.texture.ptr[tex_v][tex_u];
+                    if (cfg.texture.opacity[tex_v][tex_u] == 0) continue;
+
+                    color = cfg.texture.color[tex_v][tex_u];
                 } else {
-                    c_buff[buff_i] = cfg.draw_color;
+                    color = cfg.draw_color;
                 }
+
+                // Depth test
+                // TODO: Make depth test programmable
+                if (z > z_buff[buff_i]) continue;
+                z_buff[buff_i] = z;
+
                 // FIXME: Should we do this at frame swap?
-#ifdef MINIGL_DITHERING
-                c_buff[buff_i] = (c_buff[buff_i] >= cfg.dither.ptr[y % cfg.dither.size_y][x % cfg.dither.size_x]);
-            }
+#ifndef MINIGL_NO_DITHERING
+                c_buff[buff_i] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+#else
+                c_buff[buff_i] = color;
 #endif
+            }
         }
-    }
 #endif
     }
 }

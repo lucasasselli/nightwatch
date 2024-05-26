@@ -9,7 +9,7 @@
 
 typedef enum {
     TILE_FLOOR,
-    TILE_BASE,
+    TILE_STATUE,
     TILE_WALL_N,
     TILE_WALL_E,
     TILE_WALL_S,

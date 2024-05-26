@@ -31,7 +31,7 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
 
     // Decode to 8-bit RGBA
     size_t out_size;
-    spng_decoded_image_size(ctx, SPNG_FMT_RGB8, &out_size);
+    spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &out_size);
 
     // Extract width and height
     struct spng_ihdr ihdr;
@@ -44,26 +44,33 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
 
     // Allocate the temp buffer
     uint8_t *temp = (uint8_t *)malloc(sizeof(uint8_t) * out_size);
-    spng_decode_image(ctx, temp, out_size, SPNG_FMT_RGB8, 0);
+    spng_decode_image(ctx, temp, out_size, SPNG_FMT_RGBA8, 0);
 
     // Allocate final texture memory location
-    out->ptr = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
+    out->color = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
+    out->opacity = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
     for (int j = 0; j < out->size_y; j++) {
-        out->ptr[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
+        out->color[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
+        out->opacity[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
     }
 
-    for (size_t i = 0; i < out_size; i += 3) {
+    const int STRIDE = 4;
+
+    for (size_t i = 0; i < out_size; i += STRIDE) {
         uint8_t r = temp[i];
         uint8_t g = temp[i + 1];
         uint8_t b = temp[i + 2];
+        uint8_t a = temp[i + 3];
 
         // Calculate row and column indices
-        size_t y = i / (3 * out->size_y);
-        size_t x = (i / 3) % out->size_y;
+        size_t y = i / (STRIDE * out->size_x);
+        size_t x = (i / STRIDE) % out->size_x;
 
         // Calculate pixel luminosity (https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color)
         float lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
-        out->ptr[y][x] = (uint8_t)lum;
+
+        out->color[y][x] = (uint8_t)lum;
+        out->opacity[y][x] = a > 0 ? 255 : 0;
     }
 
     // Free resources

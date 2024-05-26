@@ -15,7 +15,7 @@ char tile_to_char(map_tile_t tile) {
         switch (tile.items[0].type) {
             case TILE_FLOOR:
                 return '.';
-            case TILE_BASE:
+            case TILE_STATUE:
                 return 'o';
             case TILE_WALL_N:
             case TILE_WALL_S:
@@ -166,8 +166,8 @@ void mapgen_grid_update(map_t *map) {
                         do {
                             x = rand_range(room.x, room.x + room.size.x);
                             y = rand_range(room.y, room.y + room.size.y);
-                        } while (tile_has_item(map, TILE_BASE, x, y));
-                        tile_item_add(map, TILE_BASE, x, y);
+                        } while (tile_has_item(map, TILE_STATUE, x, y));
+                        tile_item_add(map, TILE_STATUE, x, y);
                     }
                 }
 

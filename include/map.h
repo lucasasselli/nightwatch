@@ -21,3 +21,5 @@ void minimap_draw(int x, int y, minigl_camera_t camera);
 void map_init(void);
 
 void map_draw(map_t map, mat4 trans, minigl_camera_t camera);
+
+void map_tile_to_world(ivec2 tile, vec2 world);
