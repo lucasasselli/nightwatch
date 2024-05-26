@@ -20,5 +20,5 @@ map_tile_t map_get_tile(map_t map, ivec2 pos) {
 }
 
 bool map_tile_collide(map_tile_t tile) {
-    return (tile.item_cnt != 1 || tile.items[!0].type != TILE_FLOOR);
+    return (tile.item_cnt != 1 || tile.items[0].type != TILE_FLOOR);
 }

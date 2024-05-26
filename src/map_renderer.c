@@ -166,7 +166,7 @@ void vec2_pos_to_tile(int x, int y, vec3 pos, vec2 out) {
 
 void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, int y) {
     mat4 t = GLM_MAT4_IDENTITY_INIT;
-    glm_translate(t, (vec3){MAP_TILE_SIZE * x, 0.0f, MAP_TILE_SIZE * y});
+    glm_translate(t, (vec3){MAP_TILE_SIZE * (((float)x) + 0.5f), 0.0f, MAP_TILE_SIZE * (((float)y) + 0.5f)});
 
     int bb_tex_i = 0;
     if (item.type == TILE_STATUE) {
