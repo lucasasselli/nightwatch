@@ -1,25 +1,36 @@
 #pragma once
 
-#include <cglm/cglm.h>
+#define MAP_SIZE 64
+#define MAP_TILE_MAX_ITEMS 10
 
-#include "game.h"
-#include "mapgen.h"
-
-#define MAP_DRAW_SIZE 20
 #define MAP_TILE_SIZE 4.0f
 
-#define MINIMAP_TILE_SIZE 4
-#define MINIMAP_SIZE_X 100
-#define MINIMAP_SIZE_Y 100
+#include <cglm/cglm.h>
 
-void minimap_init(void);
+typedef enum {
+    TILE_FLOOR,
+    TILE_STATUE,
+    TILE_WALL_N,
+    TILE_WALL_E,
+    TILE_WALL_S,
+    TILE_WALL_W
+} map_item_type_t;
 
-void minimap_gen(map_t map);
+typedef struct {
+    map_item_type_t type;
+} map_item_t;
 
-void minimap_draw(int x, int y, minigl_camera_t camera);
+typedef struct {
+    map_item_t *items;
+    int item_cnt;
+} map_tile_t;
 
-void map_init(void);
+typedef map_tile_t map_t[MAP_SIZE][MAP_SIZE];
 
-void map_draw(map_t map, mat4 trans, minigl_camera_t camera);
+void pos_tile_to_world(ivec2 tile, vec3 world);
 
-void map_tile_to_world(ivec2 tile, vec2 world);
+void pos_world_to_tile(vec3 world, ivec2 tile);
+
+map_tile_t map_get_tile(map_t map, ivec2 pos);
+
+bool map_tile_collide(map_tile_t tile);

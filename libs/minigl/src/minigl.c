@@ -173,6 +173,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
         //---------------------------------------------------------------------------
 
         // Trivial reject
+        // FIXME: This might not be necessary
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
             (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
             (v[0][2] < -1.0f && v[1][2] < -1.0f && v[2][2] < -1.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
@@ -193,8 +194,8 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
 
         // FIXME: Allow programmable backface Culling
         if (cw_wind_order) {
-            minigl_perf_event(PERF_CULL);
-            // continue;
+            // minigl_perf_event(PERF_CULL);
+            //  continue;
         }
 
         // Get texture coordinates

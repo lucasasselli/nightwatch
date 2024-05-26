@@ -2,6 +2,7 @@
 
 #include <cglm/cglm.h>
 
+#include "map.h"
 #include "minigl_types.h"
 #include "pd_api.h"
 
@@ -13,6 +14,7 @@
 extern PlaydateAPI* pd;
 
 typedef struct {
+    map_t map;
     minigl_camera_t camera;
 } game_state_t;
 

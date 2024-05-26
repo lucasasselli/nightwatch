@@ -4,7 +4,8 @@
 #include <time.h>
 
 #include "game.h"
-#include "map.h"
+#include "map_generator.h"
+#include "map_renderer.h"
 #include "minigl.h"
 #include "pd_api.h"
 #include "pd_system.h"
@@ -21,7 +22,6 @@ PlaydateAPI *pd;
 
 // Game state
 game_state_t gs;
-map_t map;
 mat4 proj;
 mat4 trans;
 
@@ -84,7 +84,7 @@ static int update(void *userdata) {
 
     // Draw map
     meas_time_start(2);
-    map_draw(map, trans, gs.camera);
+    map_draw(gs.map, trans, gs.camera);
     meas_time_stop(2);
 
     // Update the screen
@@ -162,37 +162,28 @@ __declspec(dllexport)
 
         minigl_set_dither(tex_dither);
 
-        mapgen_init(&map);
-        mapgen_gen(&map);
-        mapgen_grid_print(map);
+        mapgen_gen(gs.map);
+        mapgen_grid_print(gs.map);
 
         // Setup map
         map_init();
 
         // Setup minimap
         minimap_init();
-        minimap_gen(map);
+        minimap_gen(gs.map);
 
         // Initialize game
         game_init(&gs);
 
         // Pick a random starting position in the map
-        bool good = false;
+        map_tile_t spawn_tile;
         do {
-            int x = rand() % MAP_SIZE;
-            int y = rand() % MAP_SIZE;
-            map_tile_t tile = map.grid[y][x];
-
-            // Check if position is good
-            for (int i = 0; i < tile.item_cnt; i++) {
-                if (tile.items[i].type == TILE_FLOOR) {
-                    good = true;
-                }
-            }
-
-            gs.camera.pos[0] = x * MAP_TILE_SIZE;
-            gs.camera.pos[2] = y * MAP_TILE_SIZE;
-        } while (!good);
+            ivec2 spawn_tile_pos;
+            spawn_tile_pos[0] = rand() % MAP_SIZE;
+            spawn_tile_pos[1] = rand() % MAP_SIZE;
+            spawn_tile = map_get_tile(gs.map, spawn_tile_pos);
+            pos_tile_to_world(spawn_tile_pos, gs.camera.pos);
+        } while (map_tile_collide(spawn_tile));
 
         glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 40.0f, proj);
         view_update();  // Setup view matrix

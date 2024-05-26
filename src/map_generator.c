@@ -1,10 +1,13 @@
-#include "mapgen.h"
+#include "map_generator.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "utils.h"
+
+map_room_t *rooms;
+int room_cnt;
 
 char tile_to_char(map_tile_t tile) {
     if (tile.item_cnt == 0) {
@@ -27,29 +30,29 @@ char tile_to_char(map_tile_t tile) {
     }
 }
 
-void tile_item_replace(map_t *map, map_item_type_t type, int x, int y) {
+void tile_item_replace(map_t map, map_item_type_t type, int x, int y) {
     map_item_t item;
     item.type = type;
-    map_tile_t *tile = &map->grid[y][x];
+    map_tile_t *tile = &map[y][x];
     tile->item_cnt = 0;
     tile->items[tile->item_cnt] = item;
     tile->item_cnt++;
     assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
 }
 
-bool tile_has_item(map_t *map, map_item_type_t type, int x, int y) {
+bool tile_has_item(map_t map, map_item_type_t type, int x, int y) {
     if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
-    map_tile_t *tile = &map->grid[y][x];
+    map_tile_t *tile = &map[y][x];
     for (int i = 0; i < tile->item_cnt; i++) {
         if (tile->items[i].type == type) return true;
     }
     return false;
 }
 
-void tile_item_add(map_t *map, map_item_type_t type, int x, int y) {
+void tile_item_add(map_t map, map_item_type_t type, int x, int y) {
     map_item_t item;
     item.type = type;
-    map_tile_t *tile = &map->grid[y][x];
+    map_tile_t *tile = &map[y][x];
 
     // Don't add double walls if you are next to an existing room!
     switch (item.type) {
@@ -75,21 +78,7 @@ void tile_item_add(map_t *map, map_item_type_t type, int x, int y) {
     tile->item_cnt++;
 }
 
-void mapgen_init(map_t *map) {
-    map->rooms = malloc(sizeof(map_room_t) * MAP_MAX_ROOMS);
-    map->room_cnt = 0;
-    map->grid = malloc(sizeof(map_tile_t *) * MAP_SIZE);
-    for (int y = 0; y < MAP_SIZE; y++) {
-        map->grid[y] = malloc(sizeof(map_tile_t) * MAP_SIZE);
-        for (int x = 0; x < MAP_SIZE; x++) {
-            // Initialize the tile
-            map->grid[y][x].item_cnt = 0;  // No item by default
-            map->grid[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
-        }
-    }
-}
-
-bool mapgen_room_check_collision(map_t *map, map_room_t room) {
+bool mapgen_room_check_collision(map_t map, map_room_t room) {
     // Check against map boundaries
     if (room.x < 0 || (room.x + room.size.x >= MAP_SIZE)) return false;
     if (room.y < 0 || (room.y + room.size.y >= MAP_SIZE)) return false;
@@ -97,8 +86,8 @@ bool mapgen_room_check_collision(map_t *map, map_room_t room) {
     // Check against other rooms
     bool match = false;
 
-    for (int i = 0; i < map->room_cnt; i++) {
-        map_room_t other = map->rooms[i];
+    for (int i = 0; i < room_cnt; i++) {
+        map_room_t other = rooms[i];
 
         if ((room.x + room.size.x) <= other.x) {
             continue;
@@ -122,21 +111,21 @@ bool mapgen_room_check_collision(map_t *map, map_room_t room) {
     return !match;
 }
 
-void grid_add_item_col(map_t *map, map_item_type_t type, int x, int y, int size) {
+void grid_add_item_col(map_t map, map_item_type_t type, int x, int y, int size) {
     for (int i = 0; i < size; i++) {
         tile_item_add(map, type, x, y + i);
     }
 }
 
-void grid_add_item_row(map_t *map, map_item_type_t type, int x, int y, int size) {
+void grid_add_item_row(map_t map, map_item_type_t type, int x, int y, int size) {
     for (int i = 0; i < size; i++) {
         tile_item_add(map, type, x + i, y);
     }
 }
 
-void mapgen_grid_update(map_t *map) {
-    for (int i = 0; i < map->room_cnt; i++) {
-        map_room_t room = map->rooms[i];
+void mapgen_grid_update(map_t map) {
+    for (int i = 0; i < room_cnt; i++) {
+        map_room_t room = rooms[i];
 
         assert((room.y + room.size.y) < MAP_SIZE);
         assert((room.x + room.size.x) < MAP_SIZE);
@@ -160,7 +149,7 @@ void mapgen_grid_update(map_t *map) {
 
                 // Add bases
                 if (room.type != ROOM_CORRIDOR) {
-                    int base_num = sqrt(room.size.x * room.size.y);
+                    int base_num = sqrt(room.size.x * room.size.y) / 2;
                     for (int i = 0; i < base_num; i++) {
                         int x, y;
                         do {
@@ -184,7 +173,7 @@ void mapgen_grid_update(map_t *map) {
 void mapgen_grid_print(map_t map) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            printf("%c ", tile_to_char(map.grid[y][x]));
+            printf("%c ", tile_to_char(map[y][x]));
         }
         printf("\n");
     }
@@ -320,16 +309,16 @@ void mapgen_room_randomize_next(map_room_t this, map_room_t *next) {
     } while (true);
 }
 
-void mapgen_room_add(map_t *map, map_room_t room) {
-    assert(map->room_cnt < MAP_MAX_ROOMS);
-    map->rooms[map->room_cnt] = room;
-    map->room_cnt++;
+void mapgen_room_add(map_t map, map_room_t room) {
+    assert(room_cnt < MAP_MAX_ROOMS);
+    rooms[room_cnt] = room;
+    room_cnt++;
 }
 
-void mapgen_gen_adjacent(map_t *map, map_room_t room) {
+void mapgen_gen_adjacent(map_t map, map_room_t room) {
     // Pick a point on the room walls and use this to generate the next room
     for (int i = 0; i < room.exit_cnt; i++) {
-        if (map->room_cnt >= (MAP_MAX_ROOMS - 1)) {
+        if (room_cnt >= (MAP_MAX_ROOMS - 1)) {
             return;
         }
 
@@ -351,7 +340,19 @@ void mapgen_gen_adjacent(map_t *map, map_room_t room) {
     }
 }
 
-void mapgen_gen(map_t *map) {
+void mapgen_gen(map_t map) {
+    // Initialize
+    rooms = malloc(sizeof(map_room_t) * MAP_MAX_ROOMS);
+    room_cnt = 0;
+
+    for (int y = 0; y < MAP_SIZE; y++) {
+        for (int x = 0; x < MAP_SIZE; x++) {
+            // Initialize the tile
+            map[y][x].item_cnt = 0;  // No item by default
+            map[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
+        }
+    }
+
     // Draw the first room
     map_room_t room;
     room = mapgen_room_randomize();
@@ -373,4 +374,7 @@ void mapgen_gen(map_t *map) {
 
     // Update the grid
     mapgen_grid_update(map);
+
+    // Clenup
+    free(rooms);
 }
