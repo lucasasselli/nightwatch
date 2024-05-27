@@ -9,6 +9,7 @@
 map_room_t *rooms;
 int room_cnt;
 
+/*
 char tile_to_char(map_tile_t tile) {
     if (tile.item_cnt == 0) {
         return ' ';
@@ -16,7 +17,7 @@ char tile_to_char(map_tile_t tile) {
         return '+';
     } else {
         switch (tile.items[0].type) {
-            case TILE_FLOOR:
+            case ITEM_FLOOR:
                 return '.';
             case TILE_STATUE:
                 return 'o';
@@ -28,11 +29,9 @@ char tile_to_char(map_tile_t tile) {
                 return '|';
         }
     }
-}
+}*/
 
-void tile_item_replace(map_t map, map_item_type_t type, int x, int y) {
-    map_item_t item;
-    item.type = type;
+void tile_item_replace(map_t map, map_item_t item, int x, int y) {
     map_tile_t *tile = &map[y][x];
     tile->item_cnt = 0;
     tile->items[tile->item_cnt] = item;
@@ -40,37 +39,41 @@ void tile_item_replace(map_t map, map_item_type_t type, int x, int y) {
     assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
 }
 
-bool tile_has_item(map_t map, map_item_type_t type, int x, int y) {
+bool tile_has_item(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
     if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
     map_tile_t *tile = &map[y][x];
     for (int i = 0; i < tile->item_cnt; i++) {
-        if (tile->items[i].type == type) return true;
+        map_item_t item = tile->items[i];
+        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return true;
     }
     return false;
 }
 
-void tile_item_add(map_t map, map_item_type_t type, int x, int y) {
+void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
     map_item_t item;
     item.type = type;
+    item.dir = dir;
     map_tile_t *tile = &map[y][x];
 
     // Don't add double walls if you are next to an existing room!
-    switch (item.type) {
-        case TILE_WALL_N:
-            if (tile_has_item(map, TILE_WALL_S, x, y - 1)) return;
-            break;
+    if (item.type == ITEM_WALL) {
+        switch (item.dir) {
+            case DIR_NORTH:
+                if (tile_has_item(map, ITEM_WALL, DIR_SOUTH, x, y - 1)) return;
+                break;
 
-        case TILE_WALL_E:
-            if (tile_has_item(map, TILE_WALL_W, x + 1, y)) return;
-            break;
+            case DIR_EAST:
+                if (tile_has_item(map, ITEM_WALL, DIR_WEST, x + 1, y)) return;
+                break;
 
-        case TILE_WALL_S:
-            if (tile_has_item(map, TILE_WALL_N, x, y + 1)) return;
-            break;
+            case DIR_SOUTH:
+                if (tile_has_item(map, ITEM_WALL, DIR_NORTH, x, y + 1)) return;
+                break;
 
-        case TILE_WALL_W:
-            if (tile_has_item(map, TILE_WALL_E, x - 1, y)) return;
-            break;
+            case DIR_WEST:
+                if (tile_has_item(map, ITEM_WALL, DIR_EAST, x - 1, y)) return;
+                break;
+        }
     }
 
     assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
@@ -111,15 +114,15 @@ bool mapgen_room_check_collision(map_t map, map_room_t room) {
     return !match;
 }
 
-void grid_add_item_col(map_t map, map_item_type_t type, int x, int y, int size) {
+void grid_add_item_col(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y, int size) {
     for (int i = 0; i < size; i++) {
-        tile_item_add(map, type, x, y + i);
+        tile_item_add(map, type, dir, x, y + i);
     }
 }
 
-void grid_add_item_row(map_t map, map_item_type_t type, int x, int y, int size) {
+void grid_add_item_row(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y, int size) {
     for (int i = 0; i < size; i++) {
-        tile_item_add(map, type, x + i, y);
+        tile_item_add(map, type, dir, x + i, y);
     }
 }
 
@@ -137,15 +140,15 @@ void mapgen_grid_update(map_t map) {
                 // Floor
                 for (int y = 0; y < room.size.y; y++) {
                     for (int x = 0; x < room.size.x; x++) {
-                        tile_item_add(map, TILE_FLOOR, room.x + x, room.y + y);
+                        tile_item_add(map, ITEM_FLOOR, DIR_ANY, room.x + x, room.y + y);
                     }
                 }
 
                 // Walls
-                grid_add_item_row(map, TILE_WALL_N, room.x, room.y, room.size.x);
-                grid_add_item_col(map, TILE_WALL_E, room.x + room.size.x - 1, room.y, room.size.y);
-                grid_add_item_row(map, TILE_WALL_S, room.x, room.y + room.size.y - 1, room.size.x);
-                grid_add_item_col(map, TILE_WALL_W, room.x, room.y, room.size.y);
+                grid_add_item_row(map, ITEM_WALL, DIR_NORTH, room.x, room.y, room.size.x);
+                grid_add_item_col(map, ITEM_WALL, DIR_EAST, room.x + room.size.x - 1, room.y, room.size.y);
+                grid_add_item_row(map, ITEM_WALL, DIR_SOUTH, room.x, room.y + room.size.y - 1, room.size.x);
+                grid_add_item_col(map, ITEM_WALL, DIR_WEST, room.x, room.y, room.size.y);
 
                 // Add bases
                 if (room.type != ROOM_CORRIDOR) {
@@ -155,14 +158,15 @@ void mapgen_grid_update(map_t map) {
                         do {
                             x = rand_range(room.x, room.x + room.size.x);
                             y = rand_range(room.y, room.y + room.size.y);
-                        } while (tile_has_item(map, TILE_STATUE, x, y));
-                        tile_item_add(map, TILE_STATUE, x, y);
+                        } while (tile_has_item(map, ITEM_STATUE, DIR_ANY, x, y));
+
+                        tile_item_add(map, ITEM_STATUE, rand() % 4, x, y);
                     }
                 }
 
                 // Doors
                 if (room.way_in.x > 0 && room.way_in.y > 0) {
-                    tile_item_replace(map, TILE_FLOOR, room.way_in.x, room.way_in.y);
+                    tile_item_replace(map, (map_item_t){ITEM_FLOOR, DIR_ANY}, room.way_in.x, room.way_in.y);
                 }
 
                 break;
@@ -173,7 +177,7 @@ void mapgen_grid_update(map_t map) {
 void mapgen_grid_print(map_t map) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            printf("%c ", tile_to_char(map[y][x]));
+            // printf("%c ", tile_to_char(map[y][x]));
         }
         printf("\n");
     }

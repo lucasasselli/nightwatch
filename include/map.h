@@ -8,16 +8,22 @@
 #include <cglm/cglm.h>
 
 typedef enum {
-    TILE_FLOOR,
-    TILE_STATUE,
-    TILE_WALL_N,
-    TILE_WALL_E,
-    TILE_WALL_S,
-    TILE_WALL_W
+    ITEM_FLOOR,
+    ITEM_STATUE,
+    ITEM_WALL,
 } map_item_type_t;
+
+typedef enum {
+    DIR_ANY,
+    DIR_NORTH,
+    DIR_EAST,
+    DIR_SOUTH,
+    DIR_WEST
+} map_item_dir_t;
 
 typedef struct {
     map_item_type_t type;
+    map_item_dir_t dir;
 } map_item_t;
 
 typedef struct {

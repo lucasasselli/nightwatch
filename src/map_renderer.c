@@ -1,6 +1,7 @@
 #include "map_renderer.h"
 
 #include "cglm/affine.h"
+#include "game.h"
 #include "minigl.h"
 #include "object.h"
 #include "texture.h"
@@ -34,25 +35,27 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
     for (int y = 0; y < MINIMAP_TILE_SIZE; y++) {
         for (int x = 0; x < MINIMAP_TILE_SIZE; x++) {
             bool draw = false;
-            switch (item.type) {
-                case TILE_WALL_N:
-                    if (y == 0) draw = true;
-                    break;
-                case TILE_WALL_E:
-                    if (x == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                    break;
-                case TILE_WALL_S:
-                    if (y == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                    break;
-                case TILE_WALL_W:
-                    if (x == 0) draw = true;
-                    break;
-                case TILE_STATUE:
-                    if (y == 0) draw = true;
-                    if (x == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                    if (y == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                    if (x == 0) draw = true;
-                    break;
+            if (item.type == ITEM_WALL) {
+                switch (item.dir) {
+                    case DIR_NORTH:
+                        if (y == 0) draw = true;
+                        break;
+                    case DIR_EAST:
+                        if (x == (MINIMAP_TILE_SIZE - 1)) draw = true;
+                        break;
+                    case DIR_SOUTH:
+                        if (y == (MINIMAP_TILE_SIZE - 1)) draw = true;
+                        break;
+                    case DIR_WEST:
+                        if (x == 0) draw = true;
+                        break;
+                }
+            } else if (item.type == ITEM_STATUE) {
+                if (y == 0) draw = true;
+                if (x == (MINIMAP_TILE_SIZE - 1)) draw = true;
+                if (y == (MINIMAP_TILE_SIZE - 1)) draw = true;
+                if (x == 0) draw = true;
+                break;
             }
 
             if (draw) clearpixel(bitmap_data, tile_x + x, tile_y + y, bitmap_rowbytes);
@@ -164,12 +167,26 @@ void vec2_pos_to_tile(int x, int y, vec3 pos, vec2 out) {
     glm_vec2_normalize(out);
 }
 
+int bb_tex_index(float a, map_item_dir_t dir) {
+    glm_make_deg(&a);
+
+    a += 90.0f * dir;
+
+    int a_int = ((int)fabsf(a)) % 360;
+
+    if (a > 0) {
+        return a_int / 10;
+    } else {
+        return (BB_SPRITE_SIZE - 1) - a_int / 10;
+    }
+}
+
 void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, int y) {
-    mat4 t = GLM_MAT4_IDENTITY_INIT;
-    glm_translate(t, (vec3){MAP_TILE_SIZE * (((float)x) + 0.5f), 0.0f, MAP_TILE_SIZE * (((float)y) + 0.5f)});
+    mat4 tile_trans = GLM_MAT4_IDENTITY_INIT;
+    glm_translate(tile_trans, (vec3){MAP_TILE_SIZE * (((float)x) + 0.5f), 0.0f, MAP_TILE_SIZE * (((float)y) + 0.5f)});
 
     int bb_tex_i = 0;
-    if (item.type == TILE_STATUE) {
+    if (item.type == ITEM_STATUE) {
         vec2 camera_dir2;
         camera_dir2[0] = camera.front[0];
         camera_dir2[1] = camera.front[2];
@@ -187,55 +204,45 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
         float bb_poly_a = vec2_angle(poly_dir2, camera_dir2);
         float bb_tex_a = vec2_angle(poly_dir2, pos_to_tile_dir);
 
-        glm_rotate_at(t, (vec3){0.0f, 0.0f, 0.0f}, -bb_poly_a, (vec3){0.0f, 1.0f, 0.0f});
+        glm_rotate_at(tile_trans, (vec3){0.0f, 0.0f, 0.0f}, -bb_poly_a, (vec3){0.0f, 1.0f, 0.0f});
 
-        glm_make_deg(&bb_tex_a);
-        if (bb_tex_a > 0) {
-            bb_tex_i = (int)(fabs(bb_tex_a) / 10);
-        } else {
-            bb_tex_i = (BB_SPRITE_SIZE - 1) - (int)(fabs(bb_tex_a) / 10);
-        }
-
-        assert(bb_tex_i >= 0 && bb_tex_i < BB_SPRITE_SIZE);
+        bb_tex_i = bb_tex_index(bb_tex_a, item.dir);
     }
-    glm_mat4_mul(trans, t, t);
+    glm_mat4_mul(trans, tile_trans, tile_trans);
 
-    switch (item.type) {
-        case TILE_FLOOR:
+    if (item.type == ITEM_FLOOR) {
+        if ((x % 2 == 0) && (y % 2) == 0) {
             // Draw light
-            minigl_set_color(255);
-            minigl_obj_to_obj_buf_trans(obj_light, t, &buf);
-            minigl_draw(buf);
-            break;
-        case TILE_STATUE:
-            minigl_set_tex(tex_venus[bb_tex_i]);
-            minigl_obj_to_obj_buf_trans(obj_statue, t, &buf);
-            minigl_draw(buf);
-            break;
-        case TILE_WALL_N:
-            // minigl_set_tex(tex_wall0);
-            minigl_set_color(128);
-            minigl_obj_to_obj_buf_trans(obj_wall_n, t, &buf);
-            minigl_draw(buf);
-            break;
-        case TILE_WALL_E:
-            // minigl_set_tex(tex_wall0);
-            minigl_set_color(96);
-            minigl_obj_to_obj_buf_trans(obj_wall_e, t, &buf);
-            minigl_draw(buf);
-            break;
-        case TILE_WALL_S:
-            // minigl_set_tex(tex_wall0);
-            minigl_set_color(128);
-            minigl_obj_to_obj_buf_trans(obj_wall_s, t, &buf);
-            minigl_draw(buf);
-            break;
-        case TILE_WALL_W:
-            // minigl_set_tex(tex_wall0);
-            minigl_set_color(96);
-            minigl_obj_to_obj_buf_trans(obj_wall_w, t, &buf);
-            minigl_draw(buf);
-            break;
+            // minigl_set_color(255);
+            // minigl_obj_to_obj_buf_trans(obj_light, tile_trans, &buf);
+            // minigl_draw(buf);
+        }
+    } else if (item.type == ITEM_STATUE) {
+        minigl_set_tex(tex_venus[bb_tex_i]);
+        minigl_obj_to_obj_buf_trans(obj_statue, tile_trans, &buf);
+        minigl_draw(buf);
+    } else if (item.type == ITEM_WALL) {
+        switch (item.dir) {
+            case DIR_NORTH:
+                minigl_set_color(160);
+                minigl_obj_to_obj_buf_trans(obj_wall_n, tile_trans, &buf);
+                break;
+            case DIR_EAST:
+                minigl_set_color(128);
+                minigl_obj_to_obj_buf_trans(obj_wall_e, tile_trans, &buf);
+                break;
+            case DIR_SOUTH:
+                minigl_set_color(160);
+                minigl_obj_to_obj_buf_trans(obj_wall_s, tile_trans, &buf);
+                break;
+            case DIR_WEST:
+                minigl_set_color(128);
+                minigl_obj_to_obj_buf_trans(obj_wall_w, tile_trans, &buf);
+                break;
+            case DIR_ANY:
+                assert(0);
+        }
+        minigl_draw(buf);
     }
 }
 

@@ -176,7 +176,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
         // FIXME: This might not be necessary
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
             (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
-            (v[0][2] < -1.0f && v[1][2] < -1.0f && v[2][2] < -1.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
+            (v[0][2] < -0.0f && v[1][2] < -0.0f && v[2][2] < -0.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
             minigl_perf_event(PERF_CLIP);
             continue;
         }
@@ -331,8 +331,14 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
 
                 // Depth test
                 // TODO: Make depth test programmable
-                if (z > z_buff[buff_i]) continue;
+                if (z > z_buff[buff_i] || z > 1.0f) continue;
                 z_buff[buff_i] = z;
+
+#ifndef MINIGL_NO_Z_FADE
+                if (z > MINIGL_Z_FADE_THRESHOLD) {
+                    color = ((float)color) * (1.0f - z) / (1.0f - MINIGL_Z_FADE_THRESHOLD);
+                }
+#endif
 
                 // FIXME: Should we do this at frame swap?
 #ifndef MINIGL_NO_DITHERING

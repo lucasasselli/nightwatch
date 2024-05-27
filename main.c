@@ -185,7 +185,7 @@ __declspec(dllexport)
             pos_tile_to_world(spawn_tile_pos, gs.camera.pos);
         } while (map_tile_collide(spawn_tile));
 
-        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 0.1f, 40.0f, proj);
+        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 20.0f, proj);
         view_update();  // Setup view matrix
 
         debug("Setup complete!");

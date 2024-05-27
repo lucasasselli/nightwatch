@@ -17,6 +17,7 @@
 
 // #define MINIGL_SCANLINE
 // #define MINIGL_PERSP_CORRECT
+#define MINIGL_Z_FADE_THRESHOLD 0.80f
 
 // TODO: Make the library plaform agnostic
 extern PlaydateAPI* pd;
