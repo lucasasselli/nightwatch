@@ -32,6 +32,9 @@ void handle_keys(game_state_t* state, PDButtons pushed) {
     if (pushed & kButtonLeft) {
         state->camera.yaw -= INPUT_CAMERA_RSPEED;
     }
+    if (pushed & kButtonB) {
+        state->minimap_show ^= 1;
+    }
 
     // Check collision
     ivec2 tile_pos;

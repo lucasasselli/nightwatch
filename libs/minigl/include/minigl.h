@@ -7,11 +7,9 @@
 
 #define MINIGL_INLINE static inline __attribute((always_inline))
 
-// #define MINIGL_SCANLINE
+#define MINIGL_SCANLINE
 // #define MINIGL_PERSP_CORRECT
 #define MINIGL_NO_DITHERING
-
-#define MINIGL_Z_FADE_THRESHOLD 0.90f
 
 typedef enum {
     PERF_CLIP,

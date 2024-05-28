@@ -1,6 +1,4 @@
-build
-build-sim
-build-dev
+build*
 tools
 Source
 *.pdx

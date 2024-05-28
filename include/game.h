@@ -14,6 +14,7 @@
 extern PlaydateAPI* pd;
 
 typedef struct {
+    bool minimap_show;
     map_t map;
     minigl_camera_t camera;
 } game_state_t;

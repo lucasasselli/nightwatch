@@ -25,6 +25,7 @@ game_state_t gs;
 mat4 proj;
 mat4 trans;
 
+// #define TORCH_DISABLE
 #define TORCH_DISCHARGE_RATE 0.99f
 #define TORCH_CHARGE_RATE 0.001f
 
@@ -56,6 +57,7 @@ void screen_update(void) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
             uint8_t color = minigl_frame->c_buff[y][x];
 
+#ifndef TORCH_DISABLE
             float r = frame_radius[y][x];
 
             float torch_fade_r = 100.0f * torch_charge;
@@ -82,6 +84,9 @@ void screen_update(void) {
 
                 color = (color >= tex_dither.color[y % tex_dither.size_y][x % tex_dither.size_x]);
             }
+#else
+            color = (color >= tex_dither.color[y % tex_dither.size_y][x % tex_dither.size_x]);
+#endif
 
             if (color) {
                 clearpixel(pd_frame, X_OFFSET + x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
@@ -114,23 +119,25 @@ static int update(void *userdata) {
 
     meas_time_start(0);
 
-    meas_time_start(1);
-    minigl_clear(0.0f, 1.0f);
-    meas_time_stop(1);
+    if (gs.minimap_show) {
+        meas_time_start(4);
+        minimap_draw((LCD_COLUMNS - SCREEN_SIZE_X) / 2, 0, gs.camera);
+        meas_time_stop(4);
+    } else {
+        meas_time_start(1);
+        minigl_clear(0.0f, 1.0f);
+        meas_time_stop(1);
 
-    // Draw map
-    meas_time_start(2);
-    map_draw(gs.map, trans, gs.camera);
-    meas_time_stop(2);
+        // Draw map
+        meas_time_start(2);
+        map_draw(gs.map, trans, gs.camera);
+        meas_time_stop(2);
 
-    // Update the screen
-    meas_time_start(3);
-    screen_update();
-    meas_time_stop(3);
-
-    meas_time_start(4);
-    // minimap_draw(300, 0, gs.camera);
-    meas_time_stop(4);
+        // Update the screen
+        meas_time_start(3);
+        screen_update();
+        meas_time_stop(3);
+    }
 
     // Handle crank
     float crank_delta = fabsf(pd->system->getCrankChange());
@@ -189,7 +196,9 @@ __declspec(dllexport)
         // Game resources
         //---------------------------------------------------------------------------
 
-        minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
+        if (minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither)) {
+            pd->system->error("%s:%i Couldn't load dither texture!", __FILE__, __LINE__);
+        }
 
         // Load fonts
         const char *err;
@@ -221,10 +230,8 @@ __declspec(dllexport)
 
         minigl_set_dither(tex_dither);
 
-        mapgen_gen(gs.map);
-        mapgen_grid_print(gs.map);
-
         // Setup map
+        mapgen_gen(gs.map);
         map_init();
 
         // Setup minimap

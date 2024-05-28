@@ -20,28 +20,29 @@ file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 
 if (TOOLCHAIN STREQUAL "armgcc")
-    set(SPNG_SHARED OFF CACHE BOOL "")
-    set(CGLM_SHARED OFF CACHE BOOL "")
+    set(MINIGL_SHARED OFF CACHE BOOL "")
 
-    add_compile_options(-mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1 -O3)
+	set(MCFLAGS -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1)
+
+	add_compile_options(${MCFLAGS})
+	add_compile_options(-falign-functions=16 -fomit-frame-pointer)
+	add_compile_options(-gdwarf-2)
+	add_compile_options(-fverbose-asm)
+	add_compile_options(-ffunction-sections -fdata-sections)
+	add_compile_options(-mword-relocations -fno-common)
 
     set(TARGET_NAME ${PLAYDATE_GAME_DEVICE})
     add_executable(${TARGET_NAME}
-        ${PROJECT_SOURCE_DIR}/ext/libspng/spng/spng.c
-        ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 
     target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "")
 
     add_definitions(-DDEBUG_PERF)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
-        ${PROJECT_SOURCE_DIR}/ext/libspng/spng/spng.c
-        ${MINIGL_FILES}
         ${SOURCE_FILES}
         main.c)
 
@@ -59,17 +60,11 @@ else()
 endif()
 
 add_definitions(-DDEBUG)
-add_definitions(-DSPNG_USE_MINIZ)
 
-add_subdirectory(ext/cglm)
-add_subdirectory(ext/miniz)
+add_subdirectory(libs/minigl)
 
-include_directories(${TARGET_NAME} ext/libspng/spng)
-include_directories(${TARGET_NAME} libs/minigl/include)
-include_directories(${TARGET_NAME} ext/miniz)
 include_directories(${TARGET_NAME} include)
 
-target_link_libraries(${TARGET_NAME} PUBLIC cglm)
-target_link_libraries(${TARGET_NAME} PUBLIC miniz)
+target_link_libraries(${TARGET_NAME} PUBLIC minigl)
 
-include(${SDK}/C_API/buildsupport/playdate_game.cmake)
+include(cmake/playdate_game.cmake)

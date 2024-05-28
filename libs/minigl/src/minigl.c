@@ -63,12 +63,6 @@ MINIGL_INLINE int clampi(int x, int min, int max) {
     return x;
 }
 
-MINIGL_INLINE float clampf(float x, float min, float max) {
-    if (x < min) return min;
-    if (x > max) return max;
-    return x;
-}
-
 MINIGL_INLINE void vec2_swap(float* a, float* b) {
     glm_swapf(&a[0], &b[0]);
     glm_swapf(&a[1], &b[1]);
@@ -102,27 +96,86 @@ MINIGL_INLINE float max3_clampf(float a, float b, float c, float min, float max)
     return x;
 }
 
-MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const int y) {
-    x1 = clampf(x1, 0, SCREEN_SIZE_X - 1);
-    x2 = clampf(x2, 0, SCREEN_SIZE_X - 1);
+MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
+    if (z > frame.z_buff[y][x] || z > 1.0f || z < -1.0f) return;
+    frame.z_buff[y][x] = z;
 
-    // Swap x1 and x2
-    if (x2 < x1) {
-        glm_swapf(&x1, &x2);
+#ifndef MINIGL_NO_DITHERING
+    frame.c_buff[y][x] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+#else
+    frame.c_buff[y][x] = color;
+#endif
+}
+
+MINIGL_INLINE void set_pixel_tex_2d(int x, int y, float z, float uf, float vf) {
+    // Scale
+    uf *= (float)(cfg.texture.size_x - 1);
+    vf *= (float)(cfg.texture.size_y - 1);
+
+    int u = clampi(uf, 0, cfg.texture.size_x - 1);
+    int v = clampi(vf, 0, cfg.texture.size_y - 1);
+
+    if (cfg.texture.opacity[v][u] == 0) return;
+
+    set_pixel(x, y, z, cfg.texture.color[v][u]);
+}
+
+MINIGL_INLINE float scanline_slope(float a, float b, vec4 p0, vec4 p1) {
+    return (a - b) / (p0[1] - p1[1]);  // Slope is computed on y
+}
+
+MINIGL_INLINE void scanline_slopes(float a, float b, float c, vec4 v[3], vec3 out) {
+    out[0] = scanline_slope(b, a, v[1], v[0]);
+    out[1] = scanline_slope(c, a, v[2], v[0]);
+    out[2] = scanline_slope(c, b, v[2], v[1]);
+}
+
+MINIGL_INLINE void scanline_range1(float a, float b, vec4 v[3], vec3 slope, float y, vec2 out) {
+    out[0] = a + slope[0] * (y - v[0][1]);
+    out[1] = a + slope[1] * (y - v[0][1]);
+}
+
+MINIGL_INLINE void scanline_range2(float a, float b, vec4 v[3], vec3 slope, float y, vec2 out) {
+    out[0] = b + slope[2] * (y - v[1][1]);
+    out[1] = a + slope[1] * (y - v[0][1]);
+}
+
+MINIGL_INLINE void scanline_add_slope1(vec3 slope, vec2 out) {
+    out[0] += slope[0];
+    out[1] += slope[1];
+}
+
+MINIGL_INLINE void scanline_add_slope2(vec3 slope, vec2 out) {
+    out[0] += slope[2];
+    out[1] += slope[1];
+}
+
+MINIGL_INLINE void scanline_draw(const int y, vec2 x, vec2 z, vec2 u, vec2 v, minigl_tex_mode_t tex_mode) {
+    vec2 x_l;
+    glm_vec2_copy(x, x_l);
+    glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
+
+    // Swap x_l[0] and x_l[1]
+    int start_i = 0;
+    int stop_i = 1;
+    if (x_l[1] < x_l[0]) {
+        start_i = 1;
+        stop_i = 0;
     }
 
-    for (int x = floorf(x1); x < ceilf(x2); x++) {
+    for (int x_act = floorf(x_l[start_i]); x_act < ceilf(x_l[stop_i]); x_act++) {
         minigl_perf_event(PERF_FRAG);
 
-        // FIXME: Z calculation is slow
-        float t = (float)(x - x1) / (x2 - x1);
-        float z = (1 - t) * z1 + t * z2;
+        float t = ((float)(x_act)-x[start_i]) / (x[stop_i] - x[start_i]);
+        float z_act = glm_lerp(z[start_i], z[stop_i], t);
+        float u_act = glm_lerp(u[start_i], u[stop_i], t);
+        float v_act = glm_lerp(v[start_i], v[stop_i], t);
 
-        if (z > frame.z_buff[y][x]) continue;
-        frame.z_buff[y][x] = z;
-
-        frame.c_buff[y][x] = cfg.draw_color;
-        frame.c_buff[y][x] = (frame.c_buff[y][x] >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+        if (tex_mode == MINIGL_TEX_2D) {
+            set_pixel_tex_2d(x_act, y, z_act, u_act, v_act);
+        } else {
+            set_pixel(x_act, y, z_act, cfg.draw_color);
+        }
     }
 }
 
@@ -172,7 +225,6 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
         //---------------------------------------------------------------------------
 
         // Trivial reject
-        // FIXME: This might not be necessary
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
             (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
             (v[0][2] < -0.0f && v[1][2] < -0.0f && v[2][2] < -0.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
@@ -231,38 +283,70 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
 
 #ifdef MINIGL_SCANLINE
         // Sort vertices by y-coordinate
-        if (v[0][1] > v[1][1]) vec4_swap(v[0], v[1]);
-        if (v[0][1] > v[2][1]) vec4_swap(v[0], v[2]);
-        if (v[1][1] > v[2][1]) vec4_swap(v[1], v[2]);
+        if (v[0][1] > v[1][1]) {
+            vec4_swap(v[0], v[1]);
+            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[0], t[1]);
+        }
+        if (v[0][1] > v[2][1]) {
+            vec4_swap(v[0], v[2]);
+            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[0], t[2]);
+        }
+        if (v[1][1] > v[2][1]) {
+            vec4_swap(v[1], v[2]);
+            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[1], t[2]);
+        }
 
-        float slope1 = (v[1][0] - v[0][0]) / (v[1][1] - v[0][1]);
-        float slope2 = (v[2][0] - v[0][0]) / (v[2][1] - v[0][1]);
-        float slope3 = (v[2][0] - v[1][0]) / (v[2][1] - v[1][1]);
+        vec3 slope_x;
+        vec3 slope_z;
+        vec3 slope_tex_u;
+        vec3 slope_tex_v;
+
+        scanline_slopes(v[0][0], v[1][0], v[2][0], v, slope_x);
+        scanline_slopes(v[0][2], v[1][2], v[2][2], v, slope_z);
+        scanline_slopes(t[0][0], t[1][0], t[2][0], v, slope_tex_u);
+        scanline_slopes(t[0][1], t[1][1], t[2][1], v, slope_tex_v);
 
         // Initialize scanline
-        float y0 = clampf(v[0][1], 0, SCREEN_SIZE_Y - 1);
-        float y1 = clampf(v[1][1], 0, SCREEN_SIZE_Y - 1);
-        float y2 = clampf(v[2][1], 0, SCREEN_SIZE_Y - 1);
+        float y0 = glm_clamp(v[0][1], 0, SCREEN_SIZE_Y - 1);
+        float y1 = glm_clamp(v[1][1], 0, SCREEN_SIZE_Y - 1);
+        float y2 = glm_clamp(v[2][1], 0, SCREEN_SIZE_Y - 1);
         float y = y0;
 
+        vec2 x;
+        vec2 z;
+        vec2 tex_u;
+        vec2 tex_v;
+
         // Draw scanline
-        if (!isinf(slope1) && !isinf(slope2)) {
-            float x1 = v[0][0] + slope1 * (y - v[0][1]);
-            float x2 = v[0][0] + slope2 * (y - v[0][1]);
+        if (!isinf(slope_x[0]) && !isinf(slope_x[1])) {
+            scanline_range1(v[0][0], v[1][0], v, slope_x, y, x);
+            scanline_range1(v[0][2], v[1][2], v, slope_z, y, z);
+            scanline_range1(t[0][0], t[1][0], v, slope_tex_u, y, tex_u);
+            scanline_range1(t[0][1], t[1][1], v, slope_tex_v, y, tex_v);
+
             for (; y <= y1; y += 1.0f) {
-                draw_scanline(x1, x2, v[1][2], v[2][2], y);
-                x1 += slope1;
-                x2 += slope2;
+                scanline_draw(y, x, z, tex_u, tex_v, tex_mode);
+
+                scanline_add_slope1(slope_x, x);
+                scanline_add_slope1(slope_z, z);
+                scanline_add_slope1(slope_tex_u, tex_u);
+                scanline_add_slope1(slope_tex_v, tex_v);
             }
         }
 
-        if (!isinf(slope2) && !isinf(slope3)) {
-            float x1 = v[1][0] + slope3 * (y - v[1][1]);
-            float x2 = v[0][0] + slope2 * (y - v[0][1]);
+        if (!isinf(slope_x[1]) && !isinf(slope_x[2])) {
+            scanline_range2(v[0][0], v[1][0], v, slope_x, y, x);
+            scanline_range2(v[0][2], v[1][2], v, slope_z, y, z);
+            scanline_range2(t[0][0], t[1][0], v, slope_tex_u, y, tex_u);
+            scanline_range2(t[0][1], t[1][1], v, slope_tex_v, y, tex_v);
+
             for (; y <= y2; y += 1.0f) {
-                draw_scanline(x1, x2, v[1][2], v[0][2], y);
-                x1 += slope3;
-                x2 += slope2;
+                scanline_draw(y, x, z, tex_u, tex_v, tex_mode);
+
+                scanline_add_slope2(slope_x, x);
+                scanline_add_slope2(slope_z, z);
+                scanline_add_slope2(slope_tex_u, tex_u);
+                scanline_add_slope2(slope_tex_v, tex_v);
             }
         }
 #else
@@ -297,11 +381,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
                 // Interpolate Z
                 float z = interpolate(b, v[0][2], v[1][2], v[2][2]);
 
-                uint8_t color;
-
                 if (tex_mode == MINIGL_TEX_2D) {
-                    // Interpolate texture coordinates
-                    int tex_u, tex_v;
 
 #ifdef MINIGL_PERSP_CORRECT
                     // NOTE: https://stackoverflow.com/questions/24441631/how-exactly-does-opengl-do-perspectively-correct-linear-interpolation
@@ -313,30 +393,14 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
                     glm_vec3_divs(b, b[0] + b[1] + b[2], b);
 #endif
 
-                    tex_u = (int)(interpolate(b, t[0][0], t[1][0], t[2][0]) * (float)(cfg.texture.size_x - 1));
-                    tex_v = (int)(interpolate(b, t[0][1], t[1][1], t[2][1]) * (float)(cfg.texture.size_y - 1));
+                    // Interpolate texture coordinates
+                    float tex_u = (int)(interpolate(b, t[0][0], t[1][0], t[2][0]);
+                    float tex_v = (int)(interpolate(b, t[0][1], t[1][1], t[2][1]);
 
-                    tex_u = tex_u < 0 ? 0 : tex_u >= cfg.texture.size_x ? cfg.texture.size_x - 1 : tex_u;
-                    tex_v = tex_v < 0 ? 0 : tex_v >= cfg.texture.size_y ? cfg.texture.size_y - 1 : tex_v;
-
-                    if (cfg.texture.opacity[tex_v][tex_u] == 0) continue;
-
-                    color = cfg.texture.color[tex_v][tex_u];
+                    set_pixel_tex_2d(x, y, z, tex_u, tex_v);
                 } else {
-                    color = cfg.draw_color;
+                    set_pixel(x, y, z, cfg.draw_color);
                 }
-
-                // Depth test
-                // TODO: Make depth test programmable
-                if (z > frame.z_buff[y][x] || z > 1.0f || z < -1.0f) continue;
-                frame.z_buff[y][x] = z;
-
-                // FIXME: Should we do this at frame swap?
-#ifndef MINIGL_NO_DITHERING
-                frame.c_buff[y][x] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
-#else
-                frame.c_buff[y][x] = color;
-#endif
             }
         }
 #endif
