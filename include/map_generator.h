@@ -14,21 +14,10 @@ typedef enum {
 
 #define ROOM_TYPE_SIZE 1
 
-// FIXME: Replace with Ivec2
-typedef union {
-    struct {
-        int x, y;
-    };
-    int r;
-} RoomSize;
-
 typedef struct {
     map_room_type_t type;
-    int x;
-    int y;
-    RoomSize size;
-    int exit_cnt;
-    RoomSize way_in;
+    ivec2 pos;
+    ivec2 size;
 } map_room_t;
 
 void mapgen_grid_print(map_t map);

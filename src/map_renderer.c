@@ -10,7 +10,7 @@
 #define BB_SPRITE_SIZE 36
 
 // Geometry
-minigl_obj_t obj_light;
+minigl_obj_t obj_floor;
 minigl_obj_t obj_wall_n;
 minigl_obj_t obj_wall_e;
 minigl_obj_t obj_wall_s;
@@ -88,7 +88,8 @@ void map_init(void) {
     // Geometry
     //---------------------------------------------------------------------------
 
-    const float WALL_Y_OFF = 1.0f;
+    const float WALL_SCALE_Y = 1.5f;
+    const float FLOOR_Y_OFF = WALL_SCALE_Y * MAP_TILE_SIZE / 2.0f;
 
     // Load tile object
     minigl_obj_t obj_tile;
@@ -99,47 +100,48 @@ void map_init(void) {
 
     mat4 trans;
 
-    // Create ceiling
+    // Create floor
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, MAP_TILE_SIZE + WALL_Y_OFF, 0.0f});
+    glm_translate(trans, (vec3){0.0f, -FLOOR_Y_OFF, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_light);
+    glm_scale_uni(trans, MAP_TILE_SIZE);
+    minigl_obj_copy_trans(obj_tile, trans, &obj_floor);
 
     // Wall N
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, -(MAP_TILE_SIZE / 2.0f)});
-    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_translate(trans, (vec3){0.0f, 0.0f, -(MAP_TILE_SIZE / 2.0f)});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(obj_wall, trans, &obj_wall_n);
 
     // Wall S
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, +(MAP_TILE_SIZE / 2.0f)});
+    glm_translate(trans, (vec3){0.0f, 0.0f, +(MAP_TILE_SIZE / 2.0f)});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(obj_wall, trans, &obj_wall_s);
 
     // Wall E
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){+(MAP_TILE_SIZE / 2.0f), WALL_Y_OFF, 0.0f});
+    glm_translate(trans, (vec3){+(MAP_TILE_SIZE / 2.0f), 0.0f, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(obj_wall, trans, &obj_wall_e);
 
     // Wall W
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-(MAP_TILE_SIZE / 2.0f), WALL_Y_OFF, 0.0f});
+    glm_translate(trans, (vec3){-(MAP_TILE_SIZE / 2.0f), 0.0f, 0.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(obj_wall, trans, &obj_wall_w);
 
     // Statue
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, WALL_Y_OFF, 0.0f});
-    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
+    glm_translate(trans, (vec3){0.0f, 0.0f, 0.0f});
     glm_scale_uni(trans, MAP_TILE_SIZE);
     minigl_obj_copy_trans(obj_tile, trans, &obj_statue);
 
@@ -211,12 +213,9 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
     glm_mat4_mul(trans, tile_trans, tile_trans);
 
     if (item.type == ITEM_FLOOR) {
-        if ((x % 2 == 0) && (y % 2) == 0) {
-            // Draw light
-            // minigl_set_color(255);
-            // minigl_obj_to_obj_buf_trans(obj_light, tile_trans, &buf);
-            // minigl_draw(buf);
-        }
+        minigl_set_color(16);
+        minigl_obj_to_obj_buf_trans(obj_floor, tile_trans, &buf);
+        minigl_draw(buf);
     } else if (item.type == ITEM_STATUE) {
         minigl_set_tex(tex_venus[bb_tex_i]);
         minigl_obj_to_obj_buf_trans(obj_statue, tile_trans, &buf);
@@ -247,6 +246,8 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
 }
 
 void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
+    const int FOV_HEADROOM_ANGLE = 30;
+
     vec2 camera_dir;
     camera_dir[0] = camera.front[0];
     camera_dir[1] = camera.front[2];
@@ -261,15 +262,14 @@ void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
 
             float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
 
-            // NOTE: FOV should be divided by two, but since tile are discrete,
+            // NOTE: FOV should be divided by two, but since tiles are discrete,
             // we need to use a larger angle
-            // FIXME: There's something wrong!!!
-            // if (a >= cosf(glm_rad(CAMERA_FOV))) {
-            map_tile_t tile = map[y][x];
-            for (int i = 0; i < tile.item_cnt; i++) {
-                map_item_draw(tile.items[i], camera, trans, x, y);
+            if (a >= cosf(glm_rad(CAMERA_FOV / 2 + FOV_HEADROOM_ANGLE))) {
+                map_tile_t tile = map[y][x];
+                for (int i = 0; i < tile.item_cnt; i++) {
+                    map_item_draw(tile.items[i], camera, trans, x, y);
+                }
             }
-            //}
         }
     }
 }

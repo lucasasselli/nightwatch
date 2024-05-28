@@ -31,14 +31,6 @@ char tile_to_char(map_tile_t tile) {
     }
 }*/
 
-void tile_item_replace(map_t map, map_item_t item, int x, int y) {
-    map_tile_t *tile = &map[y][x];
-    tile->item_cnt = 0;
-    tile->items[tile->item_cnt] = item;
-    tile->item_cnt++;
-    assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
-}
-
 bool tile_has_item(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
     if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
     map_tile_t *tile = &map[y][x];
@@ -49,31 +41,62 @@ bool tile_has_item(map_t map, map_item_type_t type, map_item_dir_t dir, int x, i
     return false;
 }
 
+bool tile_remove_item(map_t map, map_item_t query, int x, int y) {
+    if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
+    map_tile_t *tile = &map[y][x];
+    int j = 0;
+    bool found = false;
+    for (int i = 0; i < tile->item_cnt; i++) {
+        map_item_t item = tile->items[i];
+        if (item.type == query.type && (item.dir == query.dir)) {
+            found = true;
+            continue;
+        }
+
+        tile->items[j] = tile->items[i];
+        j++;
+    }
+
+    tile->item_cnt = j;
+    return found;
+}
+
 void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
     map_item_t item;
     item.type = type;
     item.dir = dir;
     map_tile_t *tile = &map[y][x];
 
-    // Don't add double walls if you are next to an existing room!
+    bool add_floor = false;
     if (item.type == ITEM_WALL) {
         switch (item.dir) {
             case DIR_NORTH:
-                if (tile_has_item(map, ITEM_WALL, DIR_SOUTH, x, y - 1)) return;
+                if (tile_remove_item(map, (map_item_t){ITEM_WALL, DIR_SOUTH}, x, y - 1)) {
+                    return;
+                }
                 break;
 
             case DIR_EAST:
-                if (tile_has_item(map, ITEM_WALL, DIR_WEST, x + 1, y)) return;
+                if (tile_remove_item(map, (map_item_t){ITEM_WALL, DIR_WEST}, x + 1, y)) {
+                    return;
+                }
                 break;
 
             case DIR_SOUTH:
-                if (tile_has_item(map, ITEM_WALL, DIR_NORTH, x, y + 1)) return;
+                if (tile_remove_item(map, (map_item_t){ITEM_WALL, DIR_NORTH}, x, y + 1)) {
+                    return;
+                }
                 break;
 
             case DIR_WEST:
-                if (tile_has_item(map, ITEM_WALL, DIR_EAST, x - 1, y)) return;
+                if (tile_remove_item(map, (map_item_t){ITEM_WALL, DIR_EAST}, x - 1, y)) {
+                    return;
+                }
                 break;
         }
+    }
+
+    if (add_floor) {
     }
 
     assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
@@ -81,10 +104,15 @@ void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, int x, i
     tile->item_cnt++;
 }
 
+bool mapgen_room_check_oob(map_t map, map_room_t room) {
+    if (room.pos[0] < 0 || (room.pos[0] + room.size[0] >= MAP_SIZE)) return true;
+    if (room.pos[1] < 0 || (room.pos[1] + room.size[1] >= MAP_SIZE)) return true;
+    return false;
+}
+
 bool mapgen_room_check_collision(map_t map, map_room_t room) {
     // Check against map boundaries
-    if (room.x < 0 || (room.x + room.size.x >= MAP_SIZE)) return false;
-    if (room.y < 0 || (room.y + room.size.y >= MAP_SIZE)) return false;
+    if (mapgen_room_check_oob(map, room)) return false;
 
     // Check against other rooms
     bool match = false;
@@ -92,19 +120,19 @@ bool mapgen_room_check_collision(map_t map, map_room_t room) {
     for (int i = 0; i < room_cnt; i++) {
         map_room_t other = rooms[i];
 
-        if ((room.x + room.size.x) <= other.x) {
+        if ((room.pos[0] + room.size[0]) <= other.pos[0]) {
             continue;
         }
 
-        if (room.x >= (other.x + other.size.x)) {
+        if (room.pos[0] >= (other.pos[0] + other.size[0])) {
             continue;
         }
 
-        if ((room.y + room.size.y) <= other.y) {
+        if ((room.pos[1] + room.size[1]) <= other.pos[1]) {
             continue;
         }
 
-        if (room.y >= (other.y + other.size.y)) {
+        if (room.pos[1] >= (other.pos[1] + other.size[1])) {
             continue;
         }
 
@@ -130,43 +158,38 @@ void mapgen_grid_update(map_t map) {
     for (int i = 0; i < room_cnt; i++) {
         map_room_t room = rooms[i];
 
-        assert((room.y + room.size.y) < MAP_SIZE);
-        assert((room.x + room.size.x) < MAP_SIZE);
+        assert((room.pos[1] + room.size[1]) < MAP_SIZE);
+        assert((room.pos[0] + room.size[0]) < MAP_SIZE);
 
         switch (room.type) {
             case ROOM_CORRIDOR:
             case ROOM_BASE:
 
                 // Floor
-                for (int y = 0; y < room.size.y; y++) {
-                    for (int x = 0; x < room.size.x; x++) {
-                        tile_item_add(map, ITEM_FLOOR, DIR_ANY, room.x + x, room.y + y);
+                for (int y = 0; y < room.size[1]; y++) {
+                    for (int x = 0; x < room.size[0]; x++) {
+                        tile_item_add(map, ITEM_FLOOR, DIR_ANY, room.pos[0] + x, room.pos[1] + y);
                     }
                 }
 
                 // Walls
-                grid_add_item_row(map, ITEM_WALL, DIR_NORTH, room.x, room.y, room.size.x);
-                grid_add_item_col(map, ITEM_WALL, DIR_EAST, room.x + room.size.x - 1, room.y, room.size.y);
-                grid_add_item_row(map, ITEM_WALL, DIR_SOUTH, room.x, room.y + room.size.y - 1, room.size.x);
-                grid_add_item_col(map, ITEM_WALL, DIR_WEST, room.x, room.y, room.size.y);
+                grid_add_item_row(map, ITEM_WALL, DIR_NORTH, room.pos[0], room.pos[1], room.size[0]);
+                grid_add_item_col(map, ITEM_WALL, DIR_EAST, room.pos[0] + room.size[0] - 1, room.pos[1], room.size[1]);
+                grid_add_item_row(map, ITEM_WALL, DIR_SOUTH, room.pos[0], room.pos[1] + room.size[1] - 1, room.size[0]);
+                grid_add_item_col(map, ITEM_WALL, DIR_WEST, room.pos[0], room.pos[1], room.size[1]);
 
                 // Add bases
                 if (room.type != ROOM_CORRIDOR) {
-                    int base_num = sqrt(room.size.x * room.size.y) / 2;
+                    int base_num = sqrt(room.size[0] * room.size[1]) / 2;
                     for (int i = 0; i < base_num; i++) {
                         int x, y;
                         do {
-                            x = rand_range(room.x, room.x + room.size.x);
-                            y = rand_range(room.y, room.y + room.size.y);
+                            x = rand_range(room.pos[0], room.pos[0] + room.size[0]);
+                            y = rand_range(room.pos[1], room.pos[1] + room.size[1]);
                         } while (tile_has_item(map, ITEM_STATUE, DIR_ANY, x, y));
 
                         tile_item_add(map, ITEM_STATUE, rand() % 4, x, y);
                     }
-                }
-
-                // Doors
-                if (room.way_in.x > 0 && room.way_in.y > 0) {
-                    tile_item_replace(map, (map_item_t){ITEM_FLOOR, DIR_ANY}, room.way_in.x, room.way_in.y);
                 }
 
                 break;
@@ -189,32 +212,27 @@ map_room_t mapgen_room_randomize(void) {
     // FIXME: Weight ROOM_CORRIDOR to be less likely
     room.type = rand() % ROOM_TYPE_SIZE;
 
-    room.way_in.x = -1;
-    room.way_in.y = -1;
-
     switch (room.type) {
         case ROOM_BASE:
-            room.size.x = rand_range(5, 10);
-            room.size.y = rand_range(5, 10);
-            room.exit_cnt = rand_range(1, 3);
+            room.size[0] = rand_range(5, 10);
+            room.size[1] = rand_range(5, 10);
             break;
 
         case ROOM_CORRIDOR:
             if (rand() % 1) {
                 // North-south
-                room.size.x = 2;
-                room.size.y = rand_range(4, 20);
+                room.size[0] = 2;
+                room.size[1] = rand_range(4, 20);
             } else {
                 // East-west
-                room.size.x = rand_range(4, 20);
-                room.size.y = 2;
+                room.size[0] = rand_range(4, 20);
+                room.size[1] = 2;
             }
-            room.exit_cnt = rand_range(3, 5);
             break;
     }
 
-    room.x = rand_range(0, MAP_SIZE - room.size.x);
-    room.y = rand_range(0, MAP_SIZE - room.size.y);
+    room.pos[0] = rand_range(0, MAP_SIZE - room.size[0]);
+    room.pos[1] = rand_range(0, MAP_SIZE - room.size[1]);
 
     return room;
 }
@@ -248,10 +266,10 @@ void mapgen_room_randomize_next(map_room_t this, map_room_t *next) {
     // of 2 to allow to fit the door!
 
     // Calculate the min and max coordinates for next room origin
-    int min_x = this.x - (next->size.x);
-    int max_x = this.x + (this.size.x);
-    int min_y = this.y - (next->size.y);
-    int max_y = this.y + (this.size.y);
+    int min_x = this.pos[0] - (next->size[0]);
+    int max_x = this.pos[0] + (this.size[0]);
+    int min_y = this.pos[1] - (next->size[1]);
+    int max_y = this.pos[1] + (this.size[1]);
 
     do {
         // Pick a side for the next room
@@ -268,44 +286,37 @@ void mapgen_room_randomize_next(map_room_t this, map_room_t *next) {
 
         if (side == 0 || side == 2) {
             // North - South
-            next->x = rand_range(min_x + ROOM_MARGIN, max_x - ROOM_MARGIN);
+            next->pos[0] = rand_range(min_x + ROOM_MARGIN, max_x - ROOM_MARGIN);
 
-            int door_min = maxi(this.x + DOOR_MARGIN, next->x + DOOR_MARGIN);
-            int door_max = mini(this.x + this.size.x - DOOR_MARGIN, next->x + next->size.x - DOOR_MARGIN);
+            int door_min = maxi(this.pos[0] + DOOR_MARGIN, next->pos[0] + DOOR_MARGIN);
+            int door_max = mini(this.pos[0] + this.size[0] - DOOR_MARGIN, next->pos[0] + next->size[0] - DOOR_MARGIN);
 
             if (door_max - door_min == 0) continue;
 
-            next->way_in.x = rand_range(door_min, door_max);
             if (side == 0) {
                 // North
-                next->y = min_y;
-                next->way_in.y = this.y;
+                next->pos[1] = min_y;
             } else {
                 // South
-                next->y = max_y;
-                next->way_in.y = max_y - 1;
+                next->pos[1] = max_y;
             }
         }
 
         if (side == 1 || side == 3) {
             // East - West
-            next->y = rand_range(min_y + ROOM_MARGIN, max_y - ROOM_MARGIN);
+            next->pos[1] = rand_range(min_y + ROOM_MARGIN, max_y - ROOM_MARGIN);
 
-            int door_min_y = maxi(this.y + DOOR_MARGIN, next->y + DOOR_MARGIN);
-            int door_max_y = mini(this.y + this.size.y - DOOR_MARGIN, next->y + next->size.y - DOOR_MARGIN);
+            int door_min_y = maxi(this.pos[1] + DOOR_MARGIN, next->pos[1] + DOOR_MARGIN);
+            int door_max_y = mini(this.pos[1] + this.size[1] - DOOR_MARGIN, next->pos[1] + next->size[1] - DOOR_MARGIN);
 
             if (door_max_y - door_min_y == 0) continue;
 
-            next->way_in.y = rand_range(door_min_y, door_max_y);
-
             if (side == 1) {
                 // East
-                next->x = max_x;
-                next->way_in.x = next->x - 1;
+                next->pos[0] = max_x;
             } else {
                 // West
-                next->x = min_x;
-                next->way_in.x = this.x;
+                next->pos[0] = min_x;
             }
         }
 
@@ -313,7 +324,7 @@ void mapgen_room_randomize_next(map_room_t this, map_room_t *next) {
     } while (true);
 }
 
-void mapgen_room_add(map_t map, map_room_t room) {
+void room_add(map_t map, map_room_t room) {
     assert(room_cnt < MAP_MAX_ROOMS);
     rooms[room_cnt] = room;
     room_cnt++;
@@ -321,7 +332,8 @@ void mapgen_room_add(map_t map, map_room_t room) {
 
 void mapgen_gen_adjacent(map_t map, map_room_t room) {
     // Pick a point on the room walls and use this to generate the next room
-    for (int i = 0; i < room.exit_cnt; i++) {
+    int exit_cnt = rand_range(1, 4);
+    for (int i = 0; i < exit_cnt; i++) {
         if (room_cnt >= (MAP_MAX_ROOMS - 1)) {
             return;
         }
@@ -339,7 +351,7 @@ void mapgen_gen_adjacent(map_t map, map_room_t room) {
             continue;
         }
 
-        mapgen_room_add(map, next_room);
+        room_add(map, next_room);
         mapgen_gen_adjacent(map, next_room);
     }
 }
@@ -362,14 +374,10 @@ void mapgen_gen(map_t map) {
     room = mapgen_room_randomize();
 
     // Put first room at center of map
-    room.x = MAP_SIZE / 2 - room.size.x / 2;
-    room.y = MAP_SIZE / 2 - room.size.y / 2;
+    room.pos[0] = MAP_SIZE / 2 - room.size[0] / 2;
+    room.pos[1] = MAP_SIZE / 2 - room.size[1] / 2;
 
-    // Should have at least 1 exit
-    if (room.exit_cnt < 1) {
-        room.exit_cnt = 1;
-    }
-    mapgen_room_add(map, room);
+    room_add(map, room);
 
     if (MAP_MAX_ROOMS > 1) {
         // Create adjacent rooms

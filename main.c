@@ -25,11 +25,15 @@ game_state_t gs;
 mat4 proj;
 mat4 trans;
 
+#define TORCH_DISCHARGE_RATE 0.99f
+#define TORCH_CHARGE_RATE 0.001f
+
 // Resources
 LCDFont *font = NULL;
 minigl_tex_t tex_dither;
 
 unsigned int update_cnt = 0;
+float torch_charge = 0.0;
 
 void view_update(void) {
     // Update camera poistion
@@ -40,18 +44,46 @@ void view_update(void) {
     glm_mat4_mul(proj, view, trans);
 }
 
+float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
-    uint8_t *frame = pd->graphics->getFrame();
-    int i = 0;
+    const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
+    uint8_t *pd_frame = pd->graphics->getFrame();
+    minigl_frame_t *minigl_frame = minigl_get_frame();
     for (int y = 0; y < SCREEN_SIZE_Y; y++) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
-            if (c_buff[i]) {
-                clearpixel(frame, x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
-            } else {
-                setpixel(frame, x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
+            uint8_t color = minigl_frame->c_buff[y][x];
+
+            // If pixel is already fully back, don't bother...
+            if (color > 0.0) {
+                float z = minigl_frame->z_buff[y][x];
+
+                float fade_z = 0.60f + 0.35f * torch_charge;
+
+                if (z > fade_z) {
+                    color = ((float)color) * (1.0f - z) / (1.0f - fade_z);
+                }
+
+                float r = frame_radius[y][x];
+
+                float fade_r = 100.0f * torch_charge;
+                float black_r = 120.0f - 20.0f * (1.0f - torch_charge);
+
+                if (r > fade_r && r <= black_r) {
+                    color *= (black_r - r) / (black_r - fade_r);
+                } else if (r > black_r) {
+                    color = 0;
+                }
+
+                color = (color >= tex_dither.color[y % tex_dither.size_y][x % tex_dither.size_x]);
             }
-            i++;
+
+            if (color) {
+                clearpixel(pd_frame, X_OFFSET + x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
+            } else {
+                setpixel(pd_frame, X_OFFSET + x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
+            }
         }
     }
     pd->graphics->markUpdatedRows(0, LCD_ROWS - 1);
@@ -96,6 +128,13 @@ static int update(void *userdata) {
     minimap_draw(300, 0, gs.camera);
     meas_time_stop(4);
 
+    // Handle crank
+    float crank_delta = fabsf(pd->system->getCrankChange());
+    torch_charge = torch_charge * TORCH_DISCHARGE_RATE + crank_delta * TORCH_CHARGE_RATE;
+    if (torch_charge > 1.0f) {
+        torch_charge = 1.0f;
+    }
+
     meas_time_stop(0);
 
 #ifdef DEBUG_PERF
@@ -135,6 +174,7 @@ __declspec(dllexport)
 
         pd->system->setUpdateCallback(update, pd);
         pd->display->setRefreshRate(30);
+        pd->graphics->clear(kColorBlack);
 
         //---------------------------------------------------------------------------
         // Game resources
@@ -150,6 +190,16 @@ __declspec(dllexport)
             pd->system->error("%s:%i Couldn't load font %s: %s", __FILE__, __LINE__, fontpath, err);
         }
         pd->graphics->setFont(font);
+
+        //---------------------------------------------------------------------------
+        // Precalculate stuff
+        //---------------------------------------------------------------------------
+
+        for (int y = 0; y < SCREEN_SIZE_Y; y++) {
+            for (int x = 0; x < SCREEN_SIZE_X; x++) {
+                frame_radius[y][x] = sqrtf(pow((x - SCREEN_SIZE_X / 2), 2) + pow((y - SCREEN_SIZE_Y / 2), 2));
+            }
+        }
 
         //---------------------------------------------------------------------------
         // Game config

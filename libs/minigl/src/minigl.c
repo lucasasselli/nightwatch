@@ -5,10 +5,9 @@
 
 #include "cglm/types.h"
 
-uint8_t c_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
-float z_buff[SCREEN_SIZE_Y * SCREEN_SIZE_X];
-
 minigl_cfg_t cfg = {0};
+minigl_frame_t frame;
+
 minigl_perf_data_t perf_data;
 
 void minigl_set_tex(minigl_tex_t t) {
@@ -26,9 +25,11 @@ void minigl_set_color(uint8_t color) {
 }
 
 void minigl_clear(uint8_t color, int depth) {
-    for (int i = 0; i < SCREEN_SIZE_X * SCREEN_SIZE_Y; i++) {
-        c_buff[i] = (uint8_t)color;  // Clear color buffer
-        z_buff[i] = depth;           // Clear z buffer
+    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
+        for (int x = 0; x < SCREEN_SIZE_X; x++) {
+            frame.c_buff[y][x] = (uint8_t)color;  // Clear color buffer
+            frame.z_buff[y][x] = depth;           // Clear z buffer
+        }
     }
 }
 
@@ -110,8 +111,6 @@ MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const i
         glm_swapf(&x1, &x2);
     }
 
-    int buff_off = y * SCREEN_SIZE_X;
-
     for (int x = floorf(x1); x < ceilf(x2); x++) {
         minigl_perf_event(PERF_FRAG);
 
@@ -119,11 +118,11 @@ MINIGL_INLINE void draw_scanline(float x1, float x2, float z1, float z2, const i
         float t = (float)(x - x1) / (x2 - x1);
         float z = (1 - t) * z1 + t * z2;
 
-        if (z > z_buff[buff_off + x]) continue;
-        z_buff[buff_off + x] = z;
+        if (z > frame.z_buff[y][x]) continue;
+        frame.z_buff[y][x] = z;
 
-        c_buff[buff_off + x] = cfg.draw_color;
-        c_buff[buff_off + x] = (c_buff[buff_off + x] >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+        frame.c_buff[y][x] = cfg.draw_color;
+        frame.c_buff[y][x] = (frame.c_buff[y][x] >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
     }
 }
 
@@ -279,8 +278,6 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
             for (int x = mbr_min_x; x < mbr_max_x; x++) {
                 minigl_perf_event(PERF_FRAG);
 
-                int buff_i = y * SCREEN_SIZE_X + x;
-
                 // Calculate the fragment coordinates
                 vec4 p;
                 p[0] = x;
@@ -331,20 +328,14 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
 
                 // Depth test
                 // TODO: Make depth test programmable
-                if (z > z_buff[buff_i] || z > 1.0f) continue;
-                z_buff[buff_i] = z;
-
-#ifndef MINIGL_NO_Z_FADE
-                if (z > MINIGL_Z_FADE_THRESHOLD) {
-                    color = ((float)color) * (1.0f - z) / (1.0f - MINIGL_Z_FADE_THRESHOLD);
-                }
-#endif
+                if (z > frame.z_buff[y][x] || z > 1.0f || z < -1.0f) continue;
+                frame.z_buff[y][x] = z;
 
                 // FIXME: Should we do this at frame swap?
 #ifndef MINIGL_NO_DITHERING
-                c_buff[buff_i] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+                frame.c_buff[y][x] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
 #else
-                c_buff[buff_i] = color;
+                frame.c_buff[y][x] = color;
 #endif
             }
         }
@@ -358,4 +349,8 @@ void minigl_draw(minigl_obj_buf_t buf) {
     } else if (cfg.texture_mode == MINIGL_TEX_0D) {
         draw(buf, MINIGL_TEX_0D);
     }
+}
+
+minigl_frame_t* minigl_get_frame(void) {
+    return &frame;
 }
