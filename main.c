@@ -33,7 +33,10 @@ LCDFont *font = NULL;
 minigl_tex_t tex_dither;
 
 unsigned int update_cnt = 0;
-float torch_charge = 0.0;
+float torch_charge = 1.0;
+float torch_on = false;
+
+float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 void view_update(void) {
     // Update camera poistion
@@ -44,8 +47,6 @@ void view_update(void) {
     glm_mat4_mul(proj, view, trans);
 }
 
-float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
-
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
@@ -55,8 +56,16 @@ void screen_update(void) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
             uint8_t color = minigl_frame->c_buff[y][x];
 
-            // If pixel is already fully back, don't bother...
-            if (color > 0.0) {
+            float r = frame_radius[y][x];
+
+            float torch_fade_r = 100.0f * torch_charge;
+            float torch_black_r = torch_on ? 120.0f - 20.0f * (1.0f - torch_charge) : 0.0f;
+
+            if (r > torch_black_r) {
+                // If pixel is outside torch radius
+                color = 0;
+            } else if (color > 0.0 || r > torch_black_r) {
+                // If pixel is already fully back, don't bother
                 float z = minigl_frame->z_buff[y][x];
 
                 float fade_z = 0.60f + 0.35f * torch_charge;
@@ -65,14 +74,9 @@ void screen_update(void) {
                     color = ((float)color) * (1.0f - z) / (1.0f - fade_z);
                 }
 
-                float r = frame_radius[y][x];
-
-                float fade_r = 100.0f * torch_charge;
-                float black_r = 120.0f - 20.0f * (1.0f - torch_charge);
-
-                if (r > fade_r && r <= black_r) {
-                    color *= (black_r - r) / (black_r - fade_r);
-                } else if (r > black_r) {
+                if (r > torch_fade_r && r <= torch_black_r) {
+                    color *= (torch_black_r - r) / (torch_black_r - torch_fade_r);
+                } else if (r > torch_black_r) {
                     color = 0;
                 }
 
@@ -125,14 +129,19 @@ static int update(void *userdata) {
     meas_time_stop(3);
 
     meas_time_start(4);
-    minimap_draw(300, 0, gs.camera);
+    // minimap_draw(300, 0, gs.camera);
     meas_time_stop(4);
 
     // Handle crank
     float crank_delta = fabsf(pd->system->getCrankChange());
-    torch_charge = torch_charge * TORCH_DISCHARGE_RATE + crank_delta * TORCH_CHARGE_RATE;
-    if (torch_charge > 1.0f) {
-        torch_charge = 1.0f;
+    if (!pd->system->isCrankDocked()) {
+        torch_charge = torch_charge * TORCH_DISCHARGE_RATE + crank_delta * TORCH_CHARGE_RATE;
+        if (torch_charge > 1.0f) {
+            torch_charge = 1.0f;
+        }
+        torch_on = true;
+    } else {
+        torch_on = false;
     }
 
     meas_time_stop(0);
