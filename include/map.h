@@ -29,6 +29,7 @@ typedef struct {
 typedef struct {
     map_item_t *items;
     int item_cnt;
+    bool collide;
 } map_tile_t;
 
 typedef map_tile_t map_t[MAP_SIZE][MAP_SIZE];

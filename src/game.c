@@ -14,18 +14,28 @@ void game_init(game_state_t* state) {
 void handle_keys(game_state_t* state, PDButtons pushed) {
     vec3 camera_delta;
 
+    const float INPUT_CAMERA_TSPEED1 = 0.5f;
+    const float INPUT_CAMERA_TSPEED2 = 0.7f;
+    const float INPUT_CAMERA_RSPEED = 5.0f;  // Deg per Frame;
+
     vec3 old_pos;
     glm_vec3_copy(state->camera.pos, old_pos);
 
     // FIXME: Improve once keymap is decided
     if (pushed & kButtonUp) {
-        glm_vec3_scale_as(state->camera.front, INPUT_CAMERA_TSPEED, camera_delta);
+        // Walks forward
+        float speed = INPUT_CAMERA_TSPEED1;
+        if (pushed & kButtonA) {
+            speed = INPUT_CAMERA_TSPEED2;
+        }
+        glm_vec3_scale_as(state->camera.front, speed, camera_delta);
         glm_vec3_add(state->camera.pos, camera_delta, state->camera.pos);
-    }
-    if (pushed & kButtonDown) {
-        glm_vec3_scale_as(state->camera.front, INPUT_CAMERA_TSPEED, camera_delta);
+    } else if (pushed & kButtonDown) {
+        // Walk backward
+        glm_vec3_scale_as(state->camera.front, INPUT_CAMERA_TSPEED1, camera_delta);
         glm_vec3_sub(state->camera.pos, camera_delta, state->camera.pos);
     }
+
     if (pushed & kButtonRight) {
         state->camera.yaw += INPUT_CAMERA_RSPEED;
     }
@@ -33,7 +43,7 @@ void handle_keys(game_state_t* state, PDButtons pushed) {
         state->camera.yaw -= INPUT_CAMERA_RSPEED;
     }
     if (pushed & kButtonB) {
-        state->minimap_show ^= 1;
+        // state->minimap_show ^= 1;
     }
 
     // Check collision

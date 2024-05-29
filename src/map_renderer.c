@@ -213,7 +213,11 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
     glm_mat4_mul(trans, tile_trans, tile_trans);
 
     if (item.type == ITEM_FLOOR) {
-        minigl_set_color(16);
+        if (((x + y) % 2) == 0) {
+            minigl_set_color(16);
+        } else {
+            minigl_set_color(24);
+        }
         minigl_obj_to_obj_buf_trans(obj_floor, tile_trans, &buf);
         minigl_draw(buf);
     } else if (item.type == ITEM_STATUE) {

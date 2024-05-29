@@ -25,16 +25,21 @@ game_state_t gs;
 mat4 proj;
 mat4 trans;
 
-// #define TORCH_DISABLE
-#define TORCH_DISCHARGE_RATE 0.99f
-#define TORCH_CHARGE_RATE 0.001f
-
 // Resources
 LCDFont *font = NULL;
 minigl_tex_t tex_dither;
 
 unsigned int update_cnt = 0;
-float torch_charge = 1.0;
+
+//---------------------------------------------------------------------------
+// Torch
+//---------------------------------------------------------------------------
+
+// #define TORCH_DISABLE
+#define TORCH_DISCHARGE_RATE 0.01f
+#define TORCH_CHARGE_RATE 0.001f
+
+float torch_charge = 0.0;
 float torch_on = false;
 
 float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
@@ -51,8 +56,17 @@ void view_update(void) {
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
+
+    // FIXME: This is garbage! 0 means fully back!
+    const float TORCH_FADE_Z = 0.60f + 0.35f * torch_charge;
+    const float TORCH_FADE_Z_K = 1.0f / (1.0f - TORCH_FADE_Z);
+    float TORCH_FADE_R = 100.0f * torch_charge;
+    float TORCH_BLACK_R = torch_on ? 120.0f - 20.0f * (1.0f - torch_charge) : 0.0f;
+    float TORCH_FADE_K = 1.0f / (TORCH_BLACK_R - TORCH_FADE_R);
+
     uint8_t *pd_frame = pd->graphics->getFrame();
     minigl_frame_t *minigl_frame = minigl_get_frame();
+
     for (int y = 0; y < SCREEN_SIZE_Y; y++) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
             uint8_t color = minigl_frame->c_buff[y][x];
@@ -60,29 +74,25 @@ void screen_update(void) {
 #ifndef TORCH_DISABLE
             float r = frame_radius[y][x];
 
-            float torch_fade_r = 100.0f * torch_charge;
-            float torch_black_r = torch_on ? 120.0f - 20.0f * (1.0f - torch_charge) : 0.0f;
-
-            if (r > torch_black_r) {
+            if (r > TORCH_BLACK_R) {
                 // If pixel is outside torch radius
                 color = 0;
-            } else if (color > 0.0 || r > torch_black_r) {
+            } else if (color > 0.0 || r > TORCH_BLACK_R) {
                 // If pixel is already fully back, don't bother
                 float z = minigl_frame->z_buff[y][x];
 
-                float fade_z = 0.60f + 0.35f * torch_charge;
-
-                if (z > fade_z) {
-                    color = ((float)color) * (1.0f - z) / (1.0f - fade_z);
+                if (z > TORCH_FADE_Z) {
+                    color = ((float)color) * (1.0f - z) * TORCH_FADE_Z_K;
                 }
 
-                if (r > torch_fade_r && r <= torch_black_r) {
-                    color *= (torch_black_r - r) / (torch_black_r - torch_fade_r);
-                } else if (r > torch_black_r) {
+                if (r > TORCH_FADE_R && r <= TORCH_BLACK_R) {
+                    color *= (TORCH_BLACK_R - r) * TORCH_FADE_K;
+                } else if (r > TORCH_BLACK_R) {
                     color = 0;
                 }
 
-                color = (color >= tex_dither.color[y % tex_dither.size_y][x % tex_dither.size_x]);
+                // FIXME:
+                color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
             }
 #else
             color = (color >= tex_dither.color[y % tex_dither.size_y][x % tex_dither.size_x]);
@@ -141,15 +151,11 @@ static int update(void *userdata) {
 
     // Handle crank
     float crank_delta = fabsf(pd->system->getCrankChange());
-    if (!pd->system->isCrankDocked()) {
-        torch_charge = torch_charge * TORCH_DISCHARGE_RATE + crank_delta * TORCH_CHARGE_RATE;
-        if (torch_charge > 1.0f) {
-            torch_charge = 1.0f;
-        }
-        torch_on = true;
-    } else {
-        torch_on = false;
-    }
+    torch_charge += -TORCH_DISCHARGE_RATE;
+    torch_charge += crank_delta * TORCH_CHARGE_RATE;
+    torch_charge = glm_clamp(torch_charge, 0.0f, 1.0f);
+
+    torch_on = !pd->system->isCrankDocked();
 
     meas_time_stop(0);
 
@@ -251,7 +257,7 @@ __declspec(dllexport)
             pos_tile_to_world(spawn_tile_pos, gs.camera.pos);
         } while (map_tile_collide(spawn_tile));
 
-        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 20.0f, proj);
+        glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 50.0f, proj);
         view_update();  // Setup view matrix
 
         debug("Setup complete!");

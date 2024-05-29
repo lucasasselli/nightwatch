@@ -17,6 +17,11 @@ if (TOOLCHAIN STREQUAL "armgcc")
 		-o ${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.elf
 	)
 
+	add_custom_command(
+		TARGET ${PLAYDATE_GAME_DEVICE} POST_BUILD
+        COMMAND ${CMAKE_OBJDUMP} --visualize-jumps --source ${PLAYDATE_GAME_DEVICE}.elf > ${PLAYDATE_GAME_DEVICE}_dump.txt
+	)
+
 	set_property(
 		TARGET ${PLAYDATE_GAME_DEVICE} APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 		${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.elf

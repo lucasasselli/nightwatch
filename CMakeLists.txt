@@ -19,6 +19,10 @@ file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
 set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+
 if (TOOLCHAIN STREQUAL "armgcc")
     set(MINIGL_SHARED OFF CACHE BOOL "")
 

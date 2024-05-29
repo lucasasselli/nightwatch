@@ -67,7 +67,6 @@ void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, int x, i
     item.dir = dir;
     map_tile_t *tile = &map[y][x];
 
-    bool add_floor = false;
     if (item.type == ITEM_WALL) {
         switch (item.dir) {
             case DIR_NORTH:
@@ -94,9 +93,8 @@ void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, int x, i
                 }
                 break;
         }
-    }
-
-    if (add_floor) {
+    } else if (item.type == ITEM_STATUE) {
+        tile->collide = true;
     }
 
     assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);

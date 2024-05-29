@@ -101,6 +101,7 @@ MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
     frame.z_buff[y][x] = z;
 
 #ifndef MINIGL_NO_DITHERING
+    // FIXME: use mask?
     frame.c_buff[y][x] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
 #else
     frame.c_buff[y][x] = color;
@@ -120,14 +121,10 @@ MINIGL_INLINE void set_pixel_tex_2d(int x, int y, float z, float uf, float vf) {
     set_pixel(x, y, z, cfg.texture.color[v][u]);
 }
 
-MINIGL_INLINE float scanline_slope(float a, float b, vec4 p0, vec4 p1) {
-    return (a - b) / (p0[1] - p1[1]);  // Slope is computed on y
-}
-
 MINIGL_INLINE void scanline_slopes(float a, float b, float c, vec4 v[3], vec3 out) {
-    out[0] = scanline_slope(b, a, v[1], v[0]);
-    out[1] = scanline_slope(c, a, v[2], v[0]);
-    out[2] = scanline_slope(c, b, v[2], v[1]);
+    out[0] = (b - a) / (v[1][1] - v[0][1]);
+    out[1] = (c - a) / (v[2][1] - v[0][1]);
+    out[2] = (c - b) / (v[2][1] - v[1][1]);
 }
 
 MINIGL_INLINE void scanline_range1(float a, float b, vec4 v[3], vec3 slope, float y, vec2 out) {
@@ -150,9 +147,9 @@ MINIGL_INLINE void scanline_add_slope2(vec3 slope, vec2 out) {
     out[1] += slope[1];
 }
 
-MINIGL_INLINE void scanline_draw(const int y, vec2 x, vec2 z, vec2 u, vec2 v, minigl_tex_mode_t tex_mode) {
+MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u_range, vec2 v_range, minigl_tex_mode_t tex_mode) {
     vec2 x_l;
-    glm_vec2_copy(x, x_l);
+    glm_vec2_copy(x_range, x_l);
     glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
 
     // Swap x_l[0] and x_l[1]
@@ -163,19 +160,29 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x, vec2 z, vec2 u, vec2 v, mi
         stop_i = 0;
     }
 
-    for (int x_act = floorf(x_l[start_i]); x_act < ceilf(x_l[stop_i]); x_act++) {
+    float delta_k = 1.0f / (x_range[stop_i] - x_range[start_i]);
+    float z_delta = (z_range[stop_i] - z_range[start_i]) * delta_k;
+    float u_delta = (u_range[stop_i] - u_range[start_i]) * delta_k;
+    float v_delta = (v_range[stop_i] - v_range[start_i]) * delta_k;
+
+    float x_start_delta = floorf(x_l[start_i]) - x_range[start_i];
+    float z = z_range[start_i] + x_start_delta * z_delta;
+    float u = u_range[start_i] + x_start_delta * u_delta;
+    float v = v_range[start_i] + x_start_delta * v_delta;
+
+    // FIXME: not a big fan of this x casting :(
+    for (int x = floorf(x_l[start_i]); x < ceilf(x_l[stop_i]); x++) {
         minigl_perf_event(PERF_FRAG);
 
-        float t = ((float)(x_act)-x[start_i]) / (x[stop_i] - x[start_i]);
-        float z_act = glm_lerp(z[start_i], z[stop_i], t);
-        float u_act = glm_lerp(u[start_i], u[stop_i], t);
-        float v_act = glm_lerp(v[start_i], v[stop_i], t);
-
         if (tex_mode == MINIGL_TEX_2D) {
-            set_pixel_tex_2d(x_act, y, z_act, u_act, v_act);
+            set_pixel_tex_2d(x, y, z, u, v);
         } else {
-            set_pixel(x_act, y, z_act, cfg.draw_color);
+            set_pixel(x, y, z, cfg.draw_color);
         }
+
+        z += z_delta;
+        u += u_delta;
+        v += v_delta;
     }
 }
 
@@ -220,6 +227,13 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
             continue;
         }
 
+        // Get texture coordinates
+        if (tex_mode == MINIGL_TEX_2D) {
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][0]], t[0]);
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][1]], t[1]);
+            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][2]], t[2]);
+        }
+
         //---------------------------------------------------------------------------
         // Culling/Clipping
         //---------------------------------------------------------------------------
@@ -232,6 +246,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
             continue;
         }
 
+#ifndef MINIGL_SCANLINE
         vec4 p;
         p[0] = (v[0][0] + v[1][0] + v[2][0]) / 3.0f;
         p[1] = (v[0][1] + v[1][1] + v[2][1]) / 3.0f;
@@ -249,20 +264,13 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
             //  continue;
         }
 
-        // Get texture coordinates
-        if (tex_mode == MINIGL_TEX_2D) {
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][0]], t[0]);
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][1]], t[1]);
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][2]], t[2]);
-        }
-
         if (cw_wind_order) {
             vec4_swap(v[0], v[2]);
-
             if (tex_mode == MINIGL_TEX_2D) {
                 vec2_swap(t[0], t[2]);
             }
         }
+#endif
 
         //---------------------------------------------------------------------------
         // Convert to Viewport
