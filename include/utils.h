@@ -1,8 +1,8 @@
 #pragma once
 
-#include <assert.h>
-#include <stdlib.h>
+#include <cglm/cglm.h>
 
+#include "minigl.h"
 #include "pd_api.h"
 
 #ifdef DEBUG
@@ -26,6 +26,12 @@ int rand_range(int min, int max);
 int mini(int a, int b);
 
 int maxi(int a, int b);
+
+float vec2_angle(vec2 a, vec2 b);
+
+bool ivec2_eq(ivec2 a, ivec2 b);
+
+void mat4_billboard(minigl_camera_t camer, mat4 trans);
 
 void meas_time_start(int id);
 

@@ -28,19 +28,14 @@ mat4 trans;
 // Resources
 LCDFont *font = NULL;
 minigl_tex_t tex_dither;
+minigl_tex_t tex_enemy;
+minigl_obj_t obj_enemy;
+
+minigl_obj_buf_t obj_buf;
 
 unsigned int update_cnt = 0;
 
-//---------------------------------------------------------------------------
-// Torch
-//---------------------------------------------------------------------------
-
 // #define TORCH_DISABLE
-#define TORCH_DISCHARGE_RATE 0.01f
-#define TORCH_CHARGE_RATE 0.001f
-
-float torch_charge = 0.0;
-float torch_on = false;
 
 float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
@@ -48,8 +43,8 @@ void view_update(void) {
     // Update camera poistion
     vec3 camera_center;
     mat4 view;
-    glm_vec3_add(gs.camera.pos, gs.camera.front, camera_center);
-    glm_lookat(gs.camera.pos, camera_center, gs.camera.up, view);
+    glm_vec3_add(gs.player_camera.pos, gs.player_camera.front, camera_center);
+    glm_lookat(gs.player_camera.pos, camera_center, gs.player_camera.up, view);
     glm_mat4_mul(proj, view, trans);
 }
 
@@ -58,10 +53,10 @@ void screen_update(void) {
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
 
     // FIXME: This is garbage! 0 means fully back!
-    const float TORCH_FADE_Z = 0.60f + 0.35f * torch_charge;
+    const float TORCH_FADE_Z = 0.60f + 0.35f * gs.torch_charge;
     const float TORCH_FADE_Z_K = 1.0f / (1.0f - TORCH_FADE_Z);
-    float TORCH_FADE_R = 100.0f * torch_charge;
-    float TORCH_BLACK_R = torch_on ? 120.0f - 20.0f * (1.0f - torch_charge) : 0.0f;
+    float TORCH_FADE_R = 100.0f * gs.torch_charge;
+    float TORCH_BLACK_R = gs.torch_on ? 120.0f - 20.0f * (1.0f - gs.torch_charge) : 0.0f;
     float TORCH_FADE_K = 1.0f / (TORCH_BLACK_R - TORCH_FADE_R);
 
     uint8_t *pd_frame = pd->graphics->getFrame();
@@ -122,16 +117,23 @@ static int update(void *userdata) {
     // Handle keys
     PDButtons pushed;
     pd->system->getButtonState(&pushed, NULL, NULL);
+
     if (pushed) {
-        handle_keys(&gs, pushed);
+        game_handle_keys(&gs, pushed);
         view_update();
+    }
+
+    game_handle_crank(&gs);
+
+    if (update_cnt % 100 == 0) {
+        game_handle_enemy(&gs);
     }
 
     meas_time_start(0);
 
     if (gs.minimap_show) {
         meas_time_start(4);
-        minimap_draw((LCD_COLUMNS - SCREEN_SIZE_X) / 2, 0, gs.camera);
+        minimap_draw((LCD_COLUMNS - SCREEN_SIZE_X) / 2, 0, gs.player_camera);
         meas_time_stop(4);
     } else {
         meas_time_start(1);
@@ -140,22 +142,25 @@ static int update(void *userdata) {
 
         // Draw map
         meas_time_start(2);
-        map_draw(gs.map, trans, gs.camera);
+        map_draw(gs.map, trans, gs.player_camera);
         meas_time_stop(2);
+
+        // Draw enemy
+        if (gs.enemy_state != ENEMY_HIDDEN) {
+            mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
+            glm_translate(enemy_trans, gs.enemy_camera.pos);
+            mat4_billboard(gs.player_camera, enemy_trans);
+            glm_mat4_mul(trans, enemy_trans, enemy_trans);
+            minigl_obj_to_obj_buf_trans(obj_enemy, enemy_trans, &obj_buf);
+            minigl_set_tex(tex_enemy);
+            minigl_draw(obj_buf);
+        }
 
         // Update the screen
         meas_time_start(3);
         screen_update();
         meas_time_stop(3);
     }
-
-    // Handle crank
-    float crank_delta = fabsf(pd->system->getCrankChange());
-    torch_charge += -TORCH_DISCHARGE_RATE;
-    torch_charge += crank_delta * TORCH_CHARGE_RATE;
-    torch_charge = glm_clamp(torch_charge, 0.0f, 1.0f);
-
-    torch_on = !pd->system->isCrankDocked();
 
     meas_time_stop(0);
 
@@ -202,9 +207,20 @@ __declspec(dllexport)
         // Game resources
         //---------------------------------------------------------------------------
 
-        if (minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither)) {
-            pd->system->error("%s:%i Couldn't load dither texture!", __FILE__, __LINE__);
-        }
+        // Load textures
+        minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
+        minigl_tex_read_file("res/textures/test.tex", &tex_enemy);
+
+        // Object buffer
+        obj_buf = minigl_obj_buf_init(50);
+
+        // Enemy
+        minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
+        glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+        glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+        glm_translate(trans, (vec3){0.0f, 0.0f, 0.0f});
+        glm_scale_uni(trans, MAP_TILE_SIZE);
+        minigl_obj_copy_trans(obj_enemy, trans, &obj_enemy);
 
         // Load fonts
         const char *err;
@@ -246,16 +262,6 @@ __declspec(dllexport)
 
         // Initialize game
         game_init(&gs);
-
-        // Pick a random starting position in the map
-        map_tile_t spawn_tile;
-        do {
-            ivec2 spawn_tile_pos;
-            spawn_tile_pos[0] = rand() % MAP_SIZE;
-            spawn_tile_pos[1] = rand() % MAP_SIZE;
-            spawn_tile = map_get_tile(gs.map, spawn_tile_pos);
-            pos_tile_to_world(spawn_tile_pos, gs.camera.pos);
-        } while (map_tile_collide(spawn_tile));
 
         glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 50.0f, proj);
         view_update();  // Setup view matrix

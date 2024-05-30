@@ -20,8 +20,6 @@ minigl_obj_t obj_statue;
 // Textures
 minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
-minigl_obj_buf_t buf;
-
 LCDBitmap* minimap;
 LCDBitmap* minimap_mask;
 LCDBitmap* ico_player;
@@ -82,8 +80,6 @@ void minimap_gen(map_t map) {
 }
 
 void map_init(void) {
-    buf = minigl_obj_buf_init(50);
-
     //---------------------------------------------------------------------------
     // Geometry
     //---------------------------------------------------------------------------
@@ -157,12 +153,6 @@ void map_init(void) {
     }
 }
 
-float vec2_angle(vec2 a, vec2 b) {
-    float dot = glm_vec2_dot(a, b);
-    float det = a[0] * b[1] - a[1] * b[0];
-    return atan2f(det, dot);
-}
-
 void vec2_pos_to_tile(int x, int y, vec3 pos, vec2 out) {
     out[0] = (((float)x) + 0.5f) * MAP_TILE_SIZE - pos[0];
     out[1] = (((float)y) + 0.5f) * MAP_TILE_SIZE - pos[2];
@@ -189,11 +179,6 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
 
     int bb_tex_i = 0;
     if (item.type == ITEM_STATUE) {
-        vec2 camera_dir2;
-        camera_dir2[0] = camera.front[0];
-        camera_dir2[1] = camera.front[2];
-        // glm_vec2_normalize(camera_dir2);
-
         // FIXME:
         vec2 poly_dir2;
         poly_dir2[0] = 0.0f;
@@ -202,13 +187,10 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
 
         vec2 pos_to_tile_dir;
         vec2_pos_to_tile(x, y, camera.pos, pos_to_tile_dir);
-
-        float bb_poly_a = vec2_angle(poly_dir2, camera_dir2);
         float bb_tex_a = vec2_angle(poly_dir2, pos_to_tile_dir);
-
-        glm_rotate_at(tile_trans, (vec3){0.0f, 0.0f, 0.0f}, -bb_poly_a, (vec3){0.0f, 1.0f, 0.0f});
-
         bb_tex_i = bb_tex_index(bb_tex_a, item.dir);
+
+        mat4_billboard(camera, tile_trans);
     }
     glm_mat4_mul(trans, tile_trans, tile_trans);
 
@@ -218,34 +200,34 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
         } else {
             minigl_set_color(24);
         }
-        minigl_obj_to_obj_buf_trans(obj_floor, tile_trans, &buf);
-        minigl_draw(buf);
+        minigl_obj_to_obj_buf_trans(obj_floor, tile_trans, &obj_buf);
+        minigl_draw(obj_buf);
     } else if (item.type == ITEM_STATUE) {
         minigl_set_tex(tex_venus[bb_tex_i]);
-        minigl_obj_to_obj_buf_trans(obj_statue, tile_trans, &buf);
-        minigl_draw(buf);
+        minigl_obj_to_obj_buf_trans(obj_statue, tile_trans, &obj_buf);
+        minigl_draw(obj_buf);
     } else if (item.type == ITEM_WALL) {
         switch (item.dir) {
             case DIR_NORTH:
                 minigl_set_color(160);
-                minigl_obj_to_obj_buf_trans(obj_wall_n, tile_trans, &buf);
+                minigl_obj_to_obj_buf_trans(obj_wall_n, tile_trans, &obj_buf);
                 break;
             case DIR_EAST:
                 minigl_set_color(128);
-                minigl_obj_to_obj_buf_trans(obj_wall_e, tile_trans, &buf);
+                minigl_obj_to_obj_buf_trans(obj_wall_e, tile_trans, &obj_buf);
                 break;
             case DIR_SOUTH:
                 minigl_set_color(160);
-                minigl_obj_to_obj_buf_trans(obj_wall_s, tile_trans, &buf);
+                minigl_obj_to_obj_buf_trans(obj_wall_s, tile_trans, &obj_buf);
                 break;
             case DIR_WEST:
                 minigl_set_color(128);
-                minigl_obj_to_obj_buf_trans(obj_wall_w, tile_trans, &buf);
+                minigl_obj_to_obj_buf_trans(obj_wall_w, tile_trans, &obj_buf);
                 break;
             case DIR_ANY:
                 assert(0);
         }
-        minigl_draw(buf);
+        minigl_draw(obj_buf);
     }
 }
 
