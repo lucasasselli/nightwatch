@@ -66,7 +66,7 @@ bool tile_in_fov(ivec2 tile, minigl_camera_t camera, float fov, float r) {
     tile_dir(tile, camera.pos, pos_to_tile_dir);
 
     float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
-    return a >= cosf(glm_rad(fov));
+    return a >= cosf(glm_rad(fov / 2.0f));
 }
 
 int64_t difftimespec_ns(const struct timespec after, const struct timespec before) {

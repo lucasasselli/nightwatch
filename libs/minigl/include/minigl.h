@@ -49,6 +49,6 @@ void minigl_perf_clear(void);
 
 void minigl_clear(uint8_t color, int depth);
 
-void minigl_draw(minigl_obj_buf_t obj);
+void minigl_draw(minigl_objbuf_t obj);
 
 minigl_frame_t* minigl_get_frame(void);

@@ -89,10 +89,16 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     a_star_node_t* closed_list = NULL;
     a_star_node_t* open_list = NULL;
 
+    // FIXME: This prevents assert firing when start = stop, but shouldn't be needed
+    if (ivec2_eq(start, stop)) {
+        path->size = 0;
+        return;
+    }
+
     a_star_node_t* new = node_new();
     new->parent = NULL;
     glm_ivec2_copy(start, new->pos);
-    list_add(&open_list, new);  // FIXME
+    list_add(&open_list, new);
 
     a_star_node_t* best;
     while (1) {
@@ -135,7 +141,7 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
                 map_tile_t tile = map_get_tile(map, pos);
 
                 int h = abs(stop[0] - pos[0]) + abs(stop[1] - pos[1]);
-                int g = best->g + 1;  // FIXME:
+                int g = best->g + 1;  // FIXME: Should diag be more expensive?
 
                 if (list_search(closed_list, pos) == NULL && !map_tile_collide(tile)) {
                     // Check if on open list
@@ -177,10 +183,6 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     for (int i = path->size - 1; i >= 0; i--) {
         glm_ivec2(this->pos, path->pos[i]);
         this = this->parent;
-    }
-
-    for (int i = 0; i < path->size; i++) {
-        debug("%d %d", path->pos[i][0], path->pos[i][1]);
     }
 
     // Free internal lists

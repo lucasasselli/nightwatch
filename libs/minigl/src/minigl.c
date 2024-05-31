@@ -186,11 +186,9 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     }
 }
 
-MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_mode) {
+MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_mode) {
     vec4 v[3];
     vec2 t[3];
-
-    vec3 b;
 
 #ifdef DEBUG
     if (tex_mode == MINIGL_TEX_2D) {
@@ -251,6 +249,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
         p[0] = (v[0][0] + v[1][0] + v[2][0]) / 3.0f;
         p[1] = (v[0][1] + v[1][1] + v[2][1]) / 3.0f;
 
+        vec3 b;
         b[0] = edge(v[1], v[2], p);
         b[1] = edge(v[2], v[0], p);
         b[2] = edge(v[0], v[1], p);
@@ -415,7 +414,7 @@ MINIGL_INLINE void draw(const minigl_obj_buf_t buf, const minigl_tex_mode_t tex_
     }
 }
 
-void minigl_draw(minigl_obj_buf_t buf) {
+void minigl_draw(minigl_objbuf_t buf) {
     if (cfg.texture_mode == MINIGL_TEX_2D) {
         draw(buf, MINIGL_TEX_2D);
     } else if (cfg.texture_mode == MINIGL_TEX_0D) {

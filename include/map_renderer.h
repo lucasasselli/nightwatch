@@ -2,6 +2,7 @@
 
 #include <cglm/cglm.h>
 
+#include "game.h"
 #include "map.h"
 #include "minigl_types.h"
 #include "object.h"
@@ -12,13 +13,13 @@
 #define MINIMAP_SIZE_X 100
 #define MINIMAP_SIZE_Y 100
 
-extern minigl_obj_buf_t obj_buf;
+extern minigl_objbuf_t obj_buf;
 
 void minimap_init(void);
 
 void minimap_gen(map_t map);
 
-void minimap_draw(int x, int y, minigl_camera_t camera);
+void minimap_draw(int x, int y, game_state_t* state);
 
 void map_init(void);
 

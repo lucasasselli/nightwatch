@@ -31,11 +31,11 @@ minigl_tex_t tex_dither;
 minigl_tex_t tex_enemy;
 minigl_obj_t obj_enemy;
 
-minigl_obj_buf_t obj_buf;
+minigl_objbuf_t obj_buf;
 
 unsigned int update_cnt = 0;
 
-// #define TORCH_DISABLE
+#define TORCH_DISABLE
 
 float frame_radius[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
@@ -54,7 +54,7 @@ void screen_update(void) {
 
     float torch_intensity = gs.torch_charge;
     if (gs.torch_flicker) {
-        torch_intensity = glm_clamp(rand_range(0, 30) - 10, 0.0f, 20.0f) / 20.0f;
+        torch_intensity = glm_clamp(rand_range(0, 100) - 50, 0.0f, 50.0f) / 50.0f;
     }
 
     // FIXME: This is garbage! 0 means fully back!
@@ -108,15 +108,15 @@ void screen_update(void) {
     pd->graphics->markUpdatedRows(0, LCD_ROWS - 1);
 }
 
+#ifdef DEBUG_PERF
 void minigl_perf_print(void) {
     minigl_perf_data_t perf_data = minigl_perf_get();
-#ifdef DEBUG_PERF
     debug("Clip count: %d", perf_data.clip);
     debug("Cull count: %d", perf_data.cull);
     debug("Poly count: %d", perf_data.poly);
     debug("Frag count: %d", perf_data.frag);
-#endif
 }
+#endif
 
 static int update(void *userdata) {
     // Handle keys
@@ -130,44 +130,47 @@ static int update(void *userdata) {
 
     game_handle_crank(&gs);
 
+    game_update(&gs);
+
     if (update_cnt % 100 == 0) {
         game_handle_enemy(&gs);
     }
 
     meas_time_start(0);
 
+    meas_time_start(1);
+    minigl_clear(0.0f, 1.0f);
+    meas_time_stop(1);
+
+    // Draw map
+    meas_time_start(2);
+    map_draw(gs.map, trans, gs.player_camera);
+    meas_time_stop(2);
+
+    // Draw enemy
+    if (gs.enemy_state != ENEMY_HIDDEN) {
+        mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
+        vec3 enemy_pos;
+        pos_tile_to_world(gs.enemy_tile, enemy_pos);
+        glm_translate(enemy_trans, enemy_pos);
+        mat4_billboard(gs.player_camera, enemy_trans);
+        glm_mat4_mul(trans, enemy_trans, enemy_trans);
+        minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
+        minigl_set_tex(tex_enemy);
+        minigl_draw(obj_buf);
+    }
+
+    // Not used
     if (gs.minimap_show) {
         meas_time_start(4);
-        minimap_draw((LCD_COLUMNS - SCREEN_SIZE_X) / 2, 0, gs.player_camera);
+        minimap_draw(0, 0, &gs);
         meas_time_stop(4);
-    } else {
-        meas_time_start(1);
-        minigl_clear(0.0f, 1.0f);
-        meas_time_stop(1);
-
-        // Draw map
-        meas_time_start(2);
-        map_draw(gs.map, trans, gs.player_camera);
-        meas_time_stop(2);
-
-        // Draw enemy
-        if (gs.enemy_state != ENEMY_HIDDEN) {
-            mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-            vec3 enemy_pos;
-            pos_tile_to_world(gs.enemy_tile, enemy_pos);
-            glm_translate(enemy_trans, enemy_pos);
-            mat4_billboard(gs.player_camera, enemy_trans);
-            glm_mat4_mul(trans, enemy_trans, enemy_trans);
-            minigl_obj_to_obj_buf_trans(obj_enemy, enemy_trans, &obj_buf);
-            minigl_set_tex(tex_enemy);
-            minigl_draw(obj_buf);
-        }
-
-        // Update the screen
-        meas_time_start(3);
-        screen_update();
-        meas_time_stop(3);
     }
+
+    // Update the screen
+    meas_time_start(3);
+    screen_update();
+    meas_time_stop(3);
 
     meas_time_stop(0);
 
@@ -219,14 +222,14 @@ __declspec(dllexport)
         minigl_tex_read_file("res/textures/test.tex", &tex_enemy);
 
         // Object buffer
-        obj_buf = minigl_obj_buf_init(50);
+        obj_buf = minigl_objbuf_init(50);
 
         // Enemy
         minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
         glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
         glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
         glm_scale_uni(trans, MAP_TILE_SIZE);
-        minigl_obj_copy_trans(obj_enemy, trans, &obj_enemy);
+        minigl_obj_trans(&obj_enemy, trans);
 
         // Load fonts
         const char *err;

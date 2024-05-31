@@ -158,17 +158,17 @@ void minigl_obj_trans(minigl_obj_t *in, mat4 trans) {
     }
 }
 
-minigl_obj_buf_t minigl_obj_buf_init(size_t size) {
-    minigl_obj_buf_t buf;
+minigl_objbuf_t minigl_objbuf_init(size_t size) {
+    minigl_objbuf_t buf;
     buf.vcoord_ptr = (vec4 *)malloc(size * sizeof(vec4));
     return buf;
 }
 
-void minigl_obj_buf_free(minigl_obj_buf_t buf) {
+void minigl_objbuf_free(minigl_objbuf_t buf) {
     free(buf.vcoord_ptr);
 }
 
-void minigl_obj_to_obj_buf_trans(minigl_obj_t in, mat4 trans, minigl_obj_buf_t *out) {
+void minigl_obj_to_objbuf_trans(minigl_obj_t in, mat4 trans, minigl_objbuf_t *out) {
     out->tcoord_ptr = in.tcoord_ptr;
     out->vface_ptr = in.vface_ptr;
     out->tface_ptr = in.tface_ptr;

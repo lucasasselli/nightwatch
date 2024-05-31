@@ -33,33 +33,9 @@ void game_init(game_state_t* state) {
     state->torch_charge = 0.0;
 
     // Enemy
-    enemy_hide_cntdown = 10;
+    enemy_hide_cntdown = 1;
     state->enemy_state = ENEMY_HIDDEN;
-}
-
-bool move_camera(minigl_camera_t* camera, map_t map, bool forward, float speed) {
-    vec3 camera_delta;
-    vec3 old_pos;
-
-    // Move
-    glm_vec3_copy(camera->pos, old_pos);
-    glm_vec3_scale_as(camera->front, speed, camera_delta);
-
-    if (forward) {
-        glm_vec3_add(camera->pos, camera_delta, camera->pos);
-    } else {
-        glm_vec3_add(camera->pos, camera_delta, camera->pos);
-    }
-
-    // Check collision
-    ivec2 tile_pos;
-    pos_world_to_tile(camera->pos, tile_pos);
-    map_tile_t tile = map_get_tile(map, tile_pos);
-
-    if (map_tile_collide(tile)) {
-        glm_vec3_copy(old_pos, camera->pos);
-        return false;
-    }
+    state->enemy_awareness = 0;
 }
 
 void game_handle_keys(game_state_t* state, PDButtons pushed) {
@@ -97,9 +73,6 @@ void game_handle_keys(game_state_t* state, PDButtons pushed) {
         // state->minimap_show ^= 1;
     }
 
-    //
-    // state->torch_flicker = tile_in_fov(state->enemy_tile, state->player_camera, 60, 0);
-
     //---------------------------------------------------------------------------
     // Collisions
     //---------------------------------------------------------------------------
@@ -134,50 +107,90 @@ void game_handle_crank(game_state_t* state) {
     state->torch_on = !pd->system->isCrankDocked();
 }
 
-void enemy_move(game_state_t* state) {
-    glm_ivec2_copy(enemy_path.pos[enemy_path_prog++], state->enemy_tile);
-    debug("Enemy: %d %d", state->enemy_tile[0], state->enemy_tile[1]);
+void game_update(game_state_t* state) {
+    if (state->enemy_state != ENEMY_HIDDEN && state->torch_on) {
+        state->enemy_in_fov = tile_in_fov(state->enemy_tile, state->player_camera, 60, 0);
+    } else {
+        state->enemy_in_fov = false;
+    }
+
+    if (state->enemy_state == ENEMY_CHASING && state->enemy_in_fov) {
+        state->torch_flicker = true;
+    } else {
+        state->torch_flicker = false;
+    }
+}
+
+bool enemy_path_move(game_state_t* state) {
+    if (enemy_path_prog < enemy_path.size) {
+        glm_ivec2_copy(enemy_path.pos[enemy_path_prog++], state->enemy_tile);
+        debug("Enemy: %d %d", state->enemy_tile[0], state->enemy_tile[1]);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void game_handle_enemy(game_state_t* state) {
+    const int AWARENESS_MAX = 3;
+
     switch (state->enemy_state) {
         case ENEMY_HIDDEN:
             if (enemy_hide_cntdown == 0) {
                 // FIXME: Spawn out of sight an far from player
                 rand_empty_tile(state->map, state->enemy_tile);
-                debug("Enemy spawned at %d %d!", state->enemy_tile[0], state->enemy_tile[1]);
+                debug("Enemy (ROAMING): spawned at %d %d!", state->enemy_tile[0], state->enemy_tile[1]);
                 state->enemy_state = ENEMY_ROAMING;
             } else {
                 enemy_hide_cntdown--;
             }
             break;
+
         case ENEMY_ROAMING:
-            if (enemy_path_prog == enemy_path.size) {
-                // Pick a random position
-                ivec2 target_tile;
-                rand_empty_tile(state->map, target_tile);
-                a_star_navigate(state->map, state->enemy_tile, target_tile, &enemy_path);
-                enemy_path_prog = 0;
+            if (!state->enemy_in_fov) {
+                // Enemy not in the FOV of the player
+                if (!enemy_path_move(state)) {
+                    // Enemy path complete
+                    ivec2 target_tile;
+                    rand_empty_tile(state->map, target_tile);
+                    a_star_navigate(state->map, state->enemy_tile, target_tile, &enemy_path);
+                    enemy_path_prog = 0;
+                    debug("Enemy (ROAMING): path complete! Begin new path...");
+                }
+            } else {
+                // Enemy seen by the player!
+                state->enemy_state = ENEMY_ALERT;
             }
-            enemy_move(state);
+            break;
+
+        case ENEMY_ALERT:
+            if (state->enemy_in_fov) {
+                state->enemy_awareness++;
+                debug("Enemy (ALERT): player seen! Awareness %d", state->enemy_awareness);
+
+                if (state->enemy_awareness > AWARENESS_MAX) {
+                    state->enemy_state = ENEMY_CHASING;
+                }
+            } else {
+                debug("Enemy (ALERT): player NOT seen! Awareness %d", state->enemy_awareness);
+                state->enemy_awareness--;
+                if (state->enemy_awareness == 0) {
+                    state->enemy_state = ENEMY_ROAMING;
+                }
+            }
+
             break;
 
         case ENEMY_CHASING:
             // Assume player constantly moving
-            // Once torch is off
-            a_star_navigate(state->map, state->enemy_tile, state->player_tile, &enemy_path);
-            enemy_path_prog = 0;
-            enemy_move(state);
-            break;
-
-        case ENEMY_SEARCHING:
-            if (enemy_path_prog == enemy_path.size) {
-                // Player position reached!
-                state->enemy_state = ENEMY_HIDDEN;
-            } else {
-                enemy_move(state);
+            // FIXME: Store the known position!
+            if (state->enemy_in_fov) {
+                debug("Enemy (CHASING): player visible!");
+                a_star_navigate(state->map, state->enemy_tile, state->player_tile, &enemy_path);
+                enemy_path_prog = 0;
             }
-            // Going to the last known position
+            // FIXME: Once is path is over despawn...
+            enemy_path_move(state);
             break;
     }
 }

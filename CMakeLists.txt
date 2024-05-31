@@ -19,7 +19,7 @@ file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
 set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_C_FLAGS "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
@@ -42,8 +42,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
     target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
-
-    add_definitions(-DDEBUG_PERF)
+    # add_definitions(-DDEBUG_PERF)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
@@ -59,7 +58,7 @@ else()
         DEPENDS ${TARGET_NAME}
         COMMAND valgrind 
             --leak-check=full --track-origins=yes
-            ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx
+            ${SDK}/bin/PlaydateSimulator ${PROJECT_SOURCE_DIR}/${TARGET_NAME}.pdx 2>&1 | tee -a valgrind.log
         COMMENT "Starting Valgrind...")
 endif()
 

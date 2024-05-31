@@ -3,8 +3,9 @@
 #include <assert.h>
 
 void pos_tile_to_world(ivec2 tile, vec3 world) {
+    // FIXME: Convert to vec2?
     world[0] = (((float)tile[0]) + 0.5f) * MAP_TILE_SIZE;
-    // world[1] = 0.0f;
+    world[1] = 0.0f;
     world[2] = (((float)tile[1]) + 0.5f) * MAP_TILE_SIZE;
 }
 
