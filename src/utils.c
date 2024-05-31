@@ -2,6 +2,8 @@
 
 #include <time.h>
 
+#include "map.h"
+
 struct timespec meas_time_start_data[5];
 struct timespec meas_time_stop_data[5];
 
@@ -45,6 +47,26 @@ void mat4_billboard(minigl_camera_t camera, mat4 trans) {
 
     float a = vec2_angle(poly_dir2, camera_dir2);
     glm_rotate_at(trans, GLM_VEC3_ZERO, -a, (vec3){0.0f, 1.0f, 0.0f});
+}
+
+void tile_dir(ivec2 tile, vec3 pos, vec2 out) {
+    out[0] = (((float)tile[0]) + 0.5f) * MAP_TILE_SIZE - pos[0];
+    out[1] = (((float)tile[1]) + 0.5f) * MAP_TILE_SIZE - pos[2];
+    glm_vec2_normalize(out);
+}
+
+bool tile_in_fov(ivec2 tile, minigl_camera_t camera, float fov, float r) {
+    vec2 camera_dir;
+    camera_dir[0] = camera.front[0];
+    camera_dir[1] = camera.front[2];
+
+    // NOTE: Use the cross product of the position-tile vector and the
+    // camera direction to check if the tile is within the FOV.
+    vec2 pos_to_tile_dir;
+    tile_dir(tile, camera.pos, pos_to_tile_dir);
+
+    float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
+    return a >= cosf(glm_rad(fov));
 }
 
 int64_t difftimespec_ns(const struct timespec after, const struct timespec before) {

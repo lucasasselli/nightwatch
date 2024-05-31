@@ -52,11 +52,16 @@ void view_update(void) {
 void screen_update(void) {
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
 
+    float torch_intensity = gs.torch_charge;
+    if (gs.torch_flicker) {
+        torch_intensity = glm_clamp(rand_range(0, 30) - 10, 0.0f, 20.0f) / 20.0f;
+    }
+
     // FIXME: This is garbage! 0 means fully back!
-    const float TORCH_FADE_Z = 0.60f + 0.35f * gs.torch_charge;
+    const float TORCH_FADE_Z = 0.60f + 0.35f * torch_intensity;
     const float TORCH_FADE_Z_K = 1.0f / (1.0f - TORCH_FADE_Z);
-    float TORCH_FADE_R = 100.0f * gs.torch_charge;
-    float TORCH_BLACK_R = gs.torch_on ? 120.0f - 20.0f * (1.0f - gs.torch_charge) : 0.0f;
+    float TORCH_FADE_R = 100.0f * torch_intensity;
+    float TORCH_BLACK_R = gs.torch_on ? 120.0f - 20.0f * (1.0f - torch_intensity) : 0.0f;
     float TORCH_FADE_K = 1.0f / (TORCH_BLACK_R - TORCH_FADE_R);
 
     uint8_t *pd_frame = pd->graphics->getFrame();
@@ -148,7 +153,9 @@ static int update(void *userdata) {
         // Draw enemy
         if (gs.enemy_state != ENEMY_HIDDEN) {
             mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-            glm_translate(enemy_trans, gs.enemy_camera.pos);
+            vec3 enemy_pos;
+            pos_tile_to_world(gs.enemy_tile, enemy_pos);
+            glm_translate(enemy_trans, enemy_pos);
             mat4_billboard(gs.player_camera, enemy_trans);
             glm_mat4_mul(trans, enemy_trans, enemy_trans);
             minigl_obj_to_obj_buf_trans(obj_enemy, enemy_trans, &obj_buf);
@@ -218,7 +225,6 @@ __declspec(dllexport)
         minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
         glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
         glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
-        glm_translate(trans, (vec3){0.0f, 0.0f, 0.0f});
         glm_scale_uni(trans, MAP_TILE_SIZE);
         minigl_obj_copy_trans(obj_enemy, trans, &obj_enemy);
 

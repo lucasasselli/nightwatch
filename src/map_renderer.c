@@ -237,7 +237,7 @@ void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
     vec2 camera_dir;
     camera_dir[0] = camera.front[0];
     camera_dir[1] = camera.front[2];
-    glm_vec2_normalize(camera_dir);
+    // glm_vec2_normalize(camera_dir);
 
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {

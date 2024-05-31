@@ -167,7 +167,7 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
 
     // Create the path...
     a_star_node_t* this = best;
-    path->size = 1;
+    path->size = 0;
     while (this->parent != NULL) {
         path->size++;
         this = this->parent;

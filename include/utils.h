@@ -31,6 +31,10 @@ float vec2_angle(vec2 a, vec2 b);
 
 bool ivec2_eq(ivec2 a, ivec2 b);
 
+void tile_dir(ivec2 tile, vec3 pos, vec2 out);
+
+bool tile_in_fov(ivec2 tile, minigl_camera_t camera, float fov, float r);
+
 void mat4_billboard(minigl_camera_t camer, mat4 trans);
 
 void meas_time_start(int id);

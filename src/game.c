@@ -4,6 +4,10 @@
 #include "map.h"
 #include "utils.h"
 
+a_star_path_t enemy_path;
+int enemy_path_prog = 0;
+int enemy_hide_cntdown;
+
 void rand_empty_tile(map_t map, ivec2 tile_pos) {
     map_tile_t tile;
     do {
@@ -29,11 +33,8 @@ void game_init(game_state_t* state) {
     state->torch_charge = 0.0;
 
     // Enemy
-    ivec2 enemy_spawn_tile;
-    rand_empty_tile(state->map, enemy_spawn_tile);
-    pos_tile_to_world(enemy_spawn_tile, state->enemy_camera.pos);
-
-    state->enemy_state = ENEMY_ROAMING;
+    enemy_hide_cntdown = 10;
+    state->enemy_state = ENEMY_HIDDEN;
 }
 
 bool move_camera(minigl_camera_t* camera, map_t map, bool forward, float speed) {
@@ -96,13 +97,15 @@ void game_handle_keys(game_state_t* state, PDButtons pushed) {
         // state->minimap_show ^= 1;
     }
 
+    //
+    // state->torch_flicker = tile_in_fov(state->enemy_tile, state->player_camera, 60, 0);
+
     //---------------------------------------------------------------------------
     // Collisions
     //---------------------------------------------------------------------------
 
-    ivec2 tile_pos;
-    pos_world_to_tile(state->player_camera.pos, tile_pos);
-    map_tile_t tile = map_get_tile(state->map, tile_pos);
+    pos_world_to_tile(state->player_camera.pos, state->player_tile);
+    map_tile_t tile = map_get_tile(state->map, state->player_tile);
 
     if (map_tile_collide(tile)) {
         glm_vec3_copy(old_pos, state->player_camera.pos);
@@ -115,9 +118,8 @@ void game_handle_keys(game_state_t* state, PDButtons pushed) {
     direction[2] = sinf(glm_rad(state->player_camera.yaw)) * cosf(glm_rad(state->player_camera.pitch));
     glm_vec3_normalize_to(direction, state->player_camera.front);
 
-    debug("Tile  : %d %d", tile_pos[0], tile_pos[1]);
-    debug("Camera: %f %f", state->player_camera.pos[0], state->player_camera.pos[2]);
-    debug("Enemy : %f %f", state->enemy_camera.pos[0], state->enemy_camera.pos[2]);
+    debug("Player: %d %d", state->player_tile[0], state->player_tile[1]);
+    // debug("Camera: %f %f", state->player_camera.pos[0], state->player_camera.pos[2]);
 }
 
 void game_handle_crank(game_state_t* state) {
@@ -132,36 +134,50 @@ void game_handle_crank(game_state_t* state) {
     state->torch_on = !pd->system->isCrankDocked();
 }
 
+void enemy_move(game_state_t* state) {
+    glm_ivec2_copy(enemy_path.pos[enemy_path_prog++], state->enemy_tile);
+    debug("Enemy: %d %d", state->enemy_tile[0], state->enemy_tile[1]);
+}
+
 void game_handle_enemy(game_state_t* state) {
-    const float ENEMY_SPEED = 0.2f;
+    switch (state->enemy_state) {
+        case ENEMY_HIDDEN:
+            if (enemy_hide_cntdown == 0) {
+                // FIXME: Spawn out of sight an far from player
+                rand_empty_tile(state->map, state->enemy_tile);
+                debug("Enemy spawned at %d %d!", state->enemy_tile[0], state->enemy_tile[1]);
+                state->enemy_state = ENEMY_ROAMING;
+            } else {
+                enemy_hide_cntdown--;
+            }
+            break;
+        case ENEMY_ROAMING:
+            if (enemy_path_prog == enemy_path.size) {
+                // Pick a random position
+                ivec2 target_tile;
+                rand_empty_tile(state->map, target_tile);
+                a_star_navigate(state->map, state->enemy_tile, target_tile, &enemy_path);
+                enemy_path_prog = 0;
+            }
+            enemy_move(state);
+            break;
 
-    // Enemy navigation algorithm:
-    // 1) Pick a final target (can be player pos)
-    // 2) Calculate direction to final target
-    // 3) Check for collisions along the way
-    //    3.1) If a collision is found, pick an intermediate point
-    //         That can be reached without collisions
-    //    3.2) Once the intermediate point is reached, restart from 2)
-    // 4) Once final point is reached restart from 1)
+        case ENEMY_CHASING:
+            // Assume player constantly moving
+            // Once torch is off
+            a_star_navigate(state->map, state->enemy_tile, state->player_tile, &enemy_path);
+            enemy_path_prog = 0;
+            enemy_move(state);
+            break;
 
-    // Position reached, pick new position
-
-    // Pick position to target
-    ivec2 enemy_target_tile;
-    vec3 enemy_target_world;
-    rand_empty_tile(state->map, enemy_target_tile);
-    pos_tile_to_world(enemy_target_tile, enemy_target_world);
-
-    // Chase
-    a_star_path_t path_to_player;
-    ivec2 enemy_tile;
-    ivec2 player_tile;
-    pos_world_to_tile(state->enemy_camera.pos, enemy_tile);
-    pos_world_to_tile(state->player_camera.pos, player_tile);
-    a_star_navigate(state->map, enemy_tile, player_tile, &path_to_player);
-
-    // Update position
-    pos_tile_to_world(path_to_player.pos[1], state->enemy_camera.pos);
-
-    // Check collisions
+        case ENEMY_SEARCHING:
+            if (enemy_path_prog == enemy_path.size) {
+                // Player position reached!
+                state->enemy_state = ENEMY_HIDDEN;
+            } else {
+                enemy_move(state);
+            }
+            // Going to the last known position
+            break;
+    }
 }
