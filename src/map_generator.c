@@ -9,7 +9,6 @@
 map_room_t *rooms;
 int room_cnt;
 
-/*
 char tile_to_char(map_tile_t tile) {
     if (tile.item_cnt == 0) {
         return ' ';
@@ -19,17 +18,13 @@ char tile_to_char(map_tile_t tile) {
         switch (tile.items[0].type) {
             case ITEM_FLOOR:
                 return '.';
-            case TILE_STATUE:
+            case ITEM_STATUE:
                 return 'o';
-            case TILE_WALL_N:
-            case TILE_WALL_S:
-                return '-';
-            case TILE_WALL_E:
-            case TILE_WALL_W:
-                return '|';
+            case ITEM_WALL:
+                return '#';
         }
     }
-}*/
+}
 
 bool tile_has_item(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
     if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
@@ -196,11 +191,13 @@ void mapgen_grid_update(map_t map) {
 }
 
 void mapgen_grid_print(map_t map) {
+    char buf[MAP_SIZE + 1];
+    buf[MAP_SIZE] = '\0';
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            // printf("%c ", tile_to_char(map[y][x]));
+            buf[x] = tile_to_char(map[y][x]);
         }
-        printf("\n");
+        debug("%s", buf);
     }
 }
 

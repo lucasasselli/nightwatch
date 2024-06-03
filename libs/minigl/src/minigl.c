@@ -40,9 +40,11 @@ void minigl_perf_event(minigl_perf_event_t e) {
 }
 
 void minigl_perf_clear(void) {
+#ifdef DEBUG_PERF
     for (int i = 0; i < 4; i++) {
         perf_data.array[i] = 0;
     }
+#endif
 }
 
 minigl_perf_data_t minigl_perf_get(void) {

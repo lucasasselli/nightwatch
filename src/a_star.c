@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-void list_add(a_star_node_t** list, a_star_node_t* new) {
+void a_star_list_add(a_star_node_t** list, a_star_node_t* new) {
     new->next = NULL;
 
     if (*list == NULL) {
@@ -20,7 +20,7 @@ void list_add(a_star_node_t** list, a_star_node_t* new) {
     }
 }
 
-void list_del(a_star_node_t** list, a_star_node_t* query) {
+void a_star_list_del(a_star_node_t** list, a_star_node_t* query) {
     assert(*list != NULL);
 
     a_star_node_t* this = *list;
@@ -43,7 +43,7 @@ void list_del(a_star_node_t** list, a_star_node_t* query) {
     assert(0);
 }
 
-a_star_node_t* list_search(a_star_node_t* list, ivec2 pos) {
+a_star_node_t* a_star_list_search(a_star_node_t* list, ivec2 pos) {
     if (list != NULL) {
         a_star_node_t* this = list;
         while (this != NULL) {
@@ -57,7 +57,7 @@ a_star_node_t* list_search(a_star_node_t* list, ivec2 pos) {
     return NULL;
 }
 
-a_star_node_t* list_free(a_star_node_t* list) {
+a_star_node_t* a_star_list_free(a_star_node_t* list) {
     assert(list != NULL);
     a_star_node_t* this = list;
     while (this != NULL) {
@@ -68,7 +68,7 @@ a_star_node_t* list_free(a_star_node_t* list) {
     return NULL;
 }
 
-void list_print(a_star_node_t** list) {
+void a_star_list_print(a_star_node_t** list) {
     assert(list != NULL);
     a_star_node_t* this = *list;
     int i = 0;
@@ -78,13 +78,13 @@ void list_print(a_star_node_t** list) {
     }
 }
 
-a_star_node_t* node_new(void) {
+a_star_node_t* a_star_node_new(void) {
     a_star_node_t* new = malloc(sizeof(a_star_node_t));
     new->next = NULL;
     return new;
 }
 
-void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
+bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     // NOTE: https://web.archive.org/web/20171022224528/http://www.policyalmanac.org:80/games/aStarTutorial.htm
     a_star_node_t* closed_list = NULL;
     a_star_node_t* open_list = NULL;
@@ -92,18 +92,22 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     // FIXME: This prevents assert firing when start = stop, but shouldn't be needed
     if (ivec2_eq(start, stop)) {
         path->size = 0;
-        return;
+        return true;
     }
 
-    a_star_node_t* new = node_new();
+    a_star_node_t* new = a_star_node_new();
     new->parent = NULL;
     glm_ivec2_copy(start, new->pos);
-    list_add(&open_list, new);
+    a_star_list_add(&open_list, new);
 
     a_star_node_t* best;
     while (1) {
         // If open list is empty: Error!!!
-        assert(open_list != NULL);
+        if (open_list == NULL) {
+            a_star_list_free(closed_list);
+            path->size = 0;
+            return false;
+        }
 
         // Search the on the open list
         a_star_node_t* this = open_list;
@@ -120,8 +124,8 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
             break;
         } else {
             // Add it to the closed list (and remove it from the open list
-            list_add(&closed_list, best);
-            list_del(&open_list, best);
+            a_star_list_add(&closed_list, best);
+            a_star_list_del(&open_list, best);
         }
 
         ivec2 x_range;
@@ -143,18 +147,18 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
                 int h = abs(stop[0] - pos[0]) + abs(stop[1] - pos[1]);
                 int g = best->g + 1;  // FIXME: Should diag be more expensive?
 
-                if (list_search(closed_list, pos) == NULL && !map_tile_collide(tile)) {
+                if (a_star_list_search(closed_list, pos) == NULL && !map_tile_collide(tile)) {
                     // Check if on open list
-                    a_star_node_t* match = list_search(open_list, pos);
+                    a_star_node_t* match = a_star_list_search(open_list, pos);
                     if (match == NULL) {
                         // Not on the list:
                         // Add to list, make parent square the active square
-                        a_star_node_t* new = node_new();
+                        a_star_node_t* new = a_star_node_new();
                         glm_ivec2_copy(pos, new->pos);
                         new->parent = best;
                         new->g = g;
                         new->h = h;
-                        list_add(&open_list, new);
+                        a_star_list_add(&open_list, new);
                     } else {
                         // On the list:
                         // If it is on the open list already, check to see if this path to that square is better,
@@ -186,6 +190,8 @@ void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     }
 
     // Free internal lists
-    list_free(closed_list);
-    list_free(open_list);
+    a_star_list_free(closed_list);
+    a_star_list_free(open_list);
+
+    return true;
 }

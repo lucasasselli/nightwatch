@@ -26,7 +26,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 if (TOOLCHAIN STREQUAL "armgcc")
     set(MINIGL_SHARED OFF CACHE BOOL "")
 
-	set(MCFLAGS -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1)
+	set(MCFLAGS -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__FPU_USED=1 -mfp16-format=ieee)
 
 	add_compile_options(${MCFLAGS})
 	add_compile_options(-falign-functions=16 -fomit-frame-pointer)

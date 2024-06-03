@@ -11,6 +11,13 @@
 #define debug fake_printf
 #endif
 
+#ifdef __arm__
+#include <arm_fp16.h>
+typedef __fp16 fp16_t;
+#else
+typedef float fp16_t;
+#endif
+
 // Pixel handling macros
 #define samplepixel(data, x, y, rowbytes) (((data[(y) * rowbytes + (x) / 8] & (1 << (uint8_t)(7 - ((x) % 8)))) != 0) ? kColorWhite : kColorBlack)
 #define setpixel(data, x, y, rowbytes) (data[(y) * rowbytes + (x) / 8] &= ~(1 << (uint8_t)(7 - ((x) % 8))))

@@ -18,4 +18,4 @@ typedef struct {
     int size;
 } a_star_path_t;
 
-void a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path);
+bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path);

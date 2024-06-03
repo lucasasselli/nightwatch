@@ -4,7 +4,7 @@
 
 #include "map.h"
 
-#define MAP_MAX_ROOMS 5
+#define MAP_MAX_ROOMS 16
 #define MAP_RAND_EFFORT 50
 
 typedef enum {
