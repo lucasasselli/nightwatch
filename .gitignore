@@ -1,6 +1,8 @@
 build*
 tools
-Source
 *.pdx
+*.pdo
+*.elf
+*.so
 compile_commands.json
 .cache

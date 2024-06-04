@@ -37,12 +37,14 @@ typedef struct {
     float torch_on;
 } game_state_t;
 
-void game_init(game_state_t* state);
+extern game_state_t gs;
 
-void game_handle_keys(game_state_t* state, PDButtons pushed, float delta_t);
+void game_init(void);
 
-void game_handle_crank(game_state_t* state, float delta_t);
+void game_handle_keys(PDButtons pushed, float delta_t);
 
-void game_update(game_state_t* state, float delta_t);
+void game_handle_crank(float delta_t);
 
-void game_enemy_ai(game_state_t* state, float delta_t);
+void game_update(float delta_t);
+
+void game_enemy_ai(float delta_t);

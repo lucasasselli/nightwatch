@@ -12,43 +12,33 @@
 #include "sound.h"
 #include "utils.h"
 
-#define SETUP_STEPS 5
+#define LOAD_STEP_CNT 5
 
 // API handle
 PlaydateAPI *pd;
 
 // Support
-int setup_step = 0;
+int load_step = 0;
 float update_delta_t = 0.0f;
 int update_cnt = 0;
 
-// Game state
 game_state_t gs;
-mat4 proj;
-mat4 trans;
 
 // Resources
-LCDBitmap *bg_loading;
-
 minigl_tex_t tex_dither;
 minigl_tex_t tex_enemy;
 minigl_obj_t obj_enemy;
 
 minigl_objbuf_t obj_buf;
 
+// Transforms
+mat4 proj;
+mat4 trans;
+
 // #define TORCH_DISABLE
 
 #define TORCH_MASK_STEPS 32
 fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
-
-void view_update(void) {
-    // Update camera position
-    vec3 camera_center;
-    mat4 view;
-    glm_vec3_add(gs.player_camera.pos, gs.player_camera.front, camera_center);
-    glm_lookat(gs.player_camera.pos, camera_center, gs.player_camera.up, view);
-    glm_mat4_mul(proj, view, trans);
-}
 
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
@@ -119,7 +109,7 @@ void minigl_perf_print(void) {
 #endif
 }
 
-void gen_torch_mask() {
+void gen_torch_mask(void) {
     // Torch mask
     for (int i = 0; i < TORCH_MASK_STEPS; i++) {
         float torch_intensity = (((float)i) / ((float)TORCH_MASK_STEPS - 1));
@@ -149,81 +139,88 @@ void gen_torch_mask() {
     }
 }
 
-void setup(int step) {
-    debug("Setup %d", step);
-
-    switch (step) {
-        case 0:
-            // Load textures
-            minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
-            minigl_tex_read_file("res/textures/test.tex", &tex_enemy);
-
-            // Config dither texture
-            minigl_set_dither(tex_dither);
-
-            // Object buffer
-            obj_buf = minigl_objbuf_init(50);
-
-            // Enemy
-            minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
-            glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-            glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
-            glm_scale_uni(trans, MAP_TILE_SIZE);
-            minigl_obj_trans(&obj_enemy, trans);
-            break;
-
-        case 1:
-            gen_torch_mask();
-            break;
-
-        case 2:
-            // Setup map
-            mapgen_gen(gs.map);
-            mapgen_grid_print(gs.map);
-            map_init();
-            break;
-
-        case 3:
-            // Setup minimap
-            minimap_init();
-            minimap_gen(gs.map);
-
-            // Initialize game
-            game_init(&gs);
-
-            glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 50.0f, proj);
-            view_update();  // Setup view matrix
-
-            // Sound
-            sound_init();
-            // sound_bg_start();
-            sound_effect_start(SOUND_HEARTBEAT);
-            break;
-
-        case 4:
-            break;
-    }
+void view_trans_update(void) {
+    // Update camera position
+    vec3 camera_center;
+    mat4 view;
+    glm_vec3_add(gs.player_camera.pos, gs.player_camera.front, camera_center);
+    glm_lookat(gs.player_camera.pos, camera_center, gs.player_camera.up, view);
+    glm_mat4_mul(proj, view, trans);
 }
 
-static int update(void) {
-    //---------------------------------------------------------------------------
-    // Handle input
-    //---------------------------------------------------------------------------
+static int lua_load(lua_State *L) {
+    if (load_step < LOAD_STEP_CNT) {
+        debug("Loading %d...", load_step);
 
-    // Handle keys
-    PDButtons pushed;
-    pd->system->getButtonState(&pushed, NULL, NULL);
+        switch (load_step) {
+            case 0:
+                // Load textures
+                minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
+                minigl_tex_read_file("res/textures/test.tex", &tex_enemy);
 
-    if (pushed) {
-        game_handle_keys(&gs, pushed, update_delta_t);
-        view_update();
+                // Config dither texture
+                minigl_set_dither(tex_dither);
+
+                // Object buffer
+                obj_buf = minigl_objbuf_init(50);
+
+                // Perspective transform
+                glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 50.0f, proj);
+                view_trans_update();  // Setup view matrix
+
+                // Enemy model
+                minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
+                glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+                glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+                glm_scale_uni(trans, MAP_TILE_SIZE);
+                minigl_obj_trans(&obj_enemy, trans);
+
+                break;
+
+            case 1:
+                gen_torch_mask();
+                break;
+
+            case 2:
+                // Setup map
+                mapgen_gen(gs.map);
+                mapgen_grid_print(gs.map);
+                map_init();
+                break;
+
+            case 3:
+                // Setup minimap
+                minimap_init();
+                minimap_gen(gs.map);
+
+                // Initialize game
+                game_init();
+
+                // Sound
+                sound_init();
+                // sound_bg_start();
+                sound_effect_start(SOUND_HEARTBEAT);
+                break;
+
+            case 4:
+                break;
+        }
+        load_step++;
+    } else {
+        debug("Loading done!");
     }
 
-    game_handle_crank(&gs, update_delta_t);
+    pd->lua->pushInt(load_step);
+    pd->lua->pushInt(LOAD_STEP_CNT);
+    return 2;
+}
 
-    game_update(&gs, update_delta_t);
+static int lua_update(lua_State *L) {
+    // Calculate delta T
+    update_delta_t = pd->system->getElapsedTime() - update_delta_t;
 
-    game_enemy_ai(&gs, update_delta_t);
+    // Real work is done here!
+    game_update(update_delta_t);
 
     //---------------------------------------------------------------------------
     // Draw graphics
@@ -231,6 +228,9 @@ static int update(void) {
 
     // Flush buffer
     minigl_clear(0.0f, 1.0f);
+
+    // Update transform
+    view_trans_update();
 
     // Draw map
     map_draw(gs.map, trans, gs.player_camera);
@@ -257,7 +257,7 @@ static int update(void) {
     screen_update();
 
 #ifdef DEBUG
-    if (update_cnt++ % 100 == 0) {
+    if (update_cnt % 100 == 0) {
         minigl_perf_print();
         debug("Awareness: %f", gs.enemy_awareness);
     }
@@ -266,34 +266,7 @@ static int update(void) {
     pd->system->drawFPS(0, 0);
 #endif
 
-    return 1;
-}
-
-static int pd_update_callback(void *userdata) {
-    // Calculate delta T
-    update_delta_t = pd->system->getElapsedTime() - update_delta_t;
-
-    // Do stuff
-    if (setup_step < SETUP_STEPS) {
-        // Load resources
-        if (setup_step == 0) {
-            pd->graphics->drawBitmap(bg_loading, 0, 0, 0);
-        }
-
-        setup(setup_step);
-        setup_step++;
-
-        pd->graphics->fillRect(100, 160, setup_step * (200 / SETUP_STEPS), 5, kColorWhite);
-
-        if (setup_step == SETUP_STEPS) {
-            pd->graphics->clear(kColorBlack);
-        }
-    } else {
-        // Real work is done here!
-        update();
-    }
-
-    return 1;
+    return 0;
 }
 
 #ifdef _WINDLL
@@ -301,23 +274,44 @@ __declspec(dllexport)
 #endif
     int eventHandler(PlaydateAPI *_pd, PDSystemEvent event, uint32_t arg) {
 
-    if (event == kEventInit) {
-        pd = _pd;
+    const char *err;
 
-        //---------------------------------------------------------------------------
-        // Device config
-        //---------------------------------------------------------------------------
+    switch (event) {
+        case kEventInitLua:
+            //---------------------------------------------------------------------------
+            // LUA Init
+            //---------------------------------------------------------------------------
 
-        pd->system->setUpdateCallback(pd_update_callback, pd);
-        pd->display->setRefreshRate(30);
-        pd->graphics->clear(kColorBlack);
+            if (!pd->lua->addFunction(lua_load, "loadC", &err)) {
+                pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+            }
+            if (!pd->lua->addFunction(lua_update, "updateC", &err)) {
+                pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+            }
+            break;
 
-        // int seed = time(NULL);
-        int seed = 0;
-        debug("SEED: %d", seed);
-        srand(seed);
+        case kEventInit:
+            //---------------------------------------------------------------------------
+            // Init
+            //---------------------------------------------------------------------------
 
-        bg_loading = pd->graphics->loadBitmap("res/images/loading.pdi", NULL);
+            pd = _pd;
+
+            // Configure device
+            pd->display->setRefreshRate(30);
+
+            // int seed = time(NULL);
+            int seed = 0;
+            debug("SEED: %d", seed);
+            srand(seed);
+            break;
+
+        case kEventTerminate:
+            // Cleanup!
+            break;
+
+        default:
+            break;
     }
 
     return 0;

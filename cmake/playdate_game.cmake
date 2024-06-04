@@ -14,7 +14,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 		TARGET ${PLAYDATE_GAME_DEVICE} POST_BUILD
 		COMMAND ${CMAKE_STRIP} --strip-unneeded -R .comment -g
 		${PLAYDATE_GAME_DEVICE}.elf
-		-o ${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.elf
+		-o ${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.elf
 	)
 
 	add_custom_command(
@@ -24,7 +24,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
 	set_property(
 		TARGET ${PLAYDATE_GAME_DEVICE} APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-		${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.elf
+		${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.elf
 		)
 
 	set_property(
@@ -34,7 +34,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
 	add_custom_command(
 		TARGET ${PLAYDATE_GAME_DEVICE} POST_BUILD
-		COMMAND ${PDC} Source ${PLAYDATE_GAME_NAME}.pdx
+		COMMAND ${PDC} game ${PLAYDATE_GAME_NAME}.pdx
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 
@@ -58,7 +58,7 @@ else ()
 			TARGET ${PLAYDATE_GAME_NAME} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy
 			${CMAKE_CURRENT_BINARY_DIR}/${BUILD_SUB_DIR}${PLAYDATE_GAME_NAME}.dll
-			${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.dll)
+			${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.dll)
 
 	elseif(APPLE)
 
@@ -74,7 +74,7 @@ else ()
 			TARGET ${PLAYDATE_GAME_NAME} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy
 			${CMAKE_CURRENT_BINARY_DIR}/${BUILD_SUB_DIR}lib${PLAYDATE_GAME_NAME}.dylib
-			${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.dylib)
+			${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.dylib)
 
 	elseif(UNIX)
 
@@ -84,7 +84,7 @@ else ()
 			TARGET ${PLAYDATE_GAME_NAME} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy
 			${CMAKE_CURRENT_BINARY_DIR}/lib${PLAYDATE_GAME_NAME}.so
-			${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.so)
+			${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.so)
 
 	elseif(MINGW)
 
@@ -94,14 +94,14 @@ else ()
 			TARGET ${PLAYDATE_GAME_NAME} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy
 			${CMAKE_CURRENT_BINARY_DIR}/lib${PLAYDATE_GAME_NAME}.dll
-			${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.dll)
+			${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.dll)
 	else()
 		message(FATAL_ERROR "Platform not supported!")
 	endif()
 
 	set_property(
 		TARGET ${PLAYDATE_GAME_NAME} APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-		${CMAKE_CURRENT_SOURCE_DIR}/Source/pdex.${LIB_EXT}
+		${CMAKE_CURRENT_SOURCE_DIR}/game/pdex.${LIB_EXT}
 		)
 
 	set_property(
@@ -111,7 +111,7 @@ else ()
 
 	add_custom_command(
 		TARGET ${PLAYDATE_GAME_NAME} POST_BUILD
-		COMMAND ${PDC} ${CMAKE_CURRENT_SOURCE_DIR}/Source
+		COMMAND ${PDC} ${CMAKE_CURRENT_SOURCE_DIR}/game
 		${CMAKE_CURRENT_SOURCE_DIR}/${PLAYDATE_GAME_NAME}.pdx)
 
 endif ()
