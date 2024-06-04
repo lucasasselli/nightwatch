@@ -22,8 +22,6 @@ function playdate.update()
             bg_load_fade = bg_load_fade - 0.1
         end
 
-        print(bg_load_fade)
-
         gfx.clear()
         bg_load_img:drawFaded(0, 0, bg_load_fade, gfx.image.kDitherTypeBayer8x8)
 

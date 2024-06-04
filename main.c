@@ -195,6 +195,7 @@ static int lua_load(lua_State *L) {
 
                 // Initialize game
                 game_init();
+                // game_viz_update();
 
                 // Sound
                 sound_init();
@@ -257,7 +258,7 @@ static int lua_update(lua_State *L) {
     screen_update();
 
 #ifdef DEBUG
-    if (update_cnt % 100 == 0) {
+    if (update_cnt++ % 100 == 0) {
         minigl_perf_print();
         debug("Awareness: %f", gs.enemy_awareness);
     }
