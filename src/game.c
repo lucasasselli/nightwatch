@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include "a_star.h"
+#include "constants.h"
 #include "map.h"
 #include "sound.h"
 #include "utils.h"
@@ -14,6 +15,8 @@ a_star_path_t enemy_path;
 int enemy_path_prog = 0;
 float enemy_move_cnt = 0;
 ivec2 enemy_player_last_pos;
+
+int map_viz[MAP_SIZE][MAP_SIZE];
 
 void rand_empty_tile(map_t map, ivec2 tile_pos) {
     map_tile_t tile;
@@ -39,9 +42,9 @@ void game_init(void) {
     //---------------------------------------------------------------------------
 
     // Pick a random starting position in the map
-    ivec2 player_spawn_tile;
-    rand_empty_tile(gs.map, player_spawn_tile);
-    pos_tile_to_world(player_spawn_tile, gs.player_camera.pos);
+    rand_empty_tile(gs.map, gs.player_tile);
+    pos_tile_to_world(gs.player_tile, gs.player_camera.pos);
+    map_update_viz(gs.map, gs.player_camera);
 
     // Torch
     gs.torch_charge = 0.0;
@@ -103,8 +106,8 @@ void game_handle_keys(PDButtons pushed, float delta_t) {
     direction[2] = sinf(glm_rad(gs.player_camera.yaw)) * cosf(glm_rad(gs.player_camera.pitch));
     glm_vec3_normalize_to(direction, gs.player_camera.front);
 
-    // debug("Player: %d %d", gs.player_tile[0], gs.player_tile[1]);
-    // debug("Camera: %f %f", gs.player_camera.pos[0], gs.player_camera.pos[2]);
+    // Update map visibility
+    map_update_viz(gs.map, gs.player_camera);
 }
 
 void game_handle_crank(float delta_t) {
@@ -179,7 +182,7 @@ void game_update(float delta_t) {
 
     gs.enemy_awareness = glm_clamp(gs.enemy_awareness, 0.0f, ENEMY_AWARE_MAX);
 
-    // Make this grow with the distance instead of awareness
+    // FIXME: Make this grow with the distance instead of awareness
     sound_play_range(SOUND_HEARTBEAT, 0, 120000 - 100000 * (gs.enemy_awareness / ENEMY_AWARE_MAX));
 
     game_enemy_ai(delta_t);

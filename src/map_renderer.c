@@ -255,26 +255,10 @@ void map_item_draw(map_item_t item, minigl_camera_t camera, mat4 trans, int x, i
 }
 
 void map_draw(map_t map, mat4 trans, minigl_camera_t camera) {
-    const int FOV_HEADROOM_ANGLE = 30;
-
-    vec2 camera_dir;
-    camera_dir[0] = camera.front[0];
-    camera_dir[1] = camera.front[2];
-    // glm_vec2_normalize(camera_dir);
-
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            // NOTE: Use the cross product of the position-tile vector and the
-            // camera direction to check if the tile is within the FOV.
-            vec2 pos_to_tile_dir;
-            vec2_pos_to_tile(x, y, camera.pos, pos_to_tile_dir);
-
-            float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
-
-            // NOTE: FOV should be divided by two, but since tiles are discrete,
-            // we need to use a larger angle
-            if (a >= cosf(glm_rad(CAMERA_FOV / 2 + FOV_HEADROOM_ANGLE))) {
-                map_tile_t tile = map[y][x];
+            map_tile_t tile = map[y][x];
+            if (tile.visible) {
                 for (int i = 0; i < tile.item_cnt; i++) {
                     map_item_draw(tile.items[i], camera, trans, x, y);
                 }

@@ -7,6 +7,8 @@
 
 #include <cglm/cglm.h>
 
+#include "minigl_types.h"
+
 typedef enum {
     ITEM_FLOOR,
     ITEM_STATUE,
@@ -14,7 +16,7 @@ typedef enum {
 } map_item_type_t;
 
 typedef enum {
-    DIR_ANY,
+    DIR_ANY = -1,
     DIR_NORTH,
     DIR_EAST,
     DIR_SOUTH,
@@ -30,6 +32,7 @@ typedef struct {
     map_item_t *items;
     int item_cnt;
     bool collide;
+    bool visible;
 } map_tile_t;
 
 typedef map_tile_t map_t[MAP_SIZE][MAP_SIZE];
@@ -39,5 +42,7 @@ void pos_tile_to_world(ivec2 tile, vec3 world);
 void pos_world_to_tile(vec3 world, ivec2 tile);
 
 map_tile_t map_get_tile(map_t map, ivec2 pos);
+
+void map_update_viz(map_t map, minigl_camera_t camera);
 
 bool map_tile_collide(map_tile_t tile);

@@ -6,9 +6,6 @@
 #include "minigl_types.h"
 #include "pd_api.h"
 
-#define CAMERA_FOV 60
-#define CAMERA_MAX_Z 50.0f
-
 extern PlaydateAPI* pd;
 
 typedef enum {
@@ -46,5 +43,7 @@ void game_handle_keys(PDButtons pushed, float delta_t);
 void game_handle_crank(float delta_t);
 
 void game_update(float delta_t);
+
+void game_viz_update(void);
 
 void game_enemy_ai(float delta_t);

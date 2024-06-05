@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "constants.h"
 #include "game.h"
 #include "map_generator.h"
 #include "map_renderer.h"
@@ -35,7 +36,7 @@ minigl_objbuf_t obj_buf;
 mat4 proj;
 mat4 trans;
 
-// #define TORCH_DISABLE
+#define TORCH_DISABLE
 
 #define TORCH_MASK_STEPS 32
 fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
@@ -195,7 +196,6 @@ static int lua_load(lua_State *L) {
 
                 // Initialize game
                 game_init();
-                // game_viz_update();
 
                 // Sound
                 sound_init();
@@ -258,6 +258,7 @@ static int lua_update(lua_State *L) {
     screen_update();
 
 #ifdef DEBUG
+    // Print periodically
     if (update_cnt++ % 100 == 0) {
         minigl_perf_print();
         debug("Awareness: %f", gs.enemy_awareness);
