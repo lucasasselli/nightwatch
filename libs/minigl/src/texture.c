@@ -1,6 +1,6 @@
-#include "texture.h"
+#include "minigl/texture.h"
 
-#include "system.h"
+#include "minigl/system.h"
 
 // TODO: Add hooks to be agnostic to the Playdate library
 int minigl_tex_read_file(char *path, minigl_tex_t *out) {
@@ -49,7 +49,7 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
     // Allocate final texture memory location
     out->color = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
     out->opacity = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
-    for (int j = 0; j < out->size_y; j++) {
+    for (uint32_t j = 0; j < out->size_y; j++) {
         out->color[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
         out->opacity[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
     }

@@ -1,8 +1,8 @@
-#include "frame.h"
+#include "minigl/frame.h"
 
 #include <spng.h>
 
-#include "system.h"
+#include "minigl/system.h"
 
 int minigl_frame_to_file(minigl_frame_t frame, char* path) {
     int ret = 0;

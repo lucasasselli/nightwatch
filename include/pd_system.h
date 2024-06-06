@@ -24,7 +24,7 @@ int minigl_fread(void* ptr, size_t size, void* f) {
 }
 
 int minigl_fwrite(void* file, const void* buf, unsigned int len) {
-    // return pd->file->write();
+    return pd->file->write(file, buf, len);
 }
 
 int minigl_fclose(void* file) {

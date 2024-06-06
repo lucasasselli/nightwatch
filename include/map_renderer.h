@@ -4,8 +4,7 @@
 
 #include "game.h"
 #include "map.h"
-#include "minigl_types.h"
-#include "object.h"
+#include "minigl/object.h"
 
 #define MAP_DRAW_SIZE 20
 

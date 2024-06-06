@@ -1,14 +1,13 @@
-#include "minigl.h"
+#include "minigl/rasterizer.h"
 
 #include <assert.h>
 #include <math.h>
 
-#include "cglm/types.h"
+#include "minigl/common.h"
+#include "minigl/utils.h"
 
 minigl_cfg_t cfg = {0};
 minigl_frame_t frame;
-
-minigl_perf_data_t perf_data;
 
 void minigl_set_tex(minigl_tex_t t) {
     cfg.texture_mode = MINIGL_TEX_2D;
@@ -31,24 +30,6 @@ void minigl_clear(uint8_t color, int depth) {
             frame.z_buff[y][x] = depth;           // Clear z buffer
         }
     }
-}
-
-void minigl_perf_event(minigl_perf_event_t e) {
-#ifdef DEBUG_PERF
-    perf_data.array[e]++;
-#endif
-}
-
-void minigl_perf_clear(void) {
-#ifdef DEBUG_PERF
-    for (int i = 0; i < 4; i++) {
-        perf_data.array[i] = 0;
-    }
-#endif
-}
-
-minigl_perf_data_t minigl_perf_get(void) {
-    return perf_data;
 }
 
 MINIGL_INLINE float edge(vec4 a, vec4 b, vec4 c) {
@@ -130,6 +111,7 @@ MINIGL_INLINE void scanline_slopes(float a, float b, float c, vec4 v[3], vec3 ou
 }
 
 MINIGL_INLINE void scanline_range1(float a, float b, vec4 v[3], vec3 slope, float y, vec2 out) {
+    MINIGL_UNUSED(b);
     out[0] = a + slope[0] * (y - v[0][1]);
     out[1] = a + slope[1] * (y - v[0][1]);
 }

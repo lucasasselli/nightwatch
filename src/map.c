@@ -18,18 +18,6 @@ map_tile_t map_get_tile_vec2(map_t map, vec2 pos) {
     return map_get_tile_xy(map, pos[0], pos[1]);
 }
 
-void pos_tile_to_world(ivec2 tile, vec3 world) {
-    // FIXME:
-    world[0] = (((float)tile[0]) + 0.5f);
-    world[1] = (((float)tile[1]) + 0.5f);
-}
-
-void pos_world_to_tile(vec3 world, ivec2 tile) {
-    // FIXME:
-    tile[0] = (world[0]);
-    tile[1] = (world[2]);
-}
-
 bool map_tile_collide(map_tile_t tile) {
     return (tile.item_cnt == 0 || tile.collide);
 }
@@ -109,9 +97,6 @@ void map_update_viz(map_t map, camera_t camera) {
     const float FOV_HEADROOM_ANGLE = 20.0f;
 
     // TODO: limit viz analysis to a smaller square
-    ivec2 player_tile;
-    pos_world_to_tile(camera.pos, player_tile);
-
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             // NOTE: Use the cross product of the position-tile vector and the

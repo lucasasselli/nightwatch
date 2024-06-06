@@ -41,7 +41,7 @@ void game_init(void) {
 
     // Pick a random starting position in the map
     rand_empty_tile(gs.map, gs.player_tile);
-    pos_tile_to_world(gs.player_tile, gs.camera.pos);
+    ivec2_to_vec2_center(gs.player_tile, gs.camera.pos);
     map_update_viz(gs.map, gs.camera);
 
     // Torch
@@ -52,6 +52,8 @@ void game_init(void) {
 }
 
 void game_handle_keys(PDButtons pushed, float delta_t) {
+    (void)delta_t;  // TODO: make speed delta_t dependent
+
     vec2 camera_delta;
 
     vec2 old_pos;
@@ -102,6 +104,8 @@ void game_handle_keys(PDButtons pushed, float delta_t) {
 }
 
 void game_handle_crank(float delta_t) {
+    (void)delta_t;  // TODO: Make crank rates delta_t dependent
+
     const float TORCH_DISCHARGE_RATE = 0.01f;
     const float TORCH_CHARGE_RATE = 0.001f;
 

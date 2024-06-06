@@ -2,9 +2,7 @@
 
 #include "cglm/affine.h"
 #include "game.h"
-#include "minigl.h"
-#include "object.h"
-#include "texture.h"
+#include "minigl/minigl.h"
 #include "utils.h"
 
 #define BB_SPRITE_SIZE 36
@@ -46,6 +44,9 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
                         break;
                     case DIR_WEST:
                         if (x == 0) draw = true;
+                        break;
+                    case DIR_ANY:
+                        assert(0);  // Not allowed
                         break;
                 }
             } else if (item.type == ITEM_STATUE) {
@@ -170,13 +171,6 @@ void map_init(void) {
     }
 }
 
-void vec2_pos_to_tile(int x, int y, vec3 pos, vec2 out) {
-    // FIXME:
-    out[0] = (((float)x) + 0.5f) - pos[0];
-    out[1] = (((float)y) + 0.5f) - pos[1];
-    glm_vec2_normalize(out);
-}
-
 int bb_tex_index(float a, map_item_dir_t dir) {
     glm_make_deg(&a);
 
@@ -197,15 +191,10 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
 
     int bb_tex_i = 0;
     if (item.type == ITEM_STATUE) {
-        // FIXME:
-        vec2 poly_dir2;
-        poly_dir2[0] = 0.0f;
-        poly_dir2[1] = -1.0f;
-        // glm_vec2_normalize(poly_dir2);
+        vec2 dir;
+        tile_dir((ivec2){x, y}, camera.pos, dir);
 
-        vec2 pos_to_tile_dir;
-        vec2_pos_to_tile(x, y, camera.pos, pos_to_tile_dir);
-        float bb_tex_a = vec2_angle(poly_dir2, pos_to_tile_dir);
+        float bb_tex_a = vec2_angle((vec2){0.0f, -1.0f}, dir);
         bb_tex_i = bb_tex_index(bb_tex_a, item.dir);
 
         mat4_billboard(camera, tile_trans);

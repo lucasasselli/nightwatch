@@ -2,7 +2,6 @@
 
 #include <cglm/cglm.h>
 
-#include "minigl.h"
 #include "pd_api.h"
 #include "types.h"
 
@@ -43,7 +42,7 @@ void ivec2_to_vec2_center(ivec2, vec2 out);
 
 float vec2_angle(vec2 a, vec2 b);
 
-void tile_dir(ivec2 tile, vec3 pos, vec2 out);
+void tile_dir(ivec2 tile, vec2 pos, vec2 out);
 
 bool tile_in_fov(ivec2 tile, camera_t camera, float fov, float r);
 

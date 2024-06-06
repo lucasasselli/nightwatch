@@ -1,14 +1,11 @@
 #include <cglm/cglm.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
-#include "cglm/vec3.h"
 #include "constants.h"
 #include "game.h"
 #include "map_generator.h"
 #include "map_renderer.h"
-#include "minigl.h"
+#include "minigl/minigl.h"
 #include "pd_api.h"
 #include "pd_system.h"
 #include "sound.h"
@@ -37,7 +34,7 @@ minigl_objbuf_t obj_buf;
 mat4 proj;
 mat4 trans;
 
-#define TORCH_DISABLE
+// #define TORCH_DISABLE
 
 #define TORCH_MASK_STEPS 32
 fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
@@ -102,7 +99,7 @@ void screen_update(void) {
 }
 
 void minigl_perf_print(void) {
-#ifdef DEBUG_PERF
+#ifdef MINIGL_DEBUG_PERF
     minigl_perf_data_t perf_data = minigl_perf_get();
     debug("Clip count: %d", perf_data.clip);
     debug("Cull count: %d", perf_data.cull);
@@ -120,7 +117,9 @@ void gen_torch_mask(void) {
 
         for (int y = 0; y < SCREEN_SIZE_Y; y++) {
             for (int x = 0; x < SCREEN_SIZE_X; x++) {
-                float r = sqrtf(pow((x - SCREEN_SIZE_X / 2), 2) + pow((y - SCREEN_SIZE_Y / 2), 2));
+                int dx = x - SCREEN_SIZE_X / 2;
+                int dy = y - SCREEN_SIZE_Y / 2;
+                float r = sqrtf(pow(dx, 2) + pow(dy, 2));  // FIXME: WTF? No error?
 
                 float color;
 
@@ -151,6 +150,8 @@ void view_trans_update(void) {
 }
 
 static int lua_load(lua_State *L) {
+    (void)L;  // Unused
+
     if (load_step < LOAD_STEP_CNT) {
         debug("Loading %d...", load_step);
 
@@ -217,6 +218,8 @@ static int lua_load(lua_State *L) {
 }
 
 static int lua_update(lua_State *L) {
+    (void)L;  // Unused
+
     // Calculate delta T
     update_delta_t = pd->system->getElapsedTime() - update_delta_t;
 
@@ -240,10 +243,11 @@ static int lua_update(lua_State *L) {
     if (gs.enemy_state != ENEMY_HIDDEN) {
         mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
         vec2 enemy_pos;
-        pos_tile_to_world(gs.enemy_tile, enemy_pos);
+        ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
         glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
         mat4_billboard(gs.camera, enemy_trans);
         glm_mat4_mul(trans, enemy_trans, enemy_trans);
+
         minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
         minigl_set_tex(tex_enemy);
         minigl_draw(obj_buf);
@@ -261,7 +265,7 @@ static int lua_update(lua_State *L) {
     // Print periodically
     if (update_cnt++ % 100 == 0) {
         minigl_perf_print();
-        debug("Awareness: %f", gs.enemy_awareness);
+        debug("Awareness: %f", (double)gs.enemy_awareness);
     }
     minigl_perf_clear();
 
@@ -275,6 +279,8 @@ static int lua_update(lua_State *L) {
 __declspec(dllexport)
 #endif
     int eventHandler(PlaydateAPI *_pd, PDSystemEvent event, uint32_t arg) {
+
+    (void)arg;  // Unused
 
     const char *err;
 

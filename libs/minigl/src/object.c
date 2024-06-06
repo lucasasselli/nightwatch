@@ -1,11 +1,12 @@
-#include "object.h"
+#include "minigl/object.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "system.h"
+#include "minigl/system.h"
 
-// TODO: Add hooks to be agnostic to the Playdate library
+// TODO: Add ability to read bitmaps
+
 int minigl_obj_read_file(char *path, minigl_obj_t *out) {
     // Get the file handle
     void *f = minigl_fopen(path, "r");

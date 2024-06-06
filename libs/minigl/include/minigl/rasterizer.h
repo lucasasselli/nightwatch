@@ -1,32 +1,32 @@
 #pragma once
 
-#include "frame.h"
-#include "minigl_types.h"
-#include "object.h"
-#include "texture.h"
-
-#define MINIGL_INLINE static inline __attribute((always_inline))
+#include "minigl/frame.h"
+#include "minigl/object.h"
+#include "minigl/texture.h"
 
 #define MINIGL_SCANLINE
 // #define MINIGL_PERSP_CORRECT
 #define MINIGL_NO_DITHERING
 
+// TODO: Implement
 typedef enum {
-    PERF_CLIP,
-    PERF_CULL,
-    PERF_POLY,
-    PERF_FRAG
-} minigl_perf_event_t;
+    MINIGL_NEVER,
+    MINIGL_LESS,
+    MINIGL_GREATER,
+    MINIGL_EQUAL
+} minigl_depth_funct_t;
 
-typedef union {
-    int array[4];
-    struct {
-        int clip;
-        int cull;
-        int poly;
-        int frag;
-    };
-} minigl_perf_data_t;
+// TODO: Implement
+typedef enum {
+    MINIGL_FCULL_NONE,
+    MINIGL_FCULL_BACK,
+    MINIGL_FCULL_FRONT
+} minigl_face_cull_t;
+
+typedef enum {
+    MINIGL_TEX_0D,  // Solid color
+    MINIGL_TEX_2D   // 2D texture
+} minigl_tex_mode_t;
 
 // State objects
 typedef struct {
@@ -42,10 +42,6 @@ void minigl_set_tex(minigl_tex_t t);
 void minigl_set_dither(minigl_tex_t t);
 
 void minigl_set_color(uint8_t color);
-
-minigl_perf_data_t minigl_perf_get(void);
-
-void minigl_perf_clear(void);
 
 void minigl_clear(uint8_t color, int depth);
 

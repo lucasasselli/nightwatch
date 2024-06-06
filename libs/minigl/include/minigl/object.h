@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cglm/cglm.h> /* for inline */
+#include <cglm/cglm.h>
 
 #define OBJ_LINE_BUFFER_SIZE 50
 
@@ -14,7 +14,8 @@ typedef struct {
     int face_size;
 } minigl_obj_t;
 
-// NOTE: This is identical to minigl_obj_t, but used for
+// NOTE: This is identical to minigl_obj_t, but used to buffer geometry
+// Potentially can be used interchangeably.
 typedef struct {
     vec4* vcoord_ptr;
     vec2* tcoord_ptr;

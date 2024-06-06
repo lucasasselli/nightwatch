@@ -3,7 +3,6 @@
 #include <stdbool.h>
 
 #include "map.h"
-#include "random.h"
 
 #define MAP_MAX_ROOMS 32
 #define MAP_RAND_EFFORT 50

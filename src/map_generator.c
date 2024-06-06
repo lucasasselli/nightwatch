@@ -1,15 +1,15 @@
 #include "map_generator.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
+#include "random.h"
 #include "utils.h"
 
 map_room_t *rooms;
 int room_cnt;
-// clang-format off
 
+// clang-format off
 const randw_constr_int_t CONSTR_ROOM_T = {
     .size = 3,
     .values = {
@@ -30,31 +30,30 @@ const randw_constr_int_t CONSTR_EXIT_CNT = {
 };
 // clang-format on
 
-static char tile_to_char(map_tile_t tile) {
-    if (tile.item_cnt == 0) {
-        return ' ';
-    } else if (tile.item_cnt > 1) {
-        return '+';
-    } else {
-        switch (tile.items[0].type) {
-            case ITEM_FLOOR:
-                return '.';
-            case ITEM_STATUE:
-                return 'o';
-            case ITEM_WALL:
-                return '#';
-        }
-    }
-}
-
-static bool tile_has_item(map_t map, map_item_type_t type, map_item_dir_t dir, int x, int y) {
-    if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
-    map_tile_t *tile = &map[y][x];
-    for (int i = 0; i < tile->item_cnt; i++) {
-        map_item_t item = tile->items[i];
+static bool tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
+    for (int i = 0; i < tile.item_cnt; i++) {
+        map_item_t item = tile.items[i];
         if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return true;
     }
     return false;
+}
+
+static char tile_to_char(map_tile_t tile) {
+    bool has_wall = tile_has_item(tile, ITEM_WALL, DIR_ANY);
+    bool has_statue = tile_has_item(tile, ITEM_WALL, DIR_ANY);
+    bool has_floor = tile_has_item(tile, ITEM_WALL, DIR_ANY);
+
+    if (has_wall && has_statue) {
+        return '+';
+    } else if (has_wall) {
+        return '0';
+    } else if (has_statue) {
+        return '0';
+    } else if (has_floor) {
+        return '.';
+    }
+
+    return ' ';
 }
 
 static bool tile_remove_item(map_t map, map_item_t query, int x, int y) {
@@ -107,6 +106,10 @@ static void tile_item_add(map_t map, map_item_type_t type, map_item_dir_t dir, i
                 if (tile_remove_item(map, (map_item_t){ITEM_WALL, DIR_EAST}, x - 1, y)) {
                     return;
                 }
+                break;
+
+            case DIR_ANY:
+                assert(0);
                 break;
         }
     } else if (item.type == ITEM_STATUE) {
@@ -200,7 +203,7 @@ void mapgen_grid_update(map_t map) {
                 do {
                     x = rand_range(room.pos[0], room.pos[0] + room.size[0]);
                     y = rand_range(room.pos[1], room.pos[1] + room.size[1]);
-                } while (tile_has_item(map, ITEM_STATUE, DIR_ANY, x, y));
+                } while (tile_has_item(map[y][x], ITEM_STATUE, DIR_ANY));
 
                 tile_item_add(map, ITEM_STATUE, rand() % 4, x, y);
             }
@@ -293,16 +296,16 @@ static map_room_t room_randomize(map_room_t prev) {
         int side;
 
         switch (out.type) {
-            case ROOM_BASE:
-                side = randi(DIR_NORTH, DIR_WEST + 1);
-                break;
-
             case ROOM_CORRIDOR_NS:
                 // North-south
-                side = randi(0, 2) ? 0 : 2;
+                side = randi(0, 2) ? 0 : 2;  // TODO: Add something to enumerate pairs?
                 break;
             case ROOM_CORRIDOR_EW:
-                side = randi(0, 2) ? 1 : 3;
+                side = randi(0, 2) ? 1 : 3;  // TODO: Add something to enumerate pairs?
+                break;
+
+            default:
+                side = randi(DIR_NORTH, DIR_WEST + 1);
                 break;
         }
 
@@ -403,7 +406,7 @@ void mapgen_gen(map_t map) {
     }
 
     // Generate the first room
-    map_room_t room;
+    map_room_t room = {0};
 
     room.size[0] = 4;
     room.size[1] = 4;

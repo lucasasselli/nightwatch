@@ -1,6 +1,7 @@
 #include "utils.h"
 
 int fake_printf(const char* format, ...) {
+    (void)format;
     return 0;
 }
 
@@ -50,13 +51,16 @@ void mat4_billboard(camera_t camera, mat4 trans) {
     glm_rotate_at(trans, GLM_VEC3_ZERO, -a, (vec3){0.0f, 1.0f, 0.0f});
 }
 
-void tile_dir(ivec2 tile, vec3 pos, vec2 out) {
+void tile_dir(ivec2 tile, vec2 pos, vec2 out) {
     out[0] = (((float)tile[0]) + 0.5f) - pos[0];
     out[1] = (((float)tile[1]) + 0.5f) - pos[1];
     glm_vec2_normalize(out);
 }
 
+// FIXME: Remove
 bool tile_in_fov(ivec2 tile, camera_t camera, float fov, float r) {
+    (void)r;
+
     vec2 camera_dir;
     camera_dir[0] = camera.front[0];
     camera_dir[1] = camera.front[1];

@@ -1,4 +1,4 @@
-#include "system.h"
+#include "minigl/system.h"
 
 #include <stdio.h>
 

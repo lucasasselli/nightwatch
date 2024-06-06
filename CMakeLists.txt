@@ -5,6 +5,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 
+set(CMAKE_C_FLAGS "-Wall -Wextra -Werror")
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+
 # Get the SDK
 set(SDK $ENV{PLAYDATE_SDK_PATH})
 
@@ -19,9 +23,6 @@ file(GLOB MINIGL_FILES libs/minigl/src/*.c)
 
 set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 
-set(CMAKE_C_FLAGS "-Wall -Wextra")
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 if (TOOLCHAIN STREQUAL "armgcc")
     set(MINIGL_SHARED OFF CACHE BOOL "")
@@ -42,7 +43,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
     target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
-    add_definitions(-DDEBUG_PERF)
+    add_definitions(-DMINIGL_DEBUG_PERF)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
