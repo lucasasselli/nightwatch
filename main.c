@@ -6,6 +6,7 @@
 #include "map_generator.h"
 #include "map_renderer.h"
 #include "minigl/minigl.h"
+#include "minimap_renderer.h"
 #include "pd_api.h"
 #include "pd_system.h"
 #include "sound.h"
@@ -34,7 +35,7 @@ minigl_objbuf_t obj_buf;
 mat4 proj;
 mat4 trans;
 
-// #define TORCH_DISABLE
+#define TORCH_DISABLE
 
 #define TORCH_MASK_STEPS 32
 fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
@@ -44,6 +45,7 @@ void screen_update(void) {
     // Offset to center in screen
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
 
+#ifndef TORCH_DISABLE
     // Handle flickering
     float torch_intensity = gs.torch_charge;
     if (gs.torch_on) {
@@ -59,6 +61,7 @@ void screen_update(void) {
     // FIXME: This is garbage! 0 means fully back!
     const float TORCH_FADE_Z = 0.60f + 0.35f * torch_intensity;
     const float TORCH_FADE_Z_K = 1.0f / (1.0f - TORCH_FADE_Z);
+#endif
 
     uint8_t *pd_frame = pd->graphics->getFrame();
     minigl_frame_t *minigl_frame = minigl_get_frame();
@@ -186,7 +189,6 @@ static int lua_load(lua_State *L) {
             case 2:
                 // Setup map
                 mapgen_gen(gs.map);
-                mapgen_grid_print(gs.map);
                 map_init();
                 break;
 
@@ -225,6 +227,7 @@ static int lua_update(lua_State *L) {
 
     // Real work is done here!
     game_update(update_delta_t);
+    view_trans_update();
 
     //---------------------------------------------------------------------------
     // Draw graphics
@@ -232,9 +235,6 @@ static int lua_update(lua_State *L) {
 
     // Flush buffer
     minigl_clear(0.0f, 1.0f);
-
-    // Update transform
-    view_trans_update();
 
     // Draw map
     map_draw(gs.map, trans, gs.camera);
@@ -253,15 +253,12 @@ static int lua_update(lua_State *L) {
         minigl_draw(obj_buf);
     }
 
-    // Not used
-    if (gs.minimap_show) {
-        minimap_draw(0, 0, &gs);
-    }
-
     // Update the screen
     screen_update();
 
 #ifdef DEBUG
+    minimap_debug_draw(0, 0, &gs);
+
     // Print periodically
     if (update_cnt++ % 100 == 0) {
         minigl_perf_print();

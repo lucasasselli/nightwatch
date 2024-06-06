@@ -1,11 +1,11 @@
 #pragma once
 
-#define MAP_TILE_MAX_ITEMS 10
-
 #include <cglm/cglm.h>
 
 #include "constants.h"
 #include "types.h"
+
+#define MAP_TILE_MAX_ITEMS 10
 
 typedef enum {
     ITEM_FLOOR,
@@ -41,6 +41,12 @@ map_tile_t map_get_tile_ivec2(map_t map, ivec2 pos);
 
 map_tile_t map_get_tile_vec2(map_t map, vec2 pos);
 
-void map_update_viz(map_t map, camera_t camera);
+bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir);
+
+void map_viz_update(map_t map, camera_t camera);
 
 bool map_tile_collide(map_tile_t tile);
+
+bool map_viz_xy(map_t map, vec2 pos, int x, int y);
+
+bool map_viz_ivec2(map_t map, vec2 pos, ivec2 tile);

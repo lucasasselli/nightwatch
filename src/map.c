@@ -3,9 +3,10 @@
 #include <assert.h>
 
 #include "constants.h"
+#include "utils.h"
 
 map_tile_t map_get_tile_xy(map_t map, int x, int y) {
-    assert(x < MAP_SIZE && y < MAP_SIZE);
+    assert(x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE);
 
     return map[y][x];
 }
@@ -18,19 +19,29 @@ map_tile_t map_get_tile_vec2(map_t map, vec2 pos) {
     return map_get_tile_xy(map, pos[0], pos[1]);
 }
 
+bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
+    for (int i = 0; i < tile.item_cnt; i++) {
+        map_item_t item = tile.items[i];
+        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return true;
+    }
+    return false;
+}
+
 bool map_tile_collide(map_tile_t tile) {
     return (tile.item_cnt == 0 || tile.collide);
 }
 
-/*
-static void dda_raycast(map_t map, vec3 player_pos, vec3 tile_pos, vec2 tile_dir) {
+static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
     // Digital Differential Analysis
     // NOTE: https://lodev.org/cgtutor/raycasting.html
+    float rayDirX = tpos[0] - ppos[0];
+    float rayDirY = tpos[1] - ppos[1];
 
-    float rayDirX = 0;
-    float rayDirY = 0;
-    float deltaDistX = (rayDirX == 0) ? 1e30 : fabsf(1 / rayDirX);
-    float deltaDistY = (rayDirY == 0) ? 1e30 : fabsf(1 / rayDirY);
+    float deltaDistX = (rayDirX == 0) ? 1e30f : fabsf(1.0f / rayDirX);
+    float deltaDistY = (rayDirY == 0) ? 1e30f : fabsf(1.0f / rayDirY);
+
+    float posX = ppos[0];
+    float posY = ppos[1];
 
     // length of ray from current position to next x or y-side
     float sideDistX;
@@ -40,85 +51,113 @@ static void dda_raycast(map_t map, vec3 player_pos, vec3 tile_pos, vec2 tile_dir
     int stepX;
     int stepY;
 
-    int hit = 0;  // was there a wall hit?
-    int side;     // was a NS or a EW wall hit?
+    ivec2 i;
+    glm_ivec2_copy(ppos, i);
 
-    float posX = player_pos[0];
-    float posY = player_pos[2];
-
-    int mapX;
-    int mapY;
-
-    // calculate step and initial sideDist
     if (rayDirX < 0) {
-        stepX = -1;
-        sideDistX = (posX - mapX) * deltaDistX;
+        stepX = -1.0f;
+        sideDistX = (posX - i[0]) * deltaDistX;
     } else {
-        stepX = 1;
-        sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+        stepX = 1.0f;
+        sideDistX = (i[0] + 1.0f - posX) * deltaDistX;
     }
     if (rayDirY < 0) {
-        stepY = -1;
-        sideDistY = (posY - mapY) * deltaDistY;
+        stepY = -1.0f;
+        sideDistY = (posY - i[1]) * deltaDistY;
     } else {
-        stepY = 1;
-        sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+        stepY = 1.0f;
+        sideDistY = (i[1] + 1.0f - posY) * deltaDistY;
     }
 
-    // perform DDA
-    while (hit == 0) {
-        // jump to next map square, either in x-direction, or in y-direction
+    bool side;
+    bool hit = false;
+
+    do {
+        // Check if ray has hit a wall
+        map_tile_t* tile = &map[i[1]][i[0]];
+        tile->visible = true;
+
+        if (hit) break;
+
+        // jump to next i square, either in x-direction, or in y-direction
         if (sideDistX < sideDistY) {
+            // East-west
             sideDistX += deltaDistX;
-            mapX += stepX;
+            i[0] += stepX;
             side = 0;
         } else {
+            // North-south
             sideDistY += deltaDistY;
-            mapY += stepY;
+            i[1] += stepY;
             side = 1;
         }
-        // Check if ray has hit a wall
-        if (worldMap[mapX][mapY] > 0) hit = 1;
-    }
 
-    // Calculate distance projected on camera direction. This is the shortest distance from the point where the wall is
-    // hit to the camera plane. Euclidean to center camera point would give fisheye effect!
-    // This can be computed as (mapX - posX + (1 - stepX) / 2) / rayDirX for side == 0, or same formula with Y
-    // for size == 1, but can be simplified to the code below thanks to how sideDist and deltaDist are computed:
-    // because they were left scaled to |rayDir|. sideDist is the entire length of the ray above after the multiple
-    // steps, but we subtract deltaDist once because one step more into the wall was taken above.
-    if (side == 0)
-        perpWallDist = (sideDistX - deltaDistX);
-    else
-        perpWallDist = (sideDistY - deltaDistY);
-}*/
-
-void map_update_viz(map_t map, camera_t camera) {
-    const float FOV_HEADROOM_ANGLE = 20.0f;
-
-    // TODO: limit viz analysis to a smaller square
-    for (int y = 0; y < MAP_SIZE; y++) {
-        for (int x = 0; x < MAP_SIZE; x++) {
-            // NOTE: Use the cross product of the position-tile vector and the
-            // camera direction to check if the tile is within the FOV.
-            vec3 tile_pos;
-            tile_pos[0] = (((float)x) + 0.5f);
-            tile_pos[1] = (((float)y) + 0.5f);
-
-            vec2 tile_dir;
-            tile_dir[0] = tile_pos[0] - camera.pos[0];
-            tile_dir[1] = tile_pos[1] - camera.pos[1];
-            glm_vec2_normalize(tile_dir);
-
-            // Check agains FOV angle
-            float a = glm_vec2_dot(tile_dir, camera.front);
-            if (a >= cosf(glm_rad(CAMERA_FOV / 2.0f + FOV_HEADROOM_ANGLE))) {
-                // Tile is in FOV, is there anything in between?
-                // dda_raycast(map, camera.pos, tile_pos, tile_dir);
-                map[y][x].visible = true;
+        if (side) {
+            // North-south
+            if (stepY > 0) {
+                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_SOUTH);
             } else {
-                map[y][x].visible = false;
+                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_NORTH);
+            }
+        } else {
+            // East-west
+            if (stepX > 0) {
+                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_EAST);
+            } else {
+                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_WEST);
             }
         }
+
+    } while (!hit && i[0] >= 0 && i[1] >= 0 && i[0] < MAP_SIZE && i[1] < MAP_SIZE);
+}
+
+static void viz_to_check(map_t map, camera_t camera, int x, int y) {
+    const float FOV_HEADROOM_ANGLE = 10.0f;
+
+    // NOTE: Use the cross product of the position-tile vector and the
+    // camera direction to check if the tile is within the FOV.
+    vec2 dir;
+    tile_dir((ivec2){x, y}, camera.pos, dir);
+
+    // Check agains FOV angle
+    float a = glm_vec2_dot(dir, camera.front);
+    if (a >= cosf(glm_rad(CAMERA_FOV / 2.0f + FOV_HEADROOM_ANGLE))) {
+        // Tile is in FOV, is there anything in between?
+        viz_dda_raycast(map, (ivec2){camera.pos[0], camera.pos[1]}, (ivec2){x, y});
+    } else {
+        map[y][x].visible = false;
     }
+}
+
+// FIXME: tiles very close to the player might disappear
+void map_viz_update(map_t map, camera_t camera) {
+    int min_x = maxi((int)camera.pos[0] - (MAP_DRAW_SIZE / 2), 0);
+    int max_x = mini((int)camera.pos[0] + (MAP_DRAW_SIZE / 2), MAP_SIZE - 1);
+    int min_y = maxi((int)camera.pos[1] - (MAP_DRAW_SIZE / 2), 0);
+    int max_y = mini((int)camera.pos[1] + (MAP_DRAW_SIZE / 2), MAP_SIZE - 1);
+
+    for (int y = min_y; y < max_y; y++) {
+        for (int x = min_x; x < max_x; x++) {
+            map[y][x].visible = false;  // FIXME: Visibility for every tile is a little bit too much
+        }
+    }
+
+    for (int i = 0; i < MAP_SIZE; i++) {
+        viz_to_check(map, camera, min_x, i);
+        viz_to_check(map, camera, max_x, i);
+        viz_to_check(map, camera, i, min_y);
+        viz_to_check(map, camera, i, max_y);
+    }
+}
+
+bool map_viz_xy(map_t map, vec2 pos, int x, int y) {
+    if (x < ((int)pos[0] - MAP_DRAW_SIZE / 2) || x >= ((int)pos[0] + MAP_DRAW_SIZE / 2) || y < ((int)pos[1] - MAP_DRAW_SIZE / 2) ||
+        y >= ((int)pos[1] + MAP_DRAW_SIZE / 2)) {
+        return false;
+    }
+    return map_get_tile_xy(map, x, y).visible;
+}
+
+bool map_viz_ivec2(map_t map, vec2 pos, ivec2 tile) {
+    return map_viz_xy(map, pos, tile[0], tile[1]);
 }

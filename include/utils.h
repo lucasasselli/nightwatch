@@ -44,6 +44,4 @@ float vec2_angle(vec2 a, vec2 b);
 
 void tile_dir(ivec2 tile, vec2 pos, vec2 out);
 
-bool tile_in_fov(ivec2 tile, camera_t camera, float fov, float r);
-
 void mat4_billboard(camera_t camer, mat4 trans);

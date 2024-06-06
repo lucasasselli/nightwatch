@@ -42,7 +42,7 @@ void game_init(void) {
     // Pick a random starting position in the map
     rand_empty_tile(gs.map, gs.player_tile);
     ivec2_to_vec2_center(gs.player_tile, gs.camera.pos);
-    map_update_viz(gs.map, gs.camera);
+    map_viz_update(gs.map, gs.camera);
 
     // Torch
     gs.torch_charge = 0.0;
@@ -100,7 +100,7 @@ void game_handle_keys(PDButtons pushed, float delta_t) {
     glm_vec2_normalize_to(direction, gs.camera.front);
 
     // Update map visibility
-    map_update_viz(gs.map, gs.camera);
+    map_viz_update(gs.map, gs.camera);
 }
 
 void game_handle_crank(float delta_t) {
@@ -140,9 +140,8 @@ void game_update(float delta_t) {
     //---------------------------------------------------------------------------
 
     // Is enemy visible?
-    // FIXME: In direct sight????
     if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_on) {
-        gs.enemy_in_fov = tile_in_fov(gs.enemy_tile, gs.camera, 60, 0);
+        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile);
     } else {
         gs.enemy_in_fov = false;
     }
@@ -164,7 +163,7 @@ void game_update(float delta_t) {
     if (gs.torch_on && gs.torch_charge > 0.0f && gs.enemy_state != ENEMY_CHASING) {
         // If torch is on, has charge and player is not being chased, update awareness
         if (gs.enemy_in_fov) {
-            gs.enemy_awareness += delta_t * gs.torch_charge * ENEMY_AWARE_SIGHT_K;
+            gs.enemy_awareness += delta_t * gs.torch_charge * ENEMY_AWARE_SIGHT_K;  // FIXME: make factor of distance
         } else {
             gs.enemy_awareness += delta_t * gs.torch_charge * ENEMY_AWARE_TORCH_K;
         }

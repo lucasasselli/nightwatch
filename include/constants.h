@@ -12,3 +12,4 @@
 #define INPUT_CAMERA_RSPEED 5.0f
 
 #define MAP_SIZE 64
+#define MAP_DRAW_SIZE 20

@@ -56,20 +56,3 @@ void tile_dir(ivec2 tile, vec2 pos, vec2 out) {
     out[1] = (((float)tile[1]) + 0.5f) - pos[1];
     glm_vec2_normalize(out);
 }
-
-// FIXME: Remove
-bool tile_in_fov(ivec2 tile, camera_t camera, float fov, float r) {
-    (void)r;
-
-    vec2 camera_dir;
-    camera_dir[0] = camera.front[0];
-    camera_dir[1] = camera.front[1];
-
-    // NOTE: Use the cross product of the position-tile vector and the
-    // camera direction to check if the tile is within the FOV.
-    vec2 pos_to_tile_dir;
-    tile_dir(tile, camera.pos, pos_to_tile_dir);
-
-    float a = glm_vec2_dot(pos_to_tile_dir, camera_dir);
-    return a >= cosf(glm_rad(fov / 2.0f));
-}

@@ -30,32 +30,6 @@ const randw_constr_int_t CONSTR_EXIT_CNT = {
 };
 // clang-format on
 
-static bool tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
-    for (int i = 0; i < tile.item_cnt; i++) {
-        map_item_t item = tile.items[i];
-        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return true;
-    }
-    return false;
-}
-
-static char tile_to_char(map_tile_t tile) {
-    bool has_wall = tile_has_item(tile, ITEM_WALL, DIR_ANY);
-    bool has_statue = tile_has_item(tile, ITEM_WALL, DIR_ANY);
-    bool has_floor = tile_has_item(tile, ITEM_WALL, DIR_ANY);
-
-    if (has_wall && has_statue) {
-        return '+';
-    } else if (has_wall) {
-        return '0';
-    } else if (has_statue) {
-        return '0';
-    } else if (has_floor) {
-        return '.';
-    }
-
-    return ' ';
-}
-
 static bool tile_remove_item(map_t map, map_item_t query, int x, int y) {
     if (x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) return false;
     map_tile_t *tile = &map[y][x];
@@ -203,22 +177,11 @@ void mapgen_grid_update(map_t map) {
                 do {
                     x = rand_range(room.pos[0], room.pos[0] + room.size[0]);
                     y = rand_range(room.pos[1], room.pos[1] + room.size[1]);
-                } while (tile_has_item(map[y][x], ITEM_STATUE, DIR_ANY));
+                } while (map_tile_has_item(map[y][x], ITEM_STATUE, DIR_ANY));
 
                 tile_item_add(map, ITEM_STATUE, rand() % 4, x, y);
             }
         }
-    }
-}
-
-void mapgen_grid_print(map_t map) {
-    char buf[MAP_SIZE + 1];
-    buf[MAP_SIZE] = '\0';
-    for (int y = 0; y < MAP_SIZE; y++) {
-        for (int x = 0; x < MAP_SIZE; x++) {
-            buf[x] = tile_to_char(map[y][x]);
-        }
-        debug("%s", buf);
     }
 }
 
@@ -383,7 +346,7 @@ static void room_gen_next(map_t map, map_room_t room) {
         } while (!mapgen_room_check_collision(next_room) && tries < MAP_RAND_EFFORT);
 
         if (tries >= MAP_RAND_EFFORT) {
-            debug("Max effort reached!\n");
+            debug("Max effort reached!");
             return;
         }
 

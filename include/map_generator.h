@@ -19,6 +19,4 @@ typedef struct {
     ivec2 size;
 } map_room_t;
 
-void mapgen_grid_print(map_t map);
-
 void mapgen_gen(map_t map);
