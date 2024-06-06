@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "cglm/vec3.h"
 #include "constants.h"
 #include "game.h"
 #include "map_generator.h"
@@ -142,10 +143,10 @@ void gen_torch_mask(void) {
 
 void view_trans_update(void) {
     // Update camera position
-    vec3 camera_center;
+    vec2 camera_center;
     mat4 view;
-    glm_vec3_add(gs.player_camera.pos, gs.player_camera.front, camera_center);
-    glm_lookat(gs.player_camera.pos, camera_center, gs.player_camera.up, view);
+    glm_vec2_add(gs.camera.pos, gs.camera.front, camera_center);
+    glm_lookat(CAMERA_VEC3(gs.camera.pos), CAMERA_VEC3(camera_center), CAMERA_UP, view);
     glm_mat4_mul(proj, view, trans);
 }
 
@@ -166,14 +167,13 @@ static int lua_load(lua_State *L) {
                 obj_buf = minigl_objbuf_init(50);
 
                 // Perspective transform
-                glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), 1.0f, 50.0f, proj);
+                glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), CAMERA_MIN_Z, CAMERA_MAX_Z, proj);
                 view_trans_update();  // Setup view matrix
 
                 // Enemy model
                 minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
                 glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
                 glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
-                glm_scale_uni(trans, MAP_TILE_SIZE);
                 minigl_obj_trans(&obj_enemy, trans);
 
                 break;
@@ -234,15 +234,15 @@ static int lua_update(lua_State *L) {
     view_trans_update();
 
     // Draw map
-    map_draw(gs.map, trans, gs.player_camera);
+    map_draw(gs.map, trans, gs.camera);
 
     // Draw enemy
     if (gs.enemy_state != ENEMY_HIDDEN) {
         mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-        vec3 enemy_pos;
+        vec2 enemy_pos;
         pos_tile_to_world(gs.enemy_tile, enemy_pos);
-        glm_translate(enemy_trans, enemy_pos);
-        mat4_billboard(gs.player_camera, enemy_trans);
+        glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
+        mat4_billboard(gs.camera, enemy_trans);
         glm_mat4_mul(trans, enemy_trans, enemy_trans);
         minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
         minigl_set_tex(tex_enemy);

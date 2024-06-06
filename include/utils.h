@@ -4,6 +4,7 @@
 
 #include "minigl.h"
 #include "pd_api.h"
+#include "types.h"
 
 #ifdef DEBUG
 #define debug pd->system->logToConsole
@@ -34,18 +35,16 @@ int mini(int a, int b);
 
 int maxi(int a, int b);
 
-float vec2_angle(vec2 a, vec2 b);
+void vec2_to_ivec2(vec2 in, ivec2 out);
 
-bool ivec2_eq(ivec2 a, ivec2 b);
+void ivec2_to_vec2(ivec2 in, vec2 out);
+
+void ivec2_to_vec2_center(ivec2, vec2 out);
+
+float vec2_angle(vec2 a, vec2 b);
 
 void tile_dir(ivec2 tile, vec3 pos, vec2 out);
 
-bool tile_in_fov(ivec2 tile, minigl_camera_t camera, float fov, float r);
+bool tile_in_fov(ivec2 tile, camera_t camera, float fov, float r);
 
-void mat4_billboard(minigl_camera_t camer, mat4 trans);
-
-void meas_time_start(int id);
-
-void meas_time_stop(int id);
-
-void meas_time_print(int id, const char* msg);
+void mat4_billboard(camera_t camer, mat4 trans);

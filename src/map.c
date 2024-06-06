@@ -4,24 +4,30 @@
 
 #include "constants.h"
 
-void pos_tile_to_world(ivec2 tile, vec3 world) {
-    // FIXME: Convert to vec2?
-    world[0] = (((float)tile[0]) + 0.5f) * MAP_TILE_SIZE;
-    world[1] = 0.0f;
-    world[2] = (((float)tile[1]) + 0.5f) * MAP_TILE_SIZE;
-}
-
-void pos_world_to_tile(vec3 world, ivec2 tile) {
-    tile[0] = (world[0]) / MAP_TILE_SIZE;
-    tile[1] = (world[2]) / MAP_TILE_SIZE;
-}
-
-map_tile_t map_get_tile(map_t map, ivec2 pos) {
-    int x = pos[0];
-    int y = pos[1];
+map_tile_t map_get_tile_xy(map_t map, int x, int y) {
     assert(x < MAP_SIZE && y < MAP_SIZE);
 
     return map[y][x];
+}
+
+map_tile_t map_get_tile_ivec2(map_t map, ivec2 pos) {
+    return map_get_tile_xy(map, pos[0], pos[1]);
+}
+
+map_tile_t map_get_tile_vec2(map_t map, vec2 pos) {
+    return map_get_tile_xy(map, pos[0], pos[1]);
+}
+
+void pos_tile_to_world(ivec2 tile, vec3 world) {
+    // FIXME:
+    world[0] = (((float)tile[0]) + 0.5f);
+    world[1] = (((float)tile[1]) + 0.5f);
+}
+
+void pos_world_to_tile(vec3 world, ivec2 tile) {
+    // FIXME:
+    tile[0] = (world[0]);
+    tile[1] = (world[2]);
 }
 
 bool map_tile_collide(map_tile_t tile) {
@@ -99,15 +105,10 @@ static void dda_raycast(map_t map, vec3 player_pos, vec3 tile_pos, vec2 tile_dir
         perpWallDist = (sideDistY - deltaDistY);
 }*/
 
-void map_update_viz(map_t map, minigl_camera_t camera) {
+void map_update_viz(map_t map, camera_t camera) {
     const float FOV_HEADROOM_ANGLE = 20.0f;
 
-    // TODO: limit viz analysiss to a smaller square
-
-    vec2 camera_dir;
-    camera_dir[0] = camera.front[0];
-    camera_dir[1] = camera.front[2];
-
+    // TODO: limit viz analysis to a smaller square
     ivec2 player_tile;
     pos_world_to_tile(camera.pos, player_tile);
 
@@ -116,16 +117,16 @@ void map_update_viz(map_t map, minigl_camera_t camera) {
             // NOTE: Use the cross product of the position-tile vector and the
             // camera direction to check if the tile is within the FOV.
             vec3 tile_pos;
-            tile_pos[0] = (((float)x) + 0.5f) * MAP_TILE_SIZE;
-            tile_pos[1] = (((float)y) + 0.5f) * MAP_TILE_SIZE;
+            tile_pos[0] = (((float)x) + 0.5f);
+            tile_pos[1] = (((float)y) + 0.5f);
 
             vec2 tile_dir;
             tile_dir[0] = tile_pos[0] - camera.pos[0];
-            tile_dir[1] = tile_pos[1] - camera.pos[2];
+            tile_dir[1] = tile_pos[1] - camera.pos[1];
             glm_vec2_normalize(tile_dir);
 
             // Check agains FOV angle
-            float a = glm_vec2_dot(tile_dir, camera_dir);
+            float a = glm_vec2_dot(tile_dir, camera.front);
             if (a >= cosf(glm_rad(CAMERA_FOV / 2.0f + FOV_HEADROOM_ANGLE))) {
                 // Tile is in FOV, is there anything in between?
                 // dda_raycast(map, camera.pos, tile_pos, tile_dir);

@@ -47,7 +47,7 @@ a_star_node_t* a_star_list_search(a_star_node_t* list, ivec2 pos) {
     if (list != NULL) {
         a_star_node_t* this = list;
         while (this != NULL) {
-            if (ivec2_eq(this->pos, pos)) {
+            if (glm_ivec2_eqv(this->pos, pos)) {
                 return this;
             }
             this = this->next;
@@ -90,7 +90,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     a_star_node_t* open_list = NULL;
 
     // FIXME: This prevents assert firing when start = stop, but shouldn't be needed
-    if (ivec2_eq(start, stop)) {
+    if (glm_ivec2_eqv(start, stop)) {
         path->size = 0;
         return true;
     }
@@ -119,7 +119,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
             this = this->next;
         }
 
-        if (ivec2_eq(best->pos, stop)) {
+        if (glm_ivec2_eqv(best->pos, stop)) {
             // Found stop!
             break;
         } else {
@@ -142,7 +142,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
         ivec2 pos;
         for (pos[1] = y_range[0]; pos[1] < y_range[1]; pos[1]++) {
             for (pos[0] = x_range[0]; pos[0] < x_range[1]; pos[0]++) {
-                map_tile_t tile = map_get_tile(map, pos);
+                map_tile_t tile = map_get_tile_ivec2(map, pos);
 
                 int h = abs(stop[0] - pos[0]) + abs(stop[1] - pos[1]);
                 int g = best->g + 1;  // FIXME: Should diag be more expensive?

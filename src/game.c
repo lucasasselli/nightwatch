@@ -23,7 +23,7 @@ void rand_empty_tile(map_t map, ivec2 tile_pos) {
     do {
         tile_pos[0] = rand() % MAP_SIZE;
         tile_pos[1] = rand() % MAP_SIZE;
-        tile = map_get_tile(map, tile_pos);
+        tile = map_get_tile_ivec2(map, tile_pos);
     } while (map_tile_collide(tile));
 }
 
@@ -32,10 +32,8 @@ void game_init(void) {
     // Camera
     //---------------------------------------------------------------------------
 
-    gs.player_camera.yaw = -90.0f;
-    gs.player_camera.pitch = 0.0f;
-    glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, gs.player_camera.front);
-    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, gs.player_camera.up);
+    gs.camera.yaw = -90.0f;
+    glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, gs.camera.front);
 
     //---------------------------------------------------------------------------
     // State
@@ -43,8 +41,8 @@ void game_init(void) {
 
     // Pick a random starting position in the map
     rand_empty_tile(gs.map, gs.player_tile);
-    pos_tile_to_world(gs.player_tile, gs.player_camera.pos);
-    map_update_viz(gs.map, gs.player_camera);
+    pos_tile_to_world(gs.player_tile, gs.camera.pos);
+    map_update_viz(gs.map, gs.camera);
 
     // Torch
     gs.torch_charge = 0.0;
@@ -54,14 +52,10 @@ void game_init(void) {
 }
 
 void game_handle_keys(PDButtons pushed, float delta_t) {
-    vec3 camera_delta;
+    vec2 camera_delta;
 
-    const float INPUT_CAMERA_TSPEED1 = 0.5f;
-    const float INPUT_CAMERA_TSPEED2 = 0.7f;
-    const float INPUT_CAMERA_RSPEED = 5.0f;  // Deg per Frame;
-
-    vec3 old_pos;
-    glm_vec3_copy(gs.player_camera.pos, old_pos);
+    vec2 old_pos;
+    glm_vec2_copy(gs.camera.pos, old_pos);
 
     if (pushed & kButtonUp) {
         // Walks forward
@@ -69,19 +63,19 @@ void game_handle_keys(PDButtons pushed, float delta_t) {
         if (pushed & kButtonA) {
             speed = INPUT_CAMERA_TSPEED2;
         }
-        glm_vec3_scale_as(gs.player_camera.front, speed, camera_delta);
-        glm_vec3_add(gs.player_camera.pos, camera_delta, gs.player_camera.pos);
+        glm_vec2_scale_as(gs.camera.front, speed, camera_delta);
+        glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
     } else if (pushed & kButtonDown) {
         // Walk backward
-        glm_vec3_scale_as(gs.player_camera.front, INPUT_CAMERA_TSPEED1, camera_delta);
-        glm_vec3_sub(gs.player_camera.pos, camera_delta, gs.player_camera.pos);
+        glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED1, camera_delta);
+        glm_vec2_sub(gs.camera.pos, camera_delta, gs.camera.pos);
     }
 
     if (pushed & kButtonRight) {
-        gs.player_camera.yaw += INPUT_CAMERA_RSPEED;
+        gs.camera.yaw += INPUT_CAMERA_RSPEED;
     }
     if (pushed & kButtonLeft) {
-        gs.player_camera.yaw -= INPUT_CAMERA_RSPEED;
+        gs.camera.yaw -= INPUT_CAMERA_RSPEED;
     }
 
     if (pushed & kButtonB) {
@@ -92,22 +86,19 @@ void game_handle_keys(PDButtons pushed, float delta_t) {
     // Collisions
     //---------------------------------------------------------------------------
 
-    pos_world_to_tile(gs.player_camera.pos, gs.player_tile);
-    map_tile_t tile = map_get_tile(gs.map, gs.player_tile);
-
+    map_tile_t tile = map_get_tile_vec2(gs.map, gs.camera.pos);
     if (map_tile_collide(tile)) {
-        glm_vec3_copy(old_pos, gs.player_camera.pos);
+        glm_vec2_copy(old_pos, gs.camera.pos);
     }
 
     // Update the direction
-    vec3 direction;
-    direction[0] = cosf(glm_rad(gs.player_camera.yaw)) * cosf(glm_rad(gs.player_camera.pitch));
-    direction[1] = sinf(glm_rad(gs.player_camera.pitch));
-    direction[2] = sinf(glm_rad(gs.player_camera.yaw)) * cosf(glm_rad(gs.player_camera.pitch));
-    glm_vec3_normalize_to(direction, gs.player_camera.front);
+    vec2 direction;
+    direction[0] = cosf(glm_rad(gs.camera.yaw));
+    direction[1] = sinf(glm_rad(gs.camera.yaw));
+    glm_vec2_normalize_to(direction, gs.camera.front);
 
     // Update map visibility
-    map_update_viz(gs.map, gs.player_camera);
+    map_update_viz(gs.map, gs.camera);
 }
 
 void game_handle_crank(float delta_t) {
@@ -147,7 +138,7 @@ void game_update(float delta_t) {
     // Is enemy visible?
     // FIXME: In direct sight????
     if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_on) {
-        gs.enemy_in_fov = tile_in_fov(gs.enemy_tile, gs.player_camera, 60, 0);
+        gs.enemy_in_fov = tile_in_fov(gs.enemy_tile, gs.camera, 60, 0);
     } else {
         gs.enemy_in_fov = false;
     }
@@ -212,7 +203,7 @@ void enemy_path_to_player(void) {
     debug("Enemy (CHASING): player moved to %d %d", gs.player_tile[0], gs.player_tile[1]);
 
     // Update path
-    if (!ivec2_eq(enemy_player_last_pos, gs.player_tile)) {
+    if (!glm_ivec2_eqv(enemy_player_last_pos, gs.player_tile)) {
         // Update path only if player has moved
         a_star_navigate(gs.map, gs.enemy_tile, gs.player_tile, &enemy_path);
         enemy_path_prog = 0;
@@ -280,7 +271,7 @@ void game_enemy_ai(float delta_t) {
 
             if (enemy_path_complete()) {
                 // Reached last known position
-                if (ivec2_eq(gs.enemy_tile, gs.player_tile)) {
+                if (glm_ivec2_eqv(gs.enemy_tile, gs.player_tile)) {
                     // GAME OVER!
                     debug("Enemy (CHASING): player reached!");
                 } else {

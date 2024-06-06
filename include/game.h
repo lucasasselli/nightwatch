@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cglm/cglm.h>
-
 #include "map.h"
-#include "minigl_types.h"
 #include "pd_api.h"
 
 extern PlaydateAPI* pd;
@@ -21,7 +18,7 @@ typedef struct {
     bool minimap_show;
     map_t map;
 
-    minigl_camera_t player_camera;
+    camera_t camera;
     ivec2 player_tile;
 
     ivec2 enemy_tile;
