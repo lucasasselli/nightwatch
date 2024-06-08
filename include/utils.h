@@ -24,6 +24,9 @@ typedef float fp16_t;
 #define clearpixel(data, x, y, rowbytes) (data[(y) * rowbytes + (x) / 8] |= (1 << (uint8_t)(7 - ((x) % 8))))
 #define drawpixel(data, x, y, rowbytes, color) (((color) == kColorBlack) ? setpixel((data), (x), (y), (rowbytes)) : clearpixel((data), (x), (y), (rowbytes)))
 
+#define IVEC2_INIT(x) ((ivec2){x[0], x[1]})
+#define VEC2_INIT(x) (ivec2){x[0], x[1]})
+
 extern PlaydateAPI* pd;
 
 int fake_printf(const char* format, ...);
@@ -33,6 +36,8 @@ int rand_range(int min, int max);
 int mini(int a, int b);
 
 int maxi(int a, int b);
+
+int clampi(int x, int min, int max);
 
 void vec2_to_ivec2(vec2 in, ivec2 out);
 

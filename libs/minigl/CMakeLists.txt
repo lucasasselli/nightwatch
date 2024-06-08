@@ -26,7 +26,6 @@ else()
         ${MINIGL_FILES})
 endif()
 
-
 add_definitions(-DSPNG_USE_MINIZ)
 
 add_subdirectory(ext/cglm)

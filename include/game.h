@@ -1,5 +1,6 @@
 #pragma once
 
+#include "a_star.h"
 #include "map.h"
 #include "pd_api.h"
 
@@ -19,16 +20,19 @@ typedef struct {
     map_t map;
 
     camera_t camera;
-    ivec2 player_tile;
 
-    ivec2 enemy_tile;
     enemy_state_t enemy_state;
+    ivec2 enemy_tile;
     bool enemy_in_fov;
+    int enemy_spotted_cnt;
     float enemy_awareness;
 
     float torch_flicker;
     float torch_charge;
     float torch_on;
+
+    a_star_path_t path_to_roam;
+    a_star_path_t path_to_player;
 } game_state_t;
 
 extern game_state_t gs;

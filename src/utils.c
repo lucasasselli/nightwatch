@@ -18,6 +18,12 @@ int maxi(int a, int b) {
     return (a > b) ? a : b;
 }
 
+int clampi(int x, int min, int max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+}
+
 float vec2_angle(vec2 a, vec2 b) {
     float dot = glm_vec2_dot(a, b);
     float det = a[0] * b[1] - a[1] * b[0];
@@ -38,8 +44,6 @@ void ivec2_to_vec2_center(ivec2 in, vec2 out) {
     out[0] = in[0] + 0.5;
     out[1] = in[1] + 0.5;
 }
-
-void ivec2_to_vec2_center(ivec2, vec2 out);
 
 void mat4_billboard(camera_t camera, mat4 trans) {
     vec2 poly_dir2;

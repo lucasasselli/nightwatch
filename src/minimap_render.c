@@ -116,6 +116,14 @@ void minimap_debug_draw(int x, int y, game_state_t* state) {
         }
     }
 
+    for (int i = 0; i < gs.path_to_player.size; i++) {
+        ivec2 node;
+        glm_ivec2_copy(gs.path_to_player.pos[i], node);
+        int mmap_x = node[0] * MINIMAP_TILE_SIZE;
+        int mmap_y = node[1] * MINIMAP_TILE_SIZE;
+        clearpixel(bitmap_data, mmap_x + 2, mmap_y + 2, bitmap_rowbytes);
+    }
+
     pd->graphics->setDrawMode(kDrawModeBlackTransparent);
     pd->graphics->drawBitmap(debug_minimap, x, y, kBitmapUnflipped);
     pd->graphics->drawRotatedBitmap(ico_player, x + state->camera.pos[0] * MINIMAP_TILE_SIZE, y + state->camera.pos[1] * MINIMAP_TILE_SIZE,

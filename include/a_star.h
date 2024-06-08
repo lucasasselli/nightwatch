@@ -14,7 +14,7 @@ typedef struct {
 } a_star_node_t;
 
 typedef struct {
-    ivec2 pos[50];
+    ivec2 pos[100];
     int size;
 } a_star_path_t;
 

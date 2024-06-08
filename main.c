@@ -19,7 +19,8 @@ PlaydateAPI *pd;
 
 // Support
 int load_step = 0;
-float update_delta_t = 0.0f;
+
+float update_et_last = 0.0f;
 int update_cnt = 0;
 
 game_state_t gs;
@@ -35,9 +36,10 @@ minigl_objbuf_t obj_buf;
 mat4 proj;
 mat4 trans;
 
-#define TORCH_DISABLE
+// #define TORCH_DISABLE
 
 #define TORCH_MASK_STEPS 32
+
 fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 // FIXME: Write directly on the screen buffer?
@@ -223,7 +225,9 @@ static int lua_update(lua_State *L) {
     (void)L;  // Unused
 
     // Calculate delta T
-    update_delta_t = pd->system->getElapsedTime() - update_delta_t;
+    float update_et_this = pd->system->getElapsedTime();
+    float update_delta_t = update_et_this - update_et_last;
+    update_et_last = update_et_this;
 
     // Real work is done here!
     game_update(update_delta_t);
@@ -241,6 +245,7 @@ static int lua_update(lua_State *L) {
 
     // Draw enemy
     if (gs.enemy_state != ENEMY_HIDDEN) {
+        // FIXME: This is not drawn indipendently to the raycasting viz!
         mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
         vec2 enemy_pos;
         ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
@@ -257,7 +262,9 @@ static int lua_update(lua_State *L) {
     screen_update();
 
 #ifdef DEBUG
+#ifdef DEBUG_MINIMAP
     minimap_debug_draw(0, 0, &gs);
+#endif
 
     // Print periodically
     if (update_cnt++ % 100 == 0) {
