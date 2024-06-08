@@ -156,7 +156,9 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
 
     // FIXME: not a big fan of this x casting :(
     for (int x = floorf(x_l[start_i]); x < ceilf(x_l[stop_i]); x++) {
+#ifdef MINIGL_DEBUG_PERF
         minigl_perf_event(PERF_FRAG);
+#endif
 
         if (tex_mode == MINIGL_TEX_2D) {
             set_pixel_tex_2d(x, y, z, u, v);
@@ -205,7 +207,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         }
 
         if (drop) {
+#ifdef MINIGL_DEBUG_PERF
             minigl_perf_event(PERF_CLIP);
+#endif
             continue;
         }
 
@@ -224,7 +228,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         if ((v[0][0] < -1.0f && v[1][0] < -1.0f && v[2][0] < -1.0f) || (v[0][0] > 1.0f && v[1][0] > 1.0f && v[2][0] > 1.0f) ||
             (v[0][1] < -1.0f && v[1][1] < -1.0f && v[2][1] < -1.0f) || (v[0][1] > 1.0f && v[1][1] > 1.0f && v[2][1] > 1.0f) ||
             (v[0][2] < -0.0f && v[1][2] < -0.0f && v[2][2] < -0.0f) || (v[0][2] > 1.0f && v[1][2] > 1.0f && v[2][2] > 1.0f)) {
+#ifdef MINIGL_DEBUG_PERF
             minigl_perf_event(PERF_CLIP);
+#endif
             continue;
         }
 
@@ -243,7 +249,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
 
         // FIXME: Allow programmable backface Culling
         if (cw_wind_order) {
+#ifdef MINIGL_DEBUG_PERF
             // minigl_perf_event(PERF_CULL);
+#endif
             //  continue;
         }
 
@@ -270,7 +278,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         // Rasterization
         //---------------------------------------------------------------------------
 
+#ifdef MINIGL_DEBUG_PERF
         minigl_perf_event(PERF_POLY);
+#endif
 
 #ifdef MINIGL_SCANLINE
         // Sort vertices by y-coordinate
@@ -351,7 +361,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
 
         for (int y = mbr_min_y; y < mbr_max_y; y++) {
             for (int x = mbr_min_x; x < mbr_max_x; x++) {
+#ifdef MINIGL_DEBUG_PERF
                 minigl_perf_event(PERF_FRAG);
+#endif
 
                 // Calculate the fragment coordinates
                 vec4 p;

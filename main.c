@@ -38,9 +38,10 @@ mat4 trans;
 
 // #define TORCH_DISABLE
 
-#define TORCH_MASK_STEPS 32
+#define TORCH_MASK_STEPS 64
+#define TORCH_MASK_MAX_R 120
 
-fp16_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
+uint8_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
@@ -48,6 +49,7 @@ void screen_update(void) {
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
 
 #ifndef TORCH_DISABLE
+
     // Handle flickering
     float torch_intensity = gs.torch_charge;
     if (gs.torch_on) {
@@ -60,9 +62,6 @@ void screen_update(void) {
 
     int torch_mask_i = (TORCH_MASK_STEPS - 1) * torch_intensity;
 
-    // FIXME: This is garbage! 0 means fully back!
-    const float TORCH_FADE_Z = 0.60f + 0.35f * torch_intensity;
-    const float TORCH_FADE_Z_K = 1.0f / (1.0f - TORCH_FADE_Z);
 #endif
 
     uint8_t *pd_frame = pd->graphics->getFrame();
@@ -73,21 +72,16 @@ void screen_update(void) {
             uint8_t color = minigl_frame->c_buff[y][x];
 
 #ifndef TORCH_DISABLE
-            float m = torch_mask[torch_mask_i][y][x];
+            uint8_t m = torch_mask[torch_mask_i][y][x];
 
-            if (torch_intensity == 0.0f || m == 0.0f) {
-                color = 0;
-            } else if (color > 0.0) {
-                // If pixel is already fully back, don't bother
-                float z = minigl_frame->z_buff[y][x];
-
-                if (z > TORCH_FADE_Z) {
-                    color = ((float)color) * (1.0f - z) * TORCH_FADE_Z_K;
+            if (m) {
+                if (color > 0) {
+                    // If pixel is already fully back, don't bother
+                    float z = minigl_frame->z_buff[y][x];
+                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
                 }
-
-                color *= m;
-
-                color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+            } else {
+                color = 0;
             }
 #else
             color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
@@ -116,9 +110,9 @@ void minigl_perf_print(void) {
 void gen_torch_mask(void) {
     // Torch mask
     for (int i = 0; i < TORCH_MASK_STEPS; i++) {
-        float torch_intensity = (((float)i) / ((float)TORCH_MASK_STEPS - 1));
-        float torch_fade_r = 100.0f * torch_intensity;
-        float torch_black_r = 120.0f - 20.0f * (1.0f - torch_intensity);
+        float intensity = ((float)i) / ((float)TORCH_MASK_STEPS - 1);
+        float torch_fade_r = 60.0f * intensity;
+        float torch_black_r = 120.0f * intensity;
 
         for (int y = 0; y < SCREEN_SIZE_Y; y++) {
             for (int x = 0; x < SCREEN_SIZE_X; x++) {
@@ -126,19 +120,19 @@ void gen_torch_mask(void) {
                 int dy = y - SCREEN_SIZE_Y / 2;
                 float r = sqrtf(pow(dx, 2) + pow(dy, 2));  // FIXME: WTF? No error?
 
-                float color;
+                uint8_t color = 196.0f * intensity;
 
                 if (r > torch_black_r) {
                     // If pixel is outside torch radius
-                    color = 0.0f;
-                } else if (r > torch_fade_r && r <= torch_black_r) {
+                    color = 0;
+                } else if (r >= torch_fade_r) {
                     // Fade
-                    color = (torch_black_r - r) / (torch_black_r - torch_fade_r);
-                } else {
-                    // Full brightness
-                    color = 1.0f;
+                    color *= (torch_black_r - r) / (torch_black_r - torch_fade_r);
                 }
 
+                if (color > 0) {
+                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+                }
                 torch_mask[i][y][x] = color;
             }
         }
