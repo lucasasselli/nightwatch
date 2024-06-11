@@ -1,9 +1,10 @@
 #include <cglm/cglm.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "constants.h"
 #include "game.h"
-#include "map_generator.h"
+#include "map_reader.h"
 #include "map_renderer.h"
 #include "minigl/minigl.h"
 #include "minimap_renderer.h"
@@ -37,11 +38,11 @@ mat4 proj;
 mat4 trans;
 
 // #define TORCH_DISABLE
+#define TORCH_INT_STEPS 32
+#define TORCH_FADE_STEPS 64
 
-#define TORCH_MASK_STEPS 64
-#define TORCH_MASK_MAX_R 120
-
-uint8_t torch_mask[TORCH_MASK_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
+uint8_t torch_mask[TORCH_INT_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
+fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
 
 // FIXME: Write directly on the screen buffer?
 void screen_update(void) {
@@ -60,7 +61,7 @@ void screen_update(void) {
         torch_intensity = 0.0f;
     }
 
-    int torch_mask_i = (TORCH_MASK_STEPS - 1) * torch_intensity;
+    int torch_mask_i = (TORCH_INT_STEPS - 1) * torch_intensity;
 
 #endif
 
@@ -78,7 +79,12 @@ void screen_update(void) {
                 if (color > 0) {
                     // If pixel is already fully back, don't bother
                     float z = minigl_frame->z_buff[y][x];
-                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+                    // FIXME: There are Nan! Start fixing things Luca!!!
+                    if (z > 0.0f && z < 1.0f) {
+                        int torch_fade_i = (TORCH_FADE_STEPS - 1) * z;
+                        color *= torch_fade[torch_mask_i][torch_fade_i];
+                        color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+                    }
                 }
             } else {
                 color = 0;
@@ -109,10 +115,12 @@ void minigl_perf_print(void) {
 
 void gen_torch_mask(void) {
     // Torch mask
-    for (int i = 0; i < TORCH_MASK_STEPS; i++) {
-        float intensity = ((float)i) / ((float)TORCH_MASK_STEPS - 1);
-        float torch_fade_r = 60.0f * intensity;
-        float torch_black_r = 120.0f * intensity;
+    for (int i = 0; i < TORCH_INT_STEPS; i++) {
+        float intensity = ((float)i) / ((float)TORCH_INT_STEPS - 1);
+
+        // Overlay
+        const float TORCH_FADE_R = 60.0f * intensity;
+        const float TORCH_BLACK_R = 100 + 20.0f * intensity;
 
         for (int y = 0; y < SCREEN_SIZE_Y; y++) {
             for (int x = 0; x < SCREEN_SIZE_X; x++) {
@@ -120,20 +128,37 @@ void gen_torch_mask(void) {
                 int dy = y - SCREEN_SIZE_Y / 2;
                 float r = sqrtf(pow(dx, 2) + pow(dy, 2));  // FIXME: WTF? No error?
 
-                uint8_t color = 196.0f * intensity;
+                uint8_t color = 255;
 
-                if (r > torch_black_r) {
+                if (i == 0) {
+                    // Torch is dead
+                    color = 0;
+                } else if (r > TORCH_BLACK_R) {
                     // If pixel is outside torch radius
                     color = 0;
-                } else if (r >= torch_fade_r) {
+                } else if (r >= TORCH_FADE_R) {
                     // Fade
-                    color *= (torch_black_r - r) / (torch_black_r - torch_fade_r);
+                    color *= (TORCH_BLACK_R - r) / (TORCH_BLACK_R - TORCH_FADE_R);
                 }
 
                 if (color > 0) {
                     color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
                 }
                 torch_mask[i][y][x] = color;
+            }
+        }
+
+        // Fade values
+        const float TORCH_MIN_Z = CAMERA_MIN_Z;
+        const float TORCH_MAX_Z = CAMERA_MAX_Z * intensity;
+
+        for (int j = 0; j < TORCH_FADE_STEPS; j++) {
+            float z = ((float)j) / TORCH_FADE_STEPS;
+            float lin_z = (2 * TORCH_MIN_Z * TORCH_MAX_Z) / (TORCH_MAX_Z + TORCH_MIN_Z - z * (TORCH_MAX_Z - TORCH_MIN_Z));
+            if (lin_z < TORCH_MAX_Z) {
+                torch_fade[i][j] = (TORCH_MAX_Z - lin_z) / (TORCH_MAX_Z - TORCH_MIN_Z);
+            } else {
+                torch_fade[i][j] = 0;
             }
         }
     }
@@ -164,14 +189,14 @@ static int lua_load(lua_State *L) {
                 minigl_set_dither(tex_dither);
 
                 // Object buffer
-                obj_buf = minigl_objbuf_init(50);
+                obj_buf = minigl_objbuf_init(200);
 
                 // Perspective transform
                 glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), CAMERA_MIN_Z, CAMERA_MAX_Z, proj);
                 view_trans_update();  // Setup view matrix
 
                 // Enemy model
-                minigl_obj_read_file("res/models/tile.obj", &obj_enemy);
+                minigl_obj_read_file("res/models/tile.obj", &obj_enemy, 0);
                 glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
                 glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
                 minigl_obj_trans(&obj_enemy, trans);
@@ -184,7 +209,7 @@ static int lua_load(lua_State *L) {
 
             case 2:
                 // Setup map
-                mapgen_gen(gs.map);
+                map_read(gs.map);
                 map_init();
                 break;
 
@@ -234,12 +259,16 @@ static int lua_update(lua_State *L) {
     // Flush buffer
     minigl_clear(0.0f, 1.0f);
 
+#ifdef DEBUG_MINIMAP
+    pd->graphics->clear(kColorBlack);
+#endif
+
     // Draw map
     map_draw(gs.map, trans, gs.camera);
 
     // Draw enemy
     if (gs.enemy_state != ENEMY_HIDDEN) {
-        // FIXME: This is not drawn indipendently to the raycasting viz!
+        // FIXME: This is drawn indipendently to the raycasting viz!
         mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
         vec2 enemy_pos;
         ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
@@ -306,8 +335,8 @@ __declspec(dllexport)
             // Configure device
             pd->display->setRefreshRate(30);
 
-            // int seed = time(NULL);
-            int seed = 0;
+            int seed = time(NULL);
+            // int seed = 0;
             debug("SEED: %d", seed);
             srand(seed);
             break;

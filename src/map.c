@@ -112,7 +112,7 @@ static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
 }
 
 static void viz_to_check(map_t map, camera_t camera, int x, int y) {
-    const float FOV_HEADROOM_ANGLE = 10.0f;
+    const float FOV_HEADROOM_ANGLE = 20.0f;
 
     // NOTE: Use the cross product of the position-tile vector and the
     // camera direction to check if the tile is within the FOV.

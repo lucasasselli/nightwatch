@@ -7,7 +7,7 @@
 
 // TODO: Add ability to read bitmaps
 
-int minigl_obj_read_file(char *path, minigl_obj_t *out) {
+int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
     // Get the file handle
     void *f = minigl_fopen(path, "r");
     if (f == NULL) {
@@ -85,7 +85,11 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out) {
                         float x, y;
                         sscanf(line_buffer, "vt %f %f", &x, &y);
                         out->tcoord_ptr[out->tcoord_size][0] = x;
-                        out->tcoord_ptr[out->tcoord_size][1] = 1.0f - y;  // Flip texture
+                        if (flags & MINIGL_OBJ_TEXFLIPY) {
+                            out->tcoord_ptr[out->tcoord_size][1] = 1.0f - y;
+                        } else {
+                            out->tcoord_ptr[out->tcoord_size][1] = y;
+                        }
                         out->tcoord_size++;
                     } else {
                         // Vertex coordidate

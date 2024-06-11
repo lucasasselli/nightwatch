@@ -11,6 +11,9 @@ typedef enum {
     ITEM_FLOOR,
     ITEM_STATUE,
     ITEM_WALL,
+    ITEM_COLUMN,
+    ITEM_BASE,
+    ITEM_WETFLOOR
 } map_item_type_t;
 
 typedef enum {

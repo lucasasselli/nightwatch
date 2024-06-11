@@ -41,12 +41,8 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
                         assert(0);  // Not allowed
                         break;
                 }
-            } else if (item.type == ITEM_STATUE) {
-                if (y == 0) draw = true;
-                if (x == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                if (y == (MINIMAP_TILE_SIZE - 1)) draw = true;
-                if (x == 0) draw = true;
-                break;
+            } else if (item.type == ITEM_COLUMN || item.type == ITEM_STATUE) {
+                draw = true;
             }
 
             if (draw) clearpixel(bitmap_data, tile_x + x, tile_y + y, bitmap_rowbytes);

@@ -55,7 +55,7 @@ void game_init(void) {
     //---------------------------------------------------------------------------
 
     gs.camera.yaw = -90.0f;
-    glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, gs.camera.front);
+    glm_vec2_copy((vec3){0.0f, -1.0f}, gs.camera.front);
 
     //---------------------------------------------------------------------------
     // State
@@ -63,7 +63,8 @@ void game_init(void) {
 
     // Pick a random starting position in the map
     ivec2 t;
-    rand_empty_tile(gs.map, t);
+    t[0] = 31;
+    t[1] = 36;
     ivec2_to_vec2_center(t, gs.camera.pos);
     map_viz_update(gs.map, gs.camera);
 

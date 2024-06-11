@@ -2,7 +2,7 @@
 
 #include <cglm/cglm.h>
 
-#define OBJ_LINE_BUFFER_SIZE 50
+#define OBJ_LINE_BUFFER_SIZE 70
 
 typedef struct {
     vec4* vcoord_ptr;
@@ -26,7 +26,11 @@ typedef struct {
     int face_size;
 } minigl_objbuf_t;
 
-int minigl_obj_read_file(char* path, minigl_obj_t* out);
+enum {
+    MINIGL_OBJ_TEXFLIPY = 1,
+};
+
+int minigl_obj_read_file(char* path, minigl_obj_t* out, int flags);
 
 void minigl_obj_copy(minigl_obj_t in, minigl_obj_t* out);
 
