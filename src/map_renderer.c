@@ -8,10 +8,7 @@
 
 // Geometry
 minigl_obj_t obj_floor;
-minigl_obj_t obj_wall_n;
-minigl_obj_t obj_wall_e;
-minigl_obj_t obj_wall_s;
-minigl_obj_t obj_wall_w;
+minigl_obj_t obj_wall;
 minigl_obj_t obj_statue;
 minigl_obj_t obj_column;
 minigl_obj_t obj_base;
@@ -31,7 +28,6 @@ void map_init(void) {
 
     // Load tile object
     minigl_obj_t obj_tile;
-    minigl_obj_t obj_wall;
 
     minigl_obj_read_file("res/models/tile.obj", &obj_tile, MINIGL_OBJ_TEXFLIPY);
     minigl_obj_read_file("res/models/wall.obj", &obj_wall, 0);
@@ -51,28 +47,7 @@ void map_init(void) {
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.0f, -0.5f});
     glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
-    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_n);
-
-    // Wall S
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 0.0f, +0.5f});
-    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
-    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_s);
-
-    // Wall E
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){+0.5f, 0.0f, 0.0f});
-    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
-    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_e);
-
-    // Wall W
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.5f, 0.0f, 0.0f});
-    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
-    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
-    minigl_obj_copy_trans(obj_wall, trans, &obj_wall_w);
+    minigl_obj_trans(&obj_wall, trans);
 
     // Statue
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -82,8 +57,8 @@ void map_init(void) {
 
     // Column
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){0.0f, 0.8f, 0.0f});
     glm_scale(trans, (vec3){0.4f, 3.0, 0.4});
-    glm_translate(trans, (vec3){0.0f, 0.0f, 0.0f});
     minigl_obj_trans(&obj_column, trans);
 
     // Base
@@ -102,11 +77,11 @@ void map_init(void) {
     // Textures
     //---------------------------------------------------------------------------
 
-    char tex_path[50];
+    char path[50];
 
     for (int i = 0; i < BB_SPRITE_SIZE; i++) {
-        sprintf(tex_path, "res/sprites/venus/venus_%02d.tex", i);
-        minigl_tex_read_file(tex_path, &tex_venus[i]);
+        sprintf(path, "res/sprites/venus/venus_%02d.tex", i);
+        minigl_tex_read_file(path, &tex_venus[i]);
     }
 
     minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
@@ -127,10 +102,11 @@ int bb_tex_index(float a, map_item_dir_t dir) {
 }
 
 void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
-    mat4 tile_trans = GLM_MAT4_IDENTITY_INIT;
-    glm_translate(tile_trans, (vec3){((float)x) + 0.5f, 0.0f, ((float)y) + 0.5f});
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
 
+    glm_translate(model, (vec3){((float)x) + 0.5f, 0.0f, ((float)y) + 0.5f});
     int bb_tex_i = 0;
+    // TODO: Generalize billboard?
     if (item.type == ITEM_STATUE) {
         vec2 dir;
         tile_dir((ivec2){x, y}, camera.pos, dir);
@@ -138,9 +114,26 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
         float bb_tex_a = vec2_angle((vec2){0.0f, -1.0f}, dir);
         bb_tex_i = bb_tex_index(bb_tex_a, item.dir);
 
-        mat4_billboard(camera, tile_trans);
+        mat4_billboard(camera, model);
+    } else {
+        switch (item.dir) {
+            case DIR_NORTH:
+                break;
+            case DIR_EAST:
+                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            case DIR_SOUTH:
+                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            case DIR_WEST:
+                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            default:
+                break;
+        }
     }
-    glm_mat4_mul(trans, tile_trans, tile_trans);
+
+    glm_mat4_mul(trans, model, model);
 
     if (item.type == ITEM_FLOOR) {
         if (((x + y) % 2) == 0) {
@@ -148,45 +141,42 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
         } else {
             minigl_set_color(24);
         }
-        minigl_obj_to_objbuf_trans(obj_floor, tile_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_floor, model, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_STATUE) {
         minigl_set_tex(tex_venus[bb_tex_i]);
-        minigl_obj_to_objbuf_trans(obj_statue, tile_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_statue, model, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_BASE) {
         minigl_set_color(160);
-        minigl_obj_to_objbuf_trans(obj_base, tile_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_base, model, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_WETFLOOR) {
         minigl_set_tex(tex_wetfloor);
-        minigl_obj_to_objbuf_trans(obj_wetfloor, tile_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_wetfloor, model, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_COLUMN) {
         minigl_set_color(160);
-        minigl_obj_to_objbuf_trans(obj_column, tile_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_column, model, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_WALL) {
         switch (item.dir) {
             case DIR_NORTH:
                 minigl_set_color(160);
-                minigl_obj_to_objbuf_trans(obj_wall_n, tile_trans, &obj_buf);
                 break;
             case DIR_EAST:
                 minigl_set_color(128);
-                minigl_obj_to_objbuf_trans(obj_wall_e, tile_trans, &obj_buf);
                 break;
             case DIR_SOUTH:
                 minigl_set_color(160);
-                minigl_obj_to_objbuf_trans(obj_wall_s, tile_trans, &obj_buf);
                 break;
             case DIR_WEST:
                 minigl_set_color(128);
-                minigl_obj_to_objbuf_trans(obj_wall_w, tile_trans, &obj_buf);
                 break;
             case DIR_ANY:
                 assert(0);
         }
+        minigl_obj_to_objbuf_trans(obj_wall, model, &obj_buf);
         minigl_draw(obj_buf);
     }
 }
