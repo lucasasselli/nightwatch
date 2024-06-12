@@ -39,7 +39,7 @@ mat4 trans;
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
-#define TORCH_FADE_STEPS 64
+#define TORCH_FADE_STEPS 512
 
 uint8_t torch_mask[TORCH_INT_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
 fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
@@ -148,7 +148,7 @@ void gen_torch_mask(void) {
         // Fade values
         // NOTE: These thresholds are completely empyrical
         const float TORCH_S0_I = 1.0f;
-        const float TORCH_S0_K = 0.99f;
+        const float TORCH_S0_K = 0.95f;
 
         const float TORCH_S1_I = 0.5f;
         const float TORCH_S1_K = 0.90f;
@@ -197,7 +197,7 @@ static int lua_load(lua_State *L) {
             case 0:
                 // Load textures
                 minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
-                minigl_tex_read_file("res/textures/test.tex", &tex_enemy);
+                minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
 
                 // Config dither texture
                 minigl_set_dither(tex_dither);
@@ -210,7 +210,7 @@ static int lua_load(lua_State *L) {
                 view_trans_update();  // Setup view matrix
 
                 // Enemy model
-                minigl_obj_read_file("res/models/tile.obj", &obj_enemy, 0);
+                minigl_obj_read_file("res/models/tile.obj", &obj_enemy, MINIGL_OBJ_TEXFLIPY);
                 glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
                 glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
                 minigl_obj_trans(&obj_enemy, trans);
@@ -238,7 +238,7 @@ static int lua_load(lua_State *L) {
                 // Sound
                 sound_init();
                 // sound_bg_start();
-                sound_effect_start(SOUND_HEARTBEAT);
+                // sound_effect_start(SOUND_HEARTBEAT);
                 break;
 
             case 4:
@@ -350,8 +350,8 @@ __declspec(dllexport)
             // Configure device
             pd->display->setRefreshRate(30);
 
-            int seed = time(NULL);
-            // int seed = 0;
+            // int seed = time(NULL);
+            int seed = 0;
             debug("SEED: %d", seed);
             srand(seed);
             break;

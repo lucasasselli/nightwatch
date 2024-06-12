@@ -85,11 +85,15 @@ a_star_node_t* a_star_node_new(void) {
     return new;
 }
 
+int a_star_score(a_star_node_t* node) {
+    return node->g + node->h + node->c;
+}
+
 a_star_node_t* a_star_find_best(a_star_node_t* list) {
     a_star_node_t* this = list;
     a_star_node_t* best = this;
     while (this != NULL) {
-        if ((this->g + this->h) < (best->g + best->h)) {
+        if (a_star_score(this) < a_star_score(best)) {
             best = this;
         }
         this = this->next;
@@ -122,6 +126,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     glm_ivec2_copy(start, new->pos);
     new->h = a_star_manhattan_dist(new->pos, stop);
     new->g = 0;
+    new->c = 0;
     a_star_list_add(&open_list, new);
 
     a_star_node_t* best;
@@ -157,7 +162,21 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
         glm_ivec2_clamp(y_range, 0, MAP_SIZE - 1);
         glm_ivec2_clamp(x_range, 0, MAP_SIZE - 1);
 
+        bool coll_nearby = 0;
+
         ivec2 pos;
+
+        // If there's a collision in a neighbour add a small penalty
+        for (pos[1] = y_range[0]; pos[1] < y_range[1]; pos[1]++) {
+            for (pos[0] = x_range[0]; pos[0] < x_range[1]; pos[0]++) {
+                map_tile_t tile = map_get_tile_ivec2(map, pos);
+                if (map_tile_collide(tile)) {
+                    coll_nearby = true;
+                    break;
+                }
+            }
+        }
+
         for (pos[1] = y_range[0]; pos[1] < y_range[1]; pos[1]++) {
             for (pos[0] = x_range[0]; pos[0] < x_range[1]; pos[0]++) {
                 map_tile_t tile = map_get_tile_ivec2(map, pos);
@@ -176,6 +195,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
                         new->parent = best;
                         new->g = g;
                         new->h = h;
+                        new->c = coll_nearby ? 2 : 0;
                         a_star_list_add(&open_list, new);
                     } else {
                         // On the list:

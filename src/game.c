@@ -5,7 +5,7 @@
 #include "utils.h"
 
 // Input
-#define INPUT_CAMERA_TSPEED1 2.0f
+#define INPUT_CAMERA_TSPEED1 1.0f
 #define INPUT_CAMERA_TSPEED2 4.0f
 #define INPUT_CAMERA_RSPEED 5.0f
 
@@ -21,11 +21,14 @@
 
 #define ENEMY_AWARE_SIGHT_K 10.0f
 #define ENEMY_AWARE_IDLE_K 1.0f
-#define ENEMY_AWARE_MAX 1000.0f
+#define ENEMY_AWARE_MAX 500.0f
 
-#define ENEMY_AGGR_SIGHT_K 10.0f
+#define ENEMY_AGGR_SIGHT_K 1.0f
+#define ENEMY_AGGR_DIST_K 3.0f
 #define ENEMY_AGGR_ATTACK_THRESHOLD 100.0f
 #define ENEMY_AGGR_MAX ENEMY_AGGR_ATTACK_THRESHOLD + 1.0f
+
+#define ENEMY_BASE_DIST 7
 
 // Heartbeat sound
 #define HEARTBEAT_DIST_MIN 10
@@ -56,7 +59,7 @@ void game_init(void) {
 
     // Pick a random starting position in the map
     ivec2 t;
-    t[0] = 31;
+    t[0] = 31;  // FIXME: Good start position
     t[1] = 36;
     ivec2_to_vec2_center(t, gs.camera.pos);
     map_viz_update(gs.map, gs.camera);
@@ -68,7 +71,7 @@ void game_init(void) {
     gs.enemy_state = ENEMY_RESET;
 }
 
-void game_handle_keys(PDButtons pushed, float delta_t) {
+static void handle_keys(PDButtons pushed, float delta_t) {
     vec2 camera_delta;
 
     vec2 old_pos;
@@ -167,14 +170,15 @@ void enemy_fsm_do(float delta_t) {
         case ENEMY_FOLLOW:
             if (!gs.enemy_in_fov) {
                 // When the player doesn't see the enemy, follow him
-                if (enemy_player_dist() > 7) {
+                if (enemy_player_dist() > ENEMY_BASE_DIST) {
                     enemy_move(ENEMY_ROAM_SPEED, delta_t);
                 }
             } else {
                 // Enemy seen by the player!
                 gs.enemy_spotted_cnt++;
-                // FIXME: Only once per session!
-                // sound_effect_play(SOUND_DISCOVERED);
+                if (gs.enemy_spotted_cnt == 1) {
+                    sound_effect_play(SOUND_DISCOVERED);
+                }
                 enemy_fsm_change_state(ENEMY_SPOTTED);
             }
             break;
@@ -197,7 +201,8 @@ void enemy_fsm_do(float delta_t) {
 
             if (enemy_player_dist() == 0) {
                 // Reached last known position
-                assert(0 && "Game over!");  // FIXME:
+                // TODO: Game over
+                enemy_fsm_change_state(ENEMY_HIDDEN);
             }
 
             // TODO: Awareness increases distance
@@ -222,8 +227,7 @@ void game_update(float delta_t) {
     pd->system->getButtonState(&pushed, NULL, NULL);
 
     if (pushed) {
-        // TODO: Return if player has moved
-        game_handle_keys(pushed, delta_t);
+        handle_keys(pushed, delta_t);
     }
 
     float crank_delta = fabsf(pd->system->getCrankChange());
@@ -237,9 +241,11 @@ void game_update(float delta_t) {
     // Update state
     //---------------------------------------------------------------------------
 
+    gs.torch_on = gs.torch_charge > 0.0f;
+
     // Is enemy visible?
     if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_on) {
-        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile);
+        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile) && enemy_player_dist() <= ENEMY_BASE_DIST;
     } else {
         gs.enemy_in_fov = false;
     }
@@ -257,7 +263,13 @@ void game_update(float delta_t) {
         sound_effect_stop(SOUND_FLICKER);
     }
 
-    gs.torch_on = gs.torch_charge > 0.0f;
+    int dist = enemy_player_dist();
+    float dist_k;
+    if (dist < ENEMY_BASE_DIST) {
+        dist_k = ENEMY_BASE_DIST - (float)dist / ENEMY_BASE_DIST;
+    } else {
+        dist_k = 0.0;
+    }
 
     // Update awareness
     if (gs.torch_on && gs.enemy_state != ENEMY_CHASING) {
@@ -279,8 +291,7 @@ void game_update(float delta_t) {
     if (gs.enemy_state == ENEMY_SPOTTED) {
         // If torch is on,
         if (gs.enemy_in_fov) {
-            int dist = enemy_player_dist();
-            gs.enemy_aggression += delta_t * gs.torch_charge * dist * ENEMY_AGGR_SIGHT_K;
+            gs.enemy_aggression += delta_t * (gs.torch_charge * ENEMY_AGGR_SIGHT_K + dist_k * ENEMY_AGGR_DIST_K);
         }
         gs.enemy_aggression = glm_clamp(gs.enemy_aggression, 0.0f, ENEMY_AGGR_MAX);
     }
@@ -307,6 +318,6 @@ void game_update(float delta_t) {
                           (HEARTBEAT_DIST_MAX - HEARTBEAT_DIST_MIN);
         }
 
-        sound_play_range(SOUND_HEARTBEAT, 0, 200000 - 170000 * heart_speed);
+        // sound_play_range(SOUND_HEARTBEAT, 0, 200000 - 170000 * heart_speed);
     }
 }

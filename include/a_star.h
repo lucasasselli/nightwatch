@@ -10,6 +10,7 @@ typedef struct {
     void* parent;
     int h;
     int g;
+    int c;
     void* next;
 } a_star_node_t;
 
