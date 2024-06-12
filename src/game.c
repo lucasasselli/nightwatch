@@ -16,7 +16,7 @@
 #define HEADBOB_SPEED1 18.0f
 
 // Torch
-#define TORCH_DISCHARGE_RATE 1.0f
+#define TORCH_DISCHARGE_RATE 0.5f
 #define TORCH_CHARGE_RATE 0.01f  // Charge x deg x sec
 
 // Enemy
@@ -49,7 +49,9 @@ float enemy_spawn_timer = 0;
 
 float heart_speed = 0.0;
 
-float head_bob = 0.0;
+float headbob_timer = 0.0;
+
+int step_sound = 0;
 
 void game_init(void) {
     //---------------------------------------------------------------------------
@@ -78,32 +80,42 @@ void game_init(void) {
 }
 
 static void handle_keys(PDButtons pushed, float delta_t) {
-    vec2 camera_delta;
-
     vec2 old_pos;  // In case of collision we use this
-
     glm_vec2_copy(gs.camera.pos, old_pos);
 
+    float old_bob = gs.camera.bob;
+
+    bool is_moving = false;
     float speed = 0;
+    float bob_speed;
+    float bob_range;
     if (pushed & kButtonUp) {
         // Walks forward
         if (pushed & kButtonA) {
-            glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED1 * delta_t, camera_delta);
-            head_bob += delta_t * HEADBOB_SPEED1;
-            gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE1;
+            speed = INPUT_CAMERA_TSPEED1;
+            bob_speed = HEADBOB_SPEED1;
+            bob_range = HEADBOB_RANGE1;
         } else {
-            glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED0 * delta_t, camera_delta);
-            head_bob += delta_t * HEADBOB_SPEED0;
-            gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE0;
+            speed = INPUT_CAMERA_TSPEED0;
+            bob_speed = HEADBOB_SPEED0;
+            bob_range = HEADBOB_RANGE0;
         }
+        is_moving = true;
     } else if (pushed & kButtonDown) {
         // Walk backward
-        glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEEDB * delta_t, camera_delta);
-        head_bob += delta_t * HEADBOB_SPEED0;
-        gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE0;
+        speed = INPUT_CAMERA_TSPEEDB;
+        bob_speed = HEADBOB_SPEED0;
+        bob_range = HEADBOB_RANGE0;
+        is_moving = true;
     }
 
-    glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
+    vec2 camera_delta;
+    glm_vec2_scale_as(gs.camera.front, speed * delta_t, camera_delta);
+    if (speed != 0) {
+        headbob_timer += delta_t * bob_speed;
+        gs.camera.bob = sinf(headbob_timer) * bob_range;
+        glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
+    }
 
     if (pushed & kButtonRight) {
         gs.camera.yaw += INPUT_CAMERA_RSPEED;
@@ -130,6 +142,24 @@ static void handle_keys(PDButtons pushed, float delta_t) {
 
     // Update map visibility
     map_viz_update(gs.map, gs.camera);
+
+    //---------------------------------------------------------------------------
+    // Steps
+    //---------------------------------------------------------------------------
+
+    if (is_moving) {
+        if (old_bob > 0 && gs.camera.bob < 0) {
+            if (step_sound) {
+                sound_effect_play(SOUND_STEP0);
+            } else {
+                sound_effect_play(SOUND_STEP1);
+            }
+            step_sound ^= 1;
+        }
+    } else {
+        sound_effect_stop(SOUND_STEP0);
+        sound_effect_stop(SOUND_STEP1);
+    }
 }
 
 void enemy_move(float speed, float delta_t) {
@@ -190,9 +220,6 @@ void enemy_fsm_do(float delta_t) {
             } else {
                 // Enemy seen by the player!
                 gs.enemy_spotted_cnt++;
-                if (gs.enemy_spotted_cnt == 1) {
-                    sound_effect_play(SOUND_DISCOVERED);
-                }
                 enemy_fsm_change_state(ENEMY_SPOTTED);
             }
             break;

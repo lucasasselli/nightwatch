@@ -6,13 +6,15 @@ SamplePlayer* sample_player[SOUNDS_NUM];
 bool sample_playing[SOUNDS_NUM];
 
 void sound_init(void) {
-    bg_music = pd->sound->fileplayer->newPlayer();
-    pd->sound->fileplayer->loadIntoPlayer(bg_music, "res/music/background.mp3");
-    pd->sound->fileplayer->setBufferLength(bg_music, 5.0f);
+    // bg_music = pd->sound->fileplayer->newPlayer();
+    // pd->sound->fileplayer->loadIntoPlayer(bg_music, "res/music/background.pda");
+    // pd->sound->fileplayer->setBufferLength(bg_music, 5.0f);
 
     audio_sample[SOUND_HEARTBEAT] = pd->sound->sample->load("res/sounds/heartbeat.pda");
     audio_sample[SOUND_FLICKER] = pd->sound->sample->load("res/sounds/flicker.pda");
     audio_sample[SOUND_DISCOVERED] = pd->sound->sample->load("res/sounds/discovered.pda");
+    audio_sample[SOUND_STEP0] = pd->sound->sample->load("res/sounds/step0.pda");
+    audio_sample[SOUND_STEP1] = pd->sound->sample->load("res/sounds/step1.pda");
 
     for (int i = 0; i < SOUNDS_NUM; i++) {
         sample_player[i] = pd->sound->sampleplayer->newPlayer();
@@ -21,12 +23,13 @@ void sound_init(void) {
 }
 
 bool sound_bg_playing(void) {
-    return pd->sound->fileplayer->isPlaying(bg_music);
+    // return pd->sound->fileplayer->isPlaying(bg_music);
 }
 
+// FIXME: Are we going to keep this?
 void sound_bg_start(void) {
-    pd->sound->fileplayer->play(bg_music, 1);
-    pd->sound->fileplayer->setVolume(bg_music, 0.5, 0.5);
+    // pd->sound->fileplayer->play(bg_music, 1);
+    // pd->sound->fileplayer->setVolume(bg_music, 1.0, 1.0);
 }
 
 void sound_bg_stop(void) {}
@@ -51,4 +54,8 @@ void sound_effect_stop(sound_id_t id) {
 
 void sound_play_range(sound_id_t id, int start, int stop) {
     pd->sound->sampleplayer->setPlayRange(sample_player[id], start, stop);
+}
+
+void sound_play_volume(sound_id_t id, float vol) {
+    pd->sound->sampleplayer->setVolume(sample_player[id], vol, vol);
 }

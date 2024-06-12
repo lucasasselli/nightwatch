@@ -4,12 +4,14 @@
 
 #include "pd_api.h"
 
-#define SOUNDS_NUM 3
+#define SOUNDS_NUM 5
 
 typedef enum {
     SOUND_HEARTBEAT,
     SOUND_DISCOVERED,
-    SOUND_FLICKER
+    SOUND_FLICKER,
+    SOUND_STEP0,
+    SOUND_STEP1
 } sound_id_t;
 
 extern PlaydateAPI* pd;
@@ -29,3 +31,5 @@ void sound_effect_start(sound_id_t sound);
 void sound_effect_stop(sound_id_t sound);
 
 void sound_play_range(sound_id_t sound, int start, int stop);
+
+void sound_play_volume(sound_id_t id, float vol);

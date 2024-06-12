@@ -209,6 +209,11 @@ static int lua_load(lua_State *L) {
 
         switch (load_step) {
             case 0:
+                // Sound
+                sound_init();
+                break;
+
+            case 1:
                 // Load textures
                 minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
                 minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
@@ -231,17 +236,17 @@ static int lua_load(lua_State *L) {
 
                 break;
 
-            case 1:
+            case 2:
                 gen_torch_mask();
                 break;
 
-            case 2:
+            case 3:
                 // Setup map
                 map_read(gs.map);
                 map_init();
                 break;
 
-            case 3:
+            case 4:
                 // Setup minimap
                 minimap_init();
                 minimap_gen(gs.map);
@@ -249,13 +254,7 @@ static int lua_load(lua_State *L) {
                 // Initialize game
                 game_init();
 
-                // Sound
-                sound_init();
-                // sound_bg_start();
                 // sound_effect_start(SOUND_HEARTBEAT);
-                break;
-
-            case 4:
                 break;
         }
         load_step++;
@@ -296,6 +295,7 @@ static int lua_update(lua_State *L) {
 
     // Draw enemy
     if (gs.enemy_state != ENEMY_HIDDEN) {
+        // TODO: More than one enemy?
         // FIXME: This is drawn indipendently to the raycasting viz!
         mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
         vec2 enemy_pos;
