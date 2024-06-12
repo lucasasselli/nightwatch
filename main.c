@@ -79,12 +79,9 @@ void screen_update(void) {
                 if (color > 0) {
                     // If pixel is already fully back, don't bother
                     float z = minigl_frame->z_buff[y][x];
-                    // FIXME: There are Nan! Start fixing things Luca!!!
-                    if (z > 0.0f && z < 1.0f) {
-                        int torch_fade_i = (TORCH_FADE_STEPS - 1) * z;
-                        color *= torch_fade[torch_mask_i][torch_fade_i];
-                        color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
-                    }
+                    int torch_fade_i = (TORCH_FADE_STEPS - 1) * z;
+                    color *= torch_fade[torch_mask_i][torch_fade_i];
+                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
                 }
             } else {
                 color = 0;

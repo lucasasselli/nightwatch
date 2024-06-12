@@ -80,6 +80,7 @@ MINIGL_INLINE float max3_clampf(float a, float b, float c, float min, float max)
 }
 
 MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
+    assert(!isnanf(z));
     if (z > frame.z_buff[y][x] || z > 1.0f || z < -1.0f) return;
     frame.z_buff[y][x] = z;
 
@@ -133,29 +134,36 @@ MINIGL_INLINE void scanline_add_slope2(vec3 slope, vec2 out) {
 
 MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u_range, vec2 v_range, minigl_tex_mode_t tex_mode) {
     vec2 x_l;
-    glm_vec2_copy(x_range, x_l);
-    glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
 
     // Swap x_l[0] and x_l[1]
     int start_i = 0;
     int stop_i = 1;
-    if (x_l[1] < x_l[0]) {
+    if (x_range[1] < x_range[0]) {
         start_i = 1;
         stop_i = 0;
     }
 
-    float delta_k = 1.0f / (x_range[stop_i] - x_range[start_i]);
+    // Sometimes the start and stop are very close, so round them to the nearest integer
+    // to avoid black lines on polygon edges
+    x_l[start_i] = floorf(x_range[start_i]);
+    x_l[stop_i] = ceilf(x_range[stop_i]);
+
+    float delta_k = 1.0f / (x_l[stop_i] - x_l[start_i]);
     float z_delta = (z_range[stop_i] - z_range[start_i]) * delta_k;
     float u_delta = (u_range[stop_i] - u_range[start_i]) * delta_k;
     float v_delta = (v_range[stop_i] - v_range[start_i]) * delta_k;
 
-    float x_start_delta = floorf(x_l[start_i]) - x_range[start_i];
+    // Clamp AFTER calculating slopes!
+    glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
+
+    float x_start_delta = x_l[start_i] - x_range[start_i];
     float z = z_range[start_i] + x_start_delta * z_delta;
     float u = u_range[start_i] + x_start_delta * u_delta;
     float v = v_range[start_i] + x_start_delta * v_delta;
 
-    // FIXME: not a big fan of this x casting :(
-    for (int x = floorf(x_l[start_i]); x < ceilf(x_l[stop_i]); x++) {
+    for (int x = x_l[start_i]; x < x_l[stop_i]; x++) {
+        assert(x_l[start_i] != x_l[stop_i]);
+
 #ifdef MINIGL_DEBUG_PERF
         minigl_perf_event(PERF_FRAG);
 #endif
