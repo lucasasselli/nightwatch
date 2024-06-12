@@ -112,8 +112,7 @@ static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
 }
 
 static void viz_to_check(map_t map, camera_t camera, int x, int y) {
-    const float FOV_HEADROOM_ANGLE = 20.0f;
-
+    const float FOV_HEADROOM_ANGLE = 12.0f;
     // NOTE: Use the cross product of the position-tile vector and the
     // camera direction to check if the tile is within the FOV.
     vec2 dir;
@@ -123,9 +122,7 @@ static void viz_to_check(map_t map, camera_t camera, int x, int y) {
     float a = glm_vec2_dot(dir, camera.front);
     if (a >= cosf(glm_rad(CAMERA_FOV / 2.0f + FOV_HEADROOM_ANGLE))) {
         // Tile is in FOV, is there anything in between?
-        viz_dda_raycast(map, (ivec2){camera.pos[0], camera.pos[1]}, (ivec2){x, y});
-    } else {
-        map[y][x].visible = false;
+        viz_dda_raycast(map, (ivec2){roundf(camera.pos[0]), roundf(camera.pos[1])}, (ivec2){x, y});
     }
 }
 
