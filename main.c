@@ -179,11 +179,25 @@ void gen_torch_mask(void) {
 }
 
 void view_trans_update(void) {
-    // Update camera position
-    vec2 camera_center;
     mat4 view;
-    glm_vec2_add(gs.camera.pos, gs.camera.front, camera_center);
-    glm_lookat(CAMERA_VEC3(gs.camera.pos), CAMERA_VEC3(camera_center), CAMERA_UP, view);
+    vec3 camera_center;
+
+    vec3 vec3_pos;
+    vec3_pos[0] = gs.camera.pos[0];
+    vec3_pos[1] = gs.camera.bob;
+    vec3_pos[2] = gs.camera.pos[1];
+
+    vec3 vec3_front;
+    vec3_front[0] = gs.camera.front[0];
+    vec3_front[1] = 0.0f;
+    vec3_front[2] = gs.camera.front[1];
+
+    glm_vec3_add(vec3_pos, vec3_front, camera_center);
+
+    // Update camera position
+
+    glm_vec3_add(vec3_pos, vec3_front, camera_center);
+    glm_lookat(vec3_pos, camera_center, CAMERA_UP, view);
     glm_mat4_mul(proj, view, trans);
 }
 

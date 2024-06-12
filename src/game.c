@@ -5,9 +5,15 @@
 #include "utils.h"
 
 // Input
-#define INPUT_CAMERA_TSPEED1 1.0f
-#define INPUT_CAMERA_TSPEED2 4.0f
+#define INPUT_CAMERA_TSPEEDB -0.5f
+#define INPUT_CAMERA_TSPEED0 1.0f
+#define INPUT_CAMERA_TSPEED1 4.0f
 #define INPUT_CAMERA_RSPEED 5.0f
+
+#define HEADBOB_RANGE0 0.025f
+#define HEADBOB_SPEED0 7.0f
+#define HEADBOB_RANGE1 0.038f
+#define HEADBOB_SPEED1 18.0f
 
 // Torch
 #define TORCH_DISCHARGE_RATE 1.0f
@@ -43,7 +49,7 @@ float enemy_spawn_timer = 0;
 
 float heart_speed = 0.0;
 
-int map_viz[MAP_SIZE][MAP_SIZE];
+float head_bob = 0.0;
 
 void game_init(void) {
     //---------------------------------------------------------------------------
@@ -74,22 +80,30 @@ void game_init(void) {
 static void handle_keys(PDButtons pushed, float delta_t) {
     vec2 camera_delta;
 
-    vec2 old_pos;
+    vec2 old_pos;  // In case of collision we use this
+
     glm_vec2_copy(gs.camera.pos, old_pos);
 
+    float speed = 0;
     if (pushed & kButtonUp) {
         // Walks forward
-        float speed = INPUT_CAMERA_TSPEED1 * delta_t;
         if (pushed & kButtonA) {
-            speed = INPUT_CAMERA_TSPEED2 * delta_t;
+            glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED1 * delta_t, camera_delta);
+            head_bob += delta_t * HEADBOB_SPEED1;
+            gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE1;
+        } else {
+            glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED0 * delta_t, camera_delta);
+            head_bob += delta_t * HEADBOB_SPEED0;
+            gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE0;
         }
-        glm_vec2_scale_as(gs.camera.front, speed, camera_delta);
-        glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
     } else if (pushed & kButtonDown) {
         // Walk backward
-        glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEED1 * delta_t, camera_delta);
-        glm_vec2_sub(gs.camera.pos, camera_delta, gs.camera.pos);
+        glm_vec2_scale_as(gs.camera.front, INPUT_CAMERA_TSPEEDB * delta_t, camera_delta);
+        head_bob += delta_t * HEADBOB_SPEED0;
+        gs.camera.bob = sinf(head_bob) * HEADBOB_RANGE0;
     }
+
+    glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
 
     if (pushed & kButtonRight) {
         gs.camera.yaw += INPUT_CAMERA_RSPEED;
