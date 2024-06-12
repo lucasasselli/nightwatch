@@ -7,15 +7,21 @@
 extern PlaydateAPI* pd;
 
 typedef enum {
+    PLAYER_ACTIVE,
+    PLAYER_GAMEOVER
+} player_state_t;
+
+typedef enum {
     ENEMY_RESET,
     ENEMY_HIDDEN,
     ENEMY_FOLLOW,
     ENEMY_SPOTTED,
-    ENEMY_CHASING
+    ENEMY_CHASING,
+    ENEMY_WON
 } enemy_state_t;
 
 typedef struct {
-    bool minimap_show;
+    player_state_t player_state;
     map_t map;
 
     camera_t camera;

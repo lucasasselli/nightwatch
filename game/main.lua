@@ -11,6 +11,14 @@ gfx.setBackgroundColor(gfx.kColorBlack)
 ui.crankIndicator.clockwise = true
 bg_load_img:draw(0, 0)
 
+local menu = playdate.getSystemMenu()
+local menuItem, error = menu:addMenuItem("Restart", function()
+    resetC()
+end)
+local menuItem, error = menu:addMenuItem("Credits", function()
+    -- TODO:
+end)
+
 function playdate.update()
     if game_run then
         -- Run game

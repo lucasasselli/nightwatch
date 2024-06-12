@@ -10,41 +10,58 @@
 #include "minimap_renderer.h"
 #include "pd_api.h"
 #include "pd_system.h"
+#include "random.h"
 #include "sound.h"
 #include "utils.h"
 
 #define LOAD_STEP_CNT 5
 
+// #define TORCH_DISABLE
+#define TORCH_INT_STEPS 32
+#define TORCH_FADE_STEPS 512
+
 // API handle
 PlaydateAPI *pd;
 
-// Support
-int load_step = 0;
-
-float update_et_last = 0.0f;
-int update_cnt = 0;
-
-game_state_t gs;
-
+//---------------------------------------------------------------------------
 // Resources
+//---------------------------------------------------------------------------
+
+// Textures
 minigl_tex_t tex_dither;
 minigl_tex_t tex_enemy;
+
+// Images
+LCDBitmap *img_gameover;
+
+// Objects
 minigl_obj_t obj_enemy;
 
+// Object buffer
 minigl_objbuf_t obj_buf;
+
+LCDFont *font_system = NULL;
+
+// Precalculated
+// TODO: Generate at compile time with Cog?
+uint8_t torch_mask[TORCH_INT_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
+fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
+
+//---------------------------------------------------------------------------
+// Global vars
+//---------------------------------------------------------------------------
+
+int load_step = 0;
+float update_et_last = 0.0f;
+int update_cnt = 0;
+int gameover_time = 0;
+
+game_state_t gs;
 
 // Transforms
 mat4 proj;
 mat4 trans;
 
-// #define TORCH_DISABLE
-#define TORCH_INT_STEPS 32
-#define TORCH_FADE_STEPS 512
-
-uint8_t torch_mask[TORCH_INT_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
-fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
-
-// FIXME: Write directly on the screen buffer?
 void screen_update(void) {
     // Offset to center in screen
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
@@ -52,10 +69,11 @@ void screen_update(void) {
 #ifndef TORCH_DISABLE
 
     // Handle flickering
+    // FIXME: Improve the flickering
     float torch_intensity = gs.torch_charge;
     if (gs.torch_on) {
         if (gs.torch_flicker) {
-            torch_intensity = glm_clamp(rand_range(0, 100) - 50, 0.0f, 50.0f) / 50.0f;
+            torch_intensity = glm_clamp(randi(0, 100) - 50, 0.0f, 50.0f) / 50.0f;
         }
     } else {
         torch_intensity = 0.0f;
@@ -100,7 +118,7 @@ void screen_update(void) {
     pd->graphics->markUpdatedRows(0, LCD_ROWS - 1);
 }
 
-void minigl_perf_print(void) {
+void print_perf(void) {
 #ifdef MINIGL_DEBUG_PERF
     minigl_perf_data_t perf_data = minigl_perf_get();
     debug("Clip count: %d", perf_data.clip);
@@ -201,6 +219,12 @@ void view_trans_update(void) {
     glm_mat4_mul(proj, view, trans);
 }
 
+static int lua_reset(lua_State *L) {
+    (void)L;  // Unused
+    game_init();
+    return 0;
+}
+
 static int lua_load(lua_State *L) {
     (void)L;  // Unused
 
@@ -214,9 +238,15 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 1:
+                // Load Fonts
+                font_system = pd->graphics->loadFont("/System/Fonts/Asheville-Sans-14-Bold.pft", NULL);
+
                 // Load textures
                 minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
                 minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
+
+                // Load image
+                img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
 
                 // Config dither texture
                 minigl_set_dither(tex_dither);
@@ -244,17 +274,16 @@ static int lua_load(lua_State *L) {
                 // Setup map
                 map_read(gs.map);
                 map_init();
+
+#ifdef DEBUG_MINIMAP
+                // Setup minimap
+                minimap_init();
+#endif
                 break;
 
             case 4:
-                // Setup minimap
-                minimap_init();
-                minimap_gen(gs.map);
-
                 // Initialize game
                 game_init();
-
-                // sound_effect_start(SOUND_HEARTBEAT);
                 break;
         }
         load_step++;
@@ -277,40 +306,51 @@ static int lua_update(lua_State *L) {
 
     // Real work is done here!
     game_update(update_delta_t);
-    view_trans_update();
 
-    //---------------------------------------------------------------------------
-    // Draw graphics
-    //---------------------------------------------------------------------------
+    if (gs.player_state != PLAYER_GAMEOVER) {
+        //---------------------------------------------------------------------------
+        // Active game
+        //---------------------------------------------------------------------------
 
-    // Flush buffer
-    minigl_clear(0.0f, 1.0f);
+        view_trans_update();
+
+        // Flush buffer
+        minigl_clear(0.0f, 1.0f);
 
 #ifdef DEBUG_MINIMAP
-    pd->graphics->clear(kColorBlack);
+        pd->graphics->clear(kColorBlack);
 #endif
 
-    // Draw map
-    map_draw(gs.map, trans, gs.camera);
+        // Draw map
+        map_draw(gs.map, trans, gs.camera);
 
-    // Draw enemy
-    if (gs.enemy_state != ENEMY_HIDDEN) {
-        // TODO: More than one enemy?
-        // FIXME: This is drawn indipendently to the raycasting viz!
-        mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-        vec2 enemy_pos;
-        ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
-        glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
-        mat4_billboard(gs.camera, enemy_trans);
-        glm_mat4_mul(trans, enemy_trans, enemy_trans);
+        // Draw enemy
+        if (gs.enemy_state != ENEMY_HIDDEN) {
+            // TODO: More than one enemy?
+            mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
+            vec2 enemy_pos;
+            ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
+            glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
+            mat4_billboard(gs.camera, enemy_trans);
+            glm_mat4_mul(trans, enemy_trans, enemy_trans);
 
-        minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
-        minigl_set_tex(tex_enemy);
-        minigl_draw(obj_buf);
+            minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
+            minigl_set_tex(tex_enemy);
+            minigl_draw(obj_buf);
+        }
+
+        // Update the screen
+        screen_update();
+    } else {
+        //---------------------------------------------------------------------------
+        // Gameover
+        //---------------------------------------------------------------------------
+        if (gameover_time++ == 0) {
+            sound_effect_play(SOUND_DISCOVERED);
+        }
+        pd->graphics->setDrawMode(kDrawModeCopy);
+        pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
     }
-
-    // Update the screen
-    screen_update();
 
 #ifdef DEBUG
 #ifdef DEBUG_MINIMAP
@@ -319,7 +359,7 @@ static int lua_update(lua_State *L) {
 
     // Print periodically
     if (update_cnt++ % 100 == 0) {
-        minigl_perf_print();
+        print_perf();
         debug("Awareness : %f", (double)gs.enemy_awareness);
         debug("Aggression: %f", (double)gs.enemy_aggression);
     }
@@ -346,6 +386,9 @@ __declspec(dllexport)
             // LUA Init
             //---------------------------------------------------------------------------
 
+            if (!pd->lua->addFunction(lua_reset, "resetC", &err)) {
+                pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+            }
             if (!pd->lua->addFunction(lua_load, "loadC", &err)) {
                 pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
             }

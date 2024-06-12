@@ -36,11 +36,7 @@
 
 #define ENEMY_BASE_DIST 7
 
-// Heartbeat sound
-#define HEARTBEAT_DIST_MIN 10
-#define HEARTBEAT_DIST_MAX 50
-
-const char* enemy_state_names[] = {"RESET", "HIDDEN", "FOLLOW", "SPOTTED", "CHASING"};
+const char* enemy_state_names[] = {"RESET", "HIDDEN", "FOLLOW", "SPOTTED", "CHASING", "WON"};
 
 // Game state
 int enemy_path_prog = 0;
@@ -65,6 +61,9 @@ void game_init(void) {
     // State
     //---------------------------------------------------------------------------
 
+    // Gameover
+    gs.player_state = PLAYER_ACTIVE;
+
     // Pick a random starting position in the map
     ivec2 t;
     t[0] = 31;  // FIXME: Good start position
@@ -73,7 +72,7 @@ void game_init(void) {
     map_viz_update(gs.map, gs.camera);
 
     // Torch
-    gs.torch_charge = 0.0f;
+    gs.torch_charge = 1.0f;
 
     // Enemy
     gs.enemy_state = ENEMY_RESET;
@@ -187,6 +186,7 @@ void enemy_fsm_do(float delta_t) {
         // Dummy state to initialize FSM
         case ENEMY_RESET:
             gs.enemy_awareness = 0.0f;
+            gs.enemy_aggression = 0.0f;
             gs.enemy_spotted_cnt = 0;
             enemy_spawn_timer = ENEMY_SPAWN_TIME;
             enemy_fsm_change_state(ENEMY_HIDDEN);
@@ -242,8 +242,7 @@ void enemy_fsm_do(float delta_t) {
 
             if (enemy_player_dist() == 0) {
                 // Reached last known position
-                // TODO: Game over
-                enemy_fsm_change_state(ENEMY_HIDDEN);
+                enemy_fsm_change_state(ENEMY_WON);
             }
 
             // TODO: Awareness increases distance
@@ -254,6 +253,10 @@ void enemy_fsm_do(float delta_t) {
                 enemy_spawn_timer = ENEMY_SPAWN_TIME;  // TODO: Randomize spawn time
                 enemy_fsm_change_state(ENEMY_HIDDEN);
             }
+            break;
+
+        case ENEMY_WON:
+            gs.player_state = PLAYER_GAMEOVER;
             break;
     }
 }
@@ -337,28 +340,14 @@ void game_update(float delta_t) {
         gs.enemy_aggression = glm_clamp(gs.enemy_aggression, 0.0f, ENEMY_AGGR_MAX);
     }
 
-    // Update FSM
-    enemy_fsm_do(delta_t);
-
     // Handle movement
     // FIXME: Only if player changes tile
     if (gs.enemy_state != ENEMY_HIDDEN) {
         // Update the path to player
         a_star_navigate(gs.map, gs.enemy_tile, IVEC2_INIT(gs.camera.pos), &gs.path_to_player);
         enemy_path_prog = 0;
-
-        // Heartbeat sound
-        // FIXME: Add low pass filter
-        if (gs.enemy_state == ENEMY_SPOTTED || gs.enemy_state == ENEMY_CHASING) {
-            heart_speed = 1.0;
-        } else if (gs.enemy_state == ENEMY_HIDDEN) {
-            heart_speed = 0.0;
-        } else {
-            // Heartbeat sound
-            heart_speed = (HEARTBEAT_DIST_MAX - ((float)clampi(gs.path_to_player.size, HEARTBEAT_DIST_MIN, HEARTBEAT_DIST_MAX))) /
-                          (HEARTBEAT_DIST_MAX - HEARTBEAT_DIST_MIN);
-        }
-
-        // sound_play_range(SOUND_HEARTBEAT, 0, 200000 - 170000 * heart_speed);
     }
+
+    // Update FSM
+    enemy_fsm_do(delta_t);
 }

@@ -3,8 +3,6 @@
 #include "pd_api.h"
 #include "utils.h"
 
-LCDBitmap* minimap;
-LCDBitmap* minimap_mask;
 LCDBitmap* ico_player;
 LCDBitmap* ico_enemy;
 
@@ -46,47 +44,6 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
             }
 
             if (draw) clearpixel(bitmap_data, tile_x + x, tile_y + y, bitmap_rowbytes);
-        }
-    }
-}
-
-void minimap_draw(int x, int y, game_state_t* state) {
-    int off_x = ((int)state->camera.pos[0]) - MINIMAP_SIZE_X / 2;
-    int off_y = ((int)state->camera.pos[1]) - MINIMAP_SIZE_Y / 2;
-
-    uint8_t* bitmap_data = NULL;
-    int bitmap_rowbytes = 0;
-    pd->graphics->clearBitmap(minimap_mask, kColorBlack);
-    pd->graphics->getBitmapData(minimap_mask, NULL, NULL, &bitmap_rowbytes, NULL, &bitmap_data);
-
-    for (int y = off_y; y < off_y + MINIMAP_SIZE_Y; y++) {
-        for (int x = off_x; x < off_x + MINIMAP_SIZE_X; x++) {
-            if (x < MAP_SIZE * MINIMAP_TILE_SIZE && y < MAP_SIZE * MINIMAP_TILE_SIZE) {
-                clearpixel(bitmap_data, x, y, bitmap_rowbytes);
-            }
-        }
-    }
-    pd->graphics->setBitmapMask(debug_minimap, minimap_mask);
-
-    pd->graphics->drawBitmap(minimap, x - off_x, y - off_y, kBitmapUnflipped);
-    pd->graphics->drawRect(x, y, MINIMAP_SIZE_X, MINIMAP_SIZE_Y, kColorWhite);
-    pd->graphics->drawRotatedBitmap(ico_player, x + MINIMAP_SIZE_X / 2, y + MINIMAP_SIZE_Y / 2, state->camera.yaw + 90, 0.5f, 0.5f, 0.2f, 0.2f);
-}
-
-void minimap_gen(map_t map) {
-    minimap = pd->graphics->newBitmap(MAP_SIZE * MINIMAP_TILE_SIZE, MAP_SIZE * MINIMAP_TILE_SIZE, kColorBlack);
-    minimap_mask = pd->graphics->newBitmap(MAP_SIZE * MINIMAP_TILE_SIZE, MAP_SIZE * MINIMAP_TILE_SIZE, kColorBlack);
-
-    uint8_t* bitmap_data = NULL;
-    int bitmap_rowbytes = 0;
-    pd->graphics->getBitmapData(minimap, NULL, NULL, &bitmap_rowbytes, NULL, &bitmap_data);
-
-    for (int y = 0; y < MAP_SIZE; y++) {
-        for (int x = 0; x < MAP_SIZE; x++) {
-            map_tile_t tile = map[y][x];
-            for (int i = 0; i < tile.item_cnt; i++) {
-                minimap_item_draw(tile.items[i], MINIMAP_TILE_SIZE * x, MINIMAP_TILE_SIZE * y, bitmap_data, bitmap_rowbytes);
-            }
         }
     }
 }
