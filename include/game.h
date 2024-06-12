@@ -9,10 +9,9 @@ extern PlaydateAPI* pd;
 typedef enum {
     ENEMY_RESET,
     ENEMY_HIDDEN,
-    ENEMY_ROAMING,
-    ENEMY_ALERT,
-    ENEMY_CHASING,
-    ENEMY_SEARCHING
+    ENEMY_FOLLOW,
+    ENEMY_SPOTTED,
+    ENEMY_CHASING
 } enemy_state_t;
 
 typedef struct {
@@ -25,13 +24,13 @@ typedef struct {
     ivec2 enemy_tile;
     bool enemy_in_fov;
     int enemy_spotted_cnt;
-    float enemy_awareness;
+    float enemy_awareness;   // Increases with the use of the torch and when you are spotted
+    float enemy_aggression;  // Increases when spotted
 
     float torch_flicker;
     float torch_charge;
     float torch_on;
 
-    a_star_path_t path_to_roam;
     a_star_path_t path_to_player;
 } game_state_t;
 

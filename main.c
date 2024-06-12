@@ -149,16 +149,33 @@ void gen_torch_mask(void) {
         }
 
         // Fade values
-        const float TORCH_MIN_Z = CAMERA_MIN_Z;
-        const float TORCH_MAX_Z = CAMERA_MAX_Z * intensity;
+        // NOTE: These thresholds are completely empyrical
+        const float TORCH_S0_I = 1.0f;
+        const float TORCH_S0_K = 0.99f;
+
+        const float TORCH_S1_I = 0.5f;
+        const float TORCH_S1_K = 0.90f;
+
+        const float TORCH_S2_I = 0.0f;
+        const float TORCH_S2_K = 0.0f;
+
+        float fade_z;
+        if (intensity > TORCH_S1_I) {
+            fade_z = TORCH_S1_K + (intensity - TORCH_S1_I) * (TORCH_S0_K - TORCH_S1_K) / (TORCH_S0_I - TORCH_S1_I);
+        } else if (intensity > TORCH_S2_I) {
+            fade_z = TORCH_S2_K + (intensity - TORCH_S2_I) * (TORCH_S1_K - TORCH_S2_K) / (TORCH_S1_I - TORCH_S2_I);
+        } else {
+            fade_z = 0.0f;
+        }
 
         for (int j = 0; j < TORCH_FADE_STEPS; j++) {
-            float z = ((float)j) / TORCH_FADE_STEPS;
-            float lin_z = (2 * TORCH_MIN_Z * TORCH_MAX_Z) / (TORCH_MAX_Z + TORCH_MIN_Z - z * (TORCH_MAX_Z - TORCH_MIN_Z));
-            if (lin_z < TORCH_MAX_Z) {
-                torch_fade[i][j] = (TORCH_MAX_Z - lin_z) / (TORCH_MAX_Z - TORCH_MIN_Z);
+            float z = ((float)j) / (float)(TORCH_FADE_STEPS - 1);
+            if (z > fade_z) {
+                // Fade to black (far)
+                torch_fade[i][j] = 1.0f - (z - fade_z) / (1.0f - fade_z);
             } else {
-                torch_fade[i][j] = 0;
+                // Fully lit (near)
+                torch_fade[i][j] = 1.0f;
             }
         }
     }
@@ -292,7 +309,8 @@ static int lua_update(lua_State *L) {
     // Print periodically
     if (update_cnt++ % 100 == 0) {
         minigl_perf_print();
-        debug("Awareness: %f", (double)gs.enemy_awareness);
+        debug("Awareness : %f", (double)gs.enemy_awareness);
+        debug("Aggression: %f", (double)gs.enemy_aggression);
     }
     minigl_perf_clear();
 
