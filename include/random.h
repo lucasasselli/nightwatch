@@ -39,9 +39,7 @@ typedef struct {
         .size = s, \
         .values = {
 
-#define RANDW_CONSTR_END \
-        } \
-    }
+#define RANDW_CONSTR_END }}
 
 #define RANDW_POINT(x, y) \
     { .type = RAND_POINT, .a = x, .b = 0, .weight = y }

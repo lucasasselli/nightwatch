@@ -175,8 +175,8 @@ void mapgen_grid_update(map_t map) {
 
                 // TODO: Create either at margin or center of the room
                 do {
-                    x = rand_range(room.pos[0], room.pos[0] + room.size[0]);
-                    y = rand_range(room.pos[1], room.pos[1] + room.size[1]);
+                    x = randi(room.pos[0], room.pos[0] + room.size[0]);
+                    y = randi(room.pos[1], room.pos[1] + room.size[1]);
                 } while (map_tile_has_item(map[y][x], ITEM_STATUE, DIR_ANY));
 
                 tile_item_add(map, ITEM_STATUE, rand() % 4, x, y);
@@ -283,7 +283,7 @@ static map_room_t room_randomize(map_room_t prev) {
 
         if (side == 0 || side == 2) {
             // North - South
-            out.pos[0] = rand_range(min_x + ROOM_MARGIN, max_x - ROOM_MARGIN);
+            out.pos[0] = randi(min_x + ROOM_MARGIN, max_x - ROOM_MARGIN);
 
             int door_min = maxi(prev.pos[0] + DOOR_MARGIN, out.pos[0] + DOOR_MARGIN);
             int door_max = mini(prev.pos[0] + prev.size[0] - DOOR_MARGIN, out.pos[0] + out.size[0] - DOOR_MARGIN);
@@ -301,7 +301,7 @@ static map_room_t room_randomize(map_room_t prev) {
 
         if (side == 1 || side == 3) {
             // East - West
-            out.pos[1] = rand_range(min_y + ROOM_MARGIN, max_y - ROOM_MARGIN);
+            out.pos[1] = randi(min_y + ROOM_MARGIN, max_y - ROOM_MARGIN);
 
             int door_min_y = maxi(prev.pos[1] + DOOR_MARGIN, out.pos[1] + DOOR_MARGIN);
             int door_max_y = mini(prev.pos[1] + prev.size[1] - DOOR_MARGIN, out.pos[1] + out.size[1] - DOOR_MARGIN);

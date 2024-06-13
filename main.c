@@ -368,8 +368,6 @@ static int lua_update(lua_State *L) {
         pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
     }
 
-    volatile x = randwf(&CONSTR_FLICKER, 0.1);
-
 #ifdef DEBUG
 
 #ifdef DEBUG_MINIMAP

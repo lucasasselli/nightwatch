@@ -29,10 +29,6 @@ typedef float fp16_t;
 
 extern PlaydateAPI* pd;
 
-int fake_printf(const char* format, ...);
-
-int rand_range(int min, int max);
-
 int mini(int a, int b);
 
 int maxi(int a, int b);
