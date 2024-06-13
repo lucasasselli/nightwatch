@@ -12,10 +12,10 @@ typedef enum {
 } player_state_t;
 
 typedef enum {
-    ENEMY_RESET,
     ENEMY_HIDDEN,
     ENEMY_FOLLOW,
     ENEMY_SPOTTED,
+    ENEMY_DESPAWN,
     ENEMY_CHASING,
     ENEMY_WON
 } enemy_state_t;

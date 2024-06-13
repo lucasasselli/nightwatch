@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include "map.h"
+#include "random.h"
 #include "sound.h"
 #include "utils.h"
 
@@ -16,37 +17,39 @@
 #define HEADBOB_SPEED1 18.0f
 
 // Torch
-#define TORCH_DISCHARGE_RATE 0.5f
-#define TORCH_CHARGE_RATE 0.01f  // Charge x deg x sec
+#define TORCH_DISCHARGE_RATE 0.2f
+#define TORCH_CHARGE_RATE 0.01f  // Charge x deg x s
 
 // Enemy
 #define ENEMY_ROAM_SPEED 1.0f
 #define ENEMY_CHASING_SPEED 1.0f
 
-#define ENEMY_SPAWN_TIME 10.0f
+#define ENEMY_DESPAWN_TIME 2.0f           // s
+#define ENEMY_DESPAWN_FLICKER_DELAY 1.0f  // s
 
-#define ENEMY_AWARE_SIGHT_K 10.0f
-#define ENEMY_AWARE_IDLE_K 1.0f
-#define ENEMY_AWARE_MAX 500.0f
+#define ENEMY_AWARE_SIGHT_K 0.1f
+#define ENEMY_AWARE_IDLE_K 0.03f
+#define ENEMY_AWARE_DARK_K -0.01f
+#define ENEMY_AWARE_MAX 5.0f
+#define ENEMY_AWARE_SPAWN_TH 1.0f
 
 #define ENEMY_AGGR_SIGHT_K 1.0f
 #define ENEMY_AGGR_DIST_K 3.0f
-#define ENEMY_AGGR_ATTACK_THRESHOLD 100.0f
-#define ENEMY_AGGR_MAX ENEMY_AGGR_ATTACK_THRESHOLD + 1.0f
+#define ENEMY_AGGR_ATTACK_TH 100.0f
+#define ENEMY_AGGR_MAX ENEMY_AGGR_ATTACK_TH + 1.0f
 
-#define ENEMY_BASE_DIST 7
+#define ENEMY_DIST_MAX 8
+#define ENEMY_DIST_MIN 1
+#define ENEMY_DIST_ESCAPE 8
 
-const char* enemy_state_names[] = {"RESET", "HIDDEN", "FOLLOW", "SPOTTED", "CHASING", "WON"};
+const char* enemy_state_names[] = {"HIDDEN", "FOLLOW", "SPOTTED", "DESPAWN", "CHASING", "WON"};
 
 // Game state
 int enemy_path_prog = 0;
 float enemy_move_cnt = 0;
-float enemy_spawn_timer = 0;
-
-float heart_speed = 0.0;
+float enemy_despawn_timer;
 
 float headbob_timer = 0.0;
-
 int step_sound = 0;
 
 void game_init(void) {
@@ -61,21 +64,24 @@ void game_init(void) {
     // State
     //---------------------------------------------------------------------------
 
-    // Gameover
+    // Player state
     gs.player_state = PLAYER_ACTIVE;
 
     // Pick a random starting position in the map
     ivec2 t;
-    t[0] = 31;  // FIXME: Good start position
+    t[0] = 31;  // TODO: Encode in the map or the level itself
     t[1] = 36;
     ivec2_to_vec2_center(t, gs.camera.pos);
     map_viz_update(gs.map, gs.camera);
 
     // Torch
-    gs.torch_charge = 1.0f;
+    gs.torch_charge = 0.0f;
 
     // Enemy
-    gs.enemy_state = ENEMY_RESET;
+    gs.enemy_state = ENEMY_HIDDEN;
+    gs.enemy_awareness = 0.0f;
+    gs.enemy_aggression = 0.0f;
+    gs.enemy_spotted_cnt = 0;
 }
 
 static void handle_keys(PDButtons pushed, float delta_t) {
@@ -127,7 +133,7 @@ static void handle_keys(PDButtons pushed, float delta_t) {
     // Collisions
     //---------------------------------------------------------------------------
 
-    // FIXME: Make collisions not sticky!
+    // TODO: Make collisions not sticky!
     map_tile_t tile = map_get_tile_vec2(gs.map, gs.camera.pos);
     if (map_tile_collide(tile)) {
         glm_vec2_copy(old_pos, gs.camera.pos);
@@ -178,86 +184,122 @@ int enemy_player_dist(void) {
 
 void enemy_fsm_change_state(enemy_state_t next_state) {
     debug("Enemy: %s -> %s", enemy_state_names[gs.enemy_state], enemy_state_names[next_state]);
-    gs.enemy_state = next_state;
-}
 
-void enemy_fsm_do(float delta_t) {
-    switch (gs.enemy_state) {
-        // Dummy state to initialize FSM
-        case ENEMY_RESET:
+    // Do transition stuff
+    switch (next_state) {
+        case ENEMY_HIDDEN:
             gs.enemy_awareness = 0.0f;
             gs.enemy_aggression = 0.0f;
-            gs.enemy_spotted_cnt = 0;
-            enemy_spawn_timer = ENEMY_SPAWN_TIME;
-            enemy_fsm_change_state(ENEMY_HIDDEN);
             break;
 
-        // Enemy not spawned in map
-        case ENEMY_HIDDEN:
-            enemy_spawn_timer -= delta_t;
-
-            if (enemy_spawn_timer < 0.0f) {
-                // Spwan the enemy
+        case ENEMY_FOLLOW:
+            if (gs.enemy_state == ENEMY_HIDDEN) {
+                // Spawn the enemy
                 map_tile_t tile;
                 do {
                     gs.enemy_tile[0] = rand() % MAP_SIZE;
                     gs.enemy_tile[1] = rand() % MAP_SIZE;
                     tile = map_get_tile_ivec2(gs.map, gs.enemy_tile);
                 } while (map_tile_collide(tile) || map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
-                enemy_fsm_change_state(ENEMY_FOLLOW);
+            }
+            break;
 
-                debug("Enemy (FOLLOW): spawned at %d %d!", gs.enemy_tile[0], gs.enemy_tile[1]);
+        case ENEMY_DESPAWN:
+            enemy_despawn_timer = ENEMY_DESPAWN_TIME;
+            gs.enemy_spotted_cnt++;
+            break;
+
+        case ENEMY_SPOTTED:
+            gs.enemy_spotted_cnt++;
+            break;
+
+        case ENEMY_CHASING:
+            break;
+
+        case ENEMY_WON:
+            gs.player_state = PLAYER_GAMEOVER;
+            break;
+    }
+
+    gs.enemy_state = next_state;
+}
+
+void enemy_fsm_do(float delta_t) {
+    switch (gs.enemy_state) {
+        // Enemy not spawned in map
+        case ENEMY_HIDDEN:
+            if (gs.enemy_awareness > ENEMY_AWARE_SPAWN_TH) {
+                enemy_fsm_change_state(ENEMY_FOLLOW);
             }
             break;
 
         // Enemy navigating map, not actively searching player
         case ENEMY_FOLLOW:
             if (!gs.enemy_in_fov) {
-                // When the player doesn't see the enemy, follow him
-                if (enemy_player_dist() > ENEMY_BASE_DIST) {
+                // Navigate from the spwan point to the player position, but stay at a distance.
+                // Get closes as awareness increments
+                if (enemy_player_dist() > ENEMY_DIST_MAX - gs.enemy_awareness) {
                     enemy_move(ENEMY_ROAM_SPEED, delta_t);
                 }
             } else {
                 // Enemy seen by the player!
-                gs.enemy_spotted_cnt++;
-                enemy_fsm_change_state(ENEMY_SPOTTED);
+                if (gs.enemy_spotted_cnt == 0) {
+                    // First time spotted! Always despawn
+                    enemy_fsm_change_state(ENEMY_DESPAWN);
+                } else {
+                    // TODO: Randomly despawn!
+                    enemy_fsm_change_state(ENEMY_SPOTTED);
+                }
+            }
+            break;
+
+        case ENEMY_DESPAWN:
+            enemy_despawn_timer -= delta_t;
+            if (enemy_despawn_timer < 0.0f) {
+                enemy_fsm_change_state(ENEMY_HIDDEN);
             }
             break;
 
         // Enemy spotted by player, preparing to chase
         case ENEMY_SPOTTED:
             if (gs.enemy_in_fov) {
-                if (gs.enemy_aggression > ENEMY_AGGR_ATTACK_THRESHOLD) {
+                if (gs.enemy_aggression > ENEMY_AGGR_ATTACK_TH) {
                     enemy_fsm_change_state(ENEMY_CHASING);
                 }
             } else {
                 enemy_fsm_change_state(ENEMY_FOLLOW);
             }
-            // TODO: Randomly despawn!
             break;
 
         // Enemy actively chaing player
         case ENEMY_CHASING:
             enemy_move(ENEMY_CHASING_SPEED, delta_t);
 
-            if (enemy_player_dist() == 0) {
+            if (enemy_player_dist() == ENEMY_DIST_MIN) {
                 // Reached last known position
                 enemy_fsm_change_state(ENEMY_WON);
             }
 
             // TODO: Awareness increases distance
             // TODO: Torch intensitity increases distance
-            if (gs.path_to_player.size > 10) {
+            if (gs.path_to_player.size > ENEMY_DIST_ESCAPE) {
                 // Player escaped the monster!
-                gs.enemy_aggression = 0.0f;
-                enemy_spawn_timer = ENEMY_SPAWN_TIME;  // TODO: Randomize spawn time
                 enemy_fsm_change_state(ENEMY_HIDDEN);
             }
             break;
 
         case ENEMY_WON:
-            gs.player_state = PLAYER_GAMEOVER;
+            // Wait for reset
             break;
+    }
+}
+
+void torch_flicker(bool enable) {
+    gs.torch_flicker = enable;
+    if (enable) {
+        sound_effect_start(SOUND_FLICKER);
+    } else {
+        sound_effect_stop(SOUND_FLICKER);
     }
 }
 
@@ -285,57 +327,64 @@ void game_update(float delta_t) {
     // Update state
     //---------------------------------------------------------------------------
 
-    gs.torch_on = gs.torch_charge > 0.0f;
-
     // Is enemy visible?
-    if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_on) {
-        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile) && enemy_player_dist() <= ENEMY_BASE_DIST;
+    if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_charge > 0.0f) {
+        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile) && enemy_player_dist() <= ENEMY_DIST_MAX;
     } else {
         gs.enemy_in_fov = false;
     }
 
-    // Flicker effect
-    if (gs.enemy_state == ENEMY_CHASING) {
-        gs.torch_flicker = true;
+    // Should torch flicker?
+    if (gs.torch_charge > 0.0f) {
+        // Torch is on!
+        if (gs.enemy_state == ENEMY_CHASING) {
+            torch_flicker(true);
+        } else if (gs.torch_charge > 0.0f && gs.enemy_state == ENEMY_DESPAWN && enemy_despawn_timer < ENEMY_DESPAWN_FLICKER_DELAY) {
+            torch_flicker(true);
+        } else {
+            torch_flicker(false);
+        }
     } else {
-        gs.torch_flicker = false;
-    }
-
-    if (gs.torch_flicker && gs.torch_on) {
-        sound_effect_start(SOUND_FLICKER);
-    } else {
-        sound_effect_stop(SOUND_FLICKER);
+        // Never flicker if torch is off!
+        torch_flicker(false);
     }
 
     int dist = enemy_player_dist();
     float dist_k;
-    if (dist < ENEMY_BASE_DIST) {
-        dist_k = ENEMY_BASE_DIST - (float)dist / ENEMY_BASE_DIST;
+    if (dist < ENEMY_DIST_MAX) {
+        dist_k = ENEMY_DIST_MAX - (float)dist / ENEMY_DIST_MAX;
     } else {
         dist_k = 0.0;
     }
 
     // Update awareness
-    if (gs.torch_on && gs.enemy_state != ENEMY_CHASING) {
-        // If torch is on, has charge and player is not being chased, update awareness
-        if (gs.enemy_in_fov) {
-            gs.enemy_awareness += delta_t * gs.torch_charge * ENEMY_AWARE_SIGHT_K;
+    float awareness_delta;
+    if (gs.enemy_state == ENEMY_HIDDEN || gs.enemy_state == ENEMY_FOLLOW) {
+        if (gs.torch_charge > 0) {
+            // If torch is on, has charge and player is not being chased, update awareness
+            if (gs.enemy_in_fov) {
+                awareness_delta = ENEMY_AWARE_SIGHT_K;
+            } else {
+                awareness_delta = ENEMY_AWARE_IDLE_K;
+            }
+            awareness_delta *= gs.torch_charge;
+            awareness_delta *= gs.enemy_spotted_cnt + 1;  // Getting spotted makes the game harder
+            awareness_delta *= delta_t;
         } else {
-            gs.enemy_awareness += delta_t * gs.torch_charge * ENEMY_AWARE_IDLE_K;
+            // Slowly decrease awareness when torch is off
+            awareness_delta = ENEMY_AWARE_DARK_K;
+            awareness_delta *= delta_t;
         }
-    } else if (gs.enemy_state == ENEMY_CHASING) {
-        // If enemy is chasing, awareness doesn't change.
-    } else {
-        // Slowly decrease awareness when torch is off
-        gs.enemy_awareness -= delta_t;
+        gs.enemy_awareness = glm_clamp(gs.enemy_awareness + awareness_delta, 0.0f, ENEMY_AWARE_MAX);
     }
-    gs.enemy_awareness = glm_clamp(gs.enemy_awareness, 0.0f, ENEMY_AWARE_MAX);
 
     // Update aggression
     if (gs.enemy_state == ENEMY_SPOTTED) {
         // If torch is on,
         if (gs.enemy_in_fov) {
             gs.enemy_aggression += delta_t * (gs.torch_charge * ENEMY_AGGR_SIGHT_K + dist_k * ENEMY_AGGR_DIST_K);
+        } else {
+            gs.enemy_aggression -= delta_t * (gs.torch_charge * ENEMY_AGGR_SIGHT_K);
         }
         gs.enemy_aggression = glm_clamp(gs.enemy_aggression, 0.0f, ENEMY_AGGR_MAX);
     }

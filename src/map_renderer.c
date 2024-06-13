@@ -18,7 +18,7 @@ minigl_obj_t obj_wetfloor;
 minigl_tex_t tex_wetfloor;
 minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
-void map_init(void) {
+void map_renderer_init(void) {
     //---------------------------------------------------------------------------
     // Geometry
     //---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
     }
 }
 
-void map_draw(map_t map, mat4 trans, camera_t camera) {
+void map_renderer_draw(map_t map, mat4 trans, camera_t camera) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             map_tile_t tile = map[y][x];

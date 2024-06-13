@@ -13,6 +13,7 @@ bg_load_img:draw(0, 0)
 
 local menu = playdate.getSystemMenu()
 local menuItem, error = menu:addMenuItem("Restart", function()
+    gfx.clear()
     resetC()
 end)
 local menuItem, error = menu:addMenuItem("Credits", function()

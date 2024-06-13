@@ -76,9 +76,8 @@ void screen_update(void) {
 #ifndef TORCH_DISABLE
 
     // Handle flickering
-    // FIXME: Improve the flickering
     float torch_intensity = gs.torch_charge;
-    if (gs.torch_on) {
+    if (gs.torch_charge > 0.0f) {
         if (gs.torch_flicker) {
             torch_intensity = randwf(&CONSTR_FLICKER, 0.1);
         }
@@ -182,10 +181,10 @@ void gen_torch_mask(void) {
 
         // NOTE: These thresholds are completely empirical
         const float TORCH_S0_I = 1.0f;
-        const float TORCH_S0_K = 0.95f;
+        const float TORCH_S0_K = 0.99f;
 
         const float TORCH_S1_I = 0.1f;
-        const float TORCH_S1_K = 0.1f;
+        const float TORCH_S1_K = 0.8f;
 
         const float TORCH_S2_I = 0.0f;
         const float TORCH_S2_K = 0.0f;
@@ -287,17 +286,18 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 3:
+                map_renderer_init();
+                break;
+
+            case 4:
                 // Setup map
                 map_read(gs.map);
-                map_init();
 
 #ifdef DEBUG_MINIMAP
                 // Setup minimap
                 minimap_init();
 #endif
-                break;
 
-            case 4:
                 // Initialize game
                 game_init();
                 break;
@@ -338,7 +338,7 @@ static int lua_update(lua_State *L) {
 #endif
 
         // Draw map
-        map_draw(gs.map, trans, gs.camera);
+        map_renderer_draw(gs.map, trans, gs.camera);
 
         // Draw enemy
         if (gs.enemy_state != ENEMY_HIDDEN) {
@@ -377,6 +377,7 @@ static int lua_update(lua_State *L) {
     // Print periodically
     if (update_cnt++ % 100 == 0) {
         print_perf();
+        debug("Charge    : %f", (double)gs.torch_charge);
         debug("Awareness : %f", (double)gs.enemy_awareness);
         debug("Aggression: %f", (double)gs.enemy_aggression);
     }
