@@ -47,6 +47,13 @@ LCDFont *font_system = NULL;
 uint8_t torch_mask[TORCH_INT_STEPS][SCREEN_SIZE_Y][SCREEN_SIZE_X];
 fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
 
+// clang-format off
+RANDW_CONSTR_BEGIN(float,CONSTR_FLICKER,2)
+    RANDW_POINT(0.0, 8),
+    RANDW_RANGE(0.0, 1.0, 2)
+RANDW_CONSTR_END;
+// clang-format on
+
 //---------------------------------------------------------------------------
 // Global vars
 //---------------------------------------------------------------------------
@@ -73,7 +80,7 @@ void screen_update(void) {
     float torch_intensity = gs.torch_charge;
     if (gs.torch_on) {
         if (gs.torch_flicker) {
-            torch_intensity = glm_clamp(randi(0, 100) - 50, 0.0f, 50.0f) / 50.0f;
+            torch_intensity = randwf(&CONSTR_FLICKER, 0.1);
         }
     } else {
         torch_intensity = 0.0f;
@@ -133,7 +140,10 @@ void gen_torch_mask(void) {
     for (int i = 0; i < TORCH_INT_STEPS; i++) {
         float intensity = ((float)i) / ((float)TORCH_INT_STEPS - 1);
 
+        //---------------------------------------------------------------------------
         // Overlay
+        //---------------------------------------------------------------------------
+
         const float TORCH_FADE_R = 60.0f * intensity;
         const float TORCH_BLACK_R = 100 + 20.0f * intensity;
 
@@ -163,13 +173,19 @@ void gen_torch_mask(void) {
             }
         }
 
-        // Fade values
-        // NOTE: These thresholds are completely empyrical
+        //---------------------------------------------------------------------------
+        // Fade with Z
+        //---------------------------------------------------------------------------
+
+        // Fade linearly with the distance after a certain threshold (fade_z), based
+        // on intensity using a linear spline.
+
+        // NOTE: These thresholds are completely empirical
         const float TORCH_S0_I = 1.0f;
         const float TORCH_S0_K = 0.95f;
 
-        const float TORCH_S1_I = 0.5f;
-        const float TORCH_S1_K = 0.90f;
+        const float TORCH_S1_I = 0.1f;
+        const float TORCH_S1_K = 0.1f;
 
         const float TORCH_S2_I = 0.0f;
         const float TORCH_S2_K = 0.0f;
@@ -352,7 +368,10 @@ static int lua_update(lua_State *L) {
         pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
     }
 
+    volatile x = randwf(&CONSTR_FLICKER, 0.1);
+
 #ifdef DEBUG
+
 #ifdef DEBUG_MINIMAP
     minimap_debug_draw(0, 0, &gs);
 #endif

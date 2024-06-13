@@ -22,10 +22,10 @@ const randw_constr_int_t CONSTR_ROOM_T = {
 const randw_constr_int_t CONSTR_EXIT_CNT = {
     .size = 5,
     .values = {
-        {.value = 1, .weight = 2}, 
-        {.value = 2, .weight = 8}, 
-        {.value = 3, .weight = 4}, 
-        {.value = 4, .weight = 2}
+        {.a = 1, .weight = 2}, 
+        {.a = 2, .weight = 8}, 
+        {.a = 3, .weight = 4}, 
+        {.a = 4, .weight = 2}
     }
 };
 // clang-format on
