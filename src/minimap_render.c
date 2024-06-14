@@ -9,6 +9,7 @@ LCDBitmap* ico_enemy;
 LCDBitmap* debug_minimap;
 
 extern PlaydateAPI* pd;
+extern game_state_t gs;
 
 void minimap_init(void) {
     ico_player = pd->graphics->loadBitmap("res/icons/minimap_player.pdi", NULL);
@@ -16,7 +17,7 @@ void minimap_init(void) {
     debug_minimap = pd->graphics->newBitmap(MAP_SIZE * MINIMAP_TILE_SIZE, MAP_SIZE * MINIMAP_TILE_SIZE, kColorBlack);
 }
 
-void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_data, int bitmap_rowbytes) {
+static void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_data, int bitmap_rowbytes) {
     // Object
     for (int y = 0; y < MINIMAP_TILE_SIZE; y++) {
         for (int x = 0; x < MINIMAP_TILE_SIZE; x++) {
@@ -48,7 +49,7 @@ void minimap_item_draw(map_item_t item, int tile_x, int tile_y, uint8_t* bitmap_
     }
 }
 
-void minimap_debug_tile_draw(map_tile_t tile, int x, int y, uint8_t* bitmap_data, int bitmap_rowbytes) {
+static void minimap_debug_tile_draw(map_tile_t tile, int x, int y, uint8_t* bitmap_data, int bitmap_rowbytes) {
     for (int i = 0; i < tile.item_cnt; i++) {
         minimap_item_draw(tile.items[i], x, y, bitmap_data, bitmap_rowbytes);
     }
