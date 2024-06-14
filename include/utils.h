@@ -2,8 +2,8 @@
 
 #include <cglm/cglm.h>
 
+#include "camera.h"
 #include "pd_api.h"
-#include "types.h"
 
 #ifdef DEBUG
 #define debug pd->system->logToConsole
@@ -18,6 +18,8 @@ typedef __fp16 fp16_t;
 typedef float fp16_t;
 #endif
 
+extern PlaydateAPI* pd;
+
 // Pixel handling macros
 #define samplepixel(data, x, y, rowbytes) (((data[(y) * rowbytes + (x) / 8] & (1 << (uint8_t)(7 - ((x) % 8)))) != 0) ? kColorWhite : kColorBlack)
 #define setpixel(data, x, y, rowbytes) (data[(y) * rowbytes + (x) / 8] &= ~(1 << (uint8_t)(7 - ((x) % 8))))
@@ -26,8 +28,6 @@ typedef float fp16_t;
 
 #define IVEC2_INIT(x) ((ivec2){x[0], x[1]})
 #define VEC2_INIT(x) (ivec2){x[0], x[1]})
-
-extern PlaydateAPI* pd;
 
 int mini(int a, int b);
 

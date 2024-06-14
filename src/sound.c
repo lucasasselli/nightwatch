@@ -15,6 +15,7 @@ void sound_init(void) {
     audio_sample[SOUND_DISCOVERED] = pd->sound->sample->load("res/sounds/discovered.pda");
     audio_sample[SOUND_STEP0] = pd->sound->sample->load("res/sounds/step0.pda");
     audio_sample[SOUND_STEP1] = pd->sound->sample->load("res/sounds/step1.pda");
+    audio_sample[SOUND_NOTE] = pd->sound->sample->load("res/sounds/note.pda");
 
     for (int i = 0; i < SOUNDS_NUM; i++) {
         sample_player[i] = pd->sound->sampleplayer->newPlayer();

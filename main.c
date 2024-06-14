@@ -320,13 +320,10 @@ void show_prompt(void) {
     pd->graphics->setFont(font_system);
     pd->graphics->setDrawMode(kDrawModeNXOR);
     const char *msg = "\xE2\x93\x90 Read";
-    pd->graphics->drawText(msg, strlen(msg), kUTF8Encoding, 180, 160);
+    pd->graphics->drawText(msg, strlen(msg), kUTF8Encoding, 330, 210);
 }
 
 void show_game(float delta_t) {
-    // Real work is done here!
-    game_update(delta_t);
-
     view_trans_update();
 
     // Flush buffer
@@ -379,7 +376,7 @@ void show_note(void) {
     const int X_OFFSET = 30;
     const int Y_OFFSET = 20;
 
-    const char **text = NOTES[gs.note_id];
+    const char **text = NOTES[gs.player_interact_item->id];
 
     note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, 310);
 
@@ -404,6 +401,9 @@ static int lua_update(lua_State *L) {
     float update_et_this = pd->system->getElapsedTime();
     float update_delta_t = update_et_this - update_et_last;
     update_et_last = update_et_this;
+
+    // Real work is done here!
+    game_update(update_delta_t);
 
     switch (gs.player_state) {
         case PLAYER_ACTIVE:

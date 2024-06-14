@@ -2,8 +2,8 @@
 
 #include <cglm/cglm.h>
 
+#include "camera.h"
 #include "constants.h"
-#include "types.h"
 
 #define MAP_TILE_MAX_ITEMS 10
 

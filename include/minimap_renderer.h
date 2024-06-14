@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game.h"
+#include "game_state.h"
 
 #define MINIMAP_TILE_SIZE 4
 #define MINIMAP_SIZE_X 100

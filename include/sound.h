@@ -4,14 +4,15 @@
 
 #include "pd_api.h"
 
-#define SOUNDS_NUM 5
+#define SOUNDS_NUM 6
 
 typedef enum {
     SOUND_HEARTBEAT,
     SOUND_DISCOVERED,
     SOUND_FLICKER,
     SOUND_STEP0,
-    SOUND_STEP1
+    SOUND_STEP1,
+    SOUND_NOTE
 } sound_id_t;
 
 extern PlaydateAPI* pd;

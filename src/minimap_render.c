@@ -1,3 +1,4 @@
+#include "game_state.h"
 #include "map.h"
 #include "minimap_renderer.h"
 #include "pd_api.h"
@@ -9,7 +10,6 @@ LCDBitmap* ico_enemy;
 LCDBitmap* debug_minimap;
 
 extern PlaydateAPI* pd;
-extern game_state_t gs;
 
 void minimap_init(void) {
     ico_player = pd->graphics->loadBitmap("res/icons/minimap_player.pdi", NULL);
@@ -70,9 +70,9 @@ void minimap_debug_draw(int x, int y, game_state_t* state) {
         }
     }
 
-    for (int i = 0; i < gs.path_to_player.size; i++) {
+    for (int i = 0; i < state->path_to_player.size; i++) {
         ivec2 node;
-        glm_ivec2_copy(gs.path_to_player.pos[i], node);
+        glm_ivec2_copy(state->path_to_player.pos[i], node);
         int mmap_x = node[0] * MINIMAP_TILE_SIZE;
         int mmap_y = node[1] * MINIMAP_TILE_SIZE;
         clearpixel(bitmap_data, mmap_x + 2, mmap_y + 2, bitmap_rowbytes);
