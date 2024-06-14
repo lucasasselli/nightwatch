@@ -13,12 +13,19 @@ minigl_obj_t obj_statue;
 minigl_obj_t obj_column;
 minigl_obj_t obj_base;
 minigl_obj_t obj_wetfloor;
+minigl_obj_t obj_note;
 
 // Textures
 minigl_tex_t tex_wetfloor;
+minigl_tex_t tex_note;
 minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
+// Other
+float map_render_timer;
+
 void map_renderer_init(void) {
+    map_render_timer = 0;
+
     //---------------------------------------------------------------------------
     // Geometry
     //---------------------------------------------------------------------------
@@ -73,6 +80,11 @@ void map_renderer_init(void) {
     glm_translate(trans, (vec3){0.0f, -1.2f, 0.0f});
     minigl_obj_trans(&obj_wetfloor, trans);
 
+    // Note
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){0.3f, 0.4, 1.0});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_note);
+
     //---------------------------------------------------------------------------
     // Textures
     //---------------------------------------------------------------------------
@@ -85,6 +97,7 @@ void map_renderer_init(void) {
     }
 
     minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
+    minigl_tex_read_file("res/textures/note.tex", &tex_note);
 }
 
 int bb_tex_index(float a, map_item_dir_t dir) {
@@ -102,9 +115,11 @@ int bb_tex_index(float a, map_item_dir_t dir) {
 }
 
 void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
-    mat4 model = GLM_MAT4_IDENTITY_INIT;
+    // Skip items marked as hidden
+    if (item.hidden) return;
 
-    glm_translate(model, (vec3){((float)x) + 0.5f, 0.0f, ((float)y) + 0.5f});
+    mat4 item_trans = GLM_MAT4_IDENTITY_INIT;
+    glm_translate(item_trans, (vec3){((float)x) + 0.5f, 0.0f, ((float)y) + 0.5f});
     int bb_tex_i = 0;
     // TODO: Generalize billboard?
     if (item.type == ITEM_STATUE) {
@@ -114,50 +129,56 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
         float bb_tex_a = vec2_angle((vec2){0.0f, -1.0f}, dir);
         bb_tex_i = bb_tex_index(bb_tex_a, item.dir);
 
-        mat4_billboard(camera, model);
+        mat4_billboard(camera, item_trans);
     } else {
         switch (item.dir) {
             case DIR_NORTH:
                 break;
             case DIR_EAST:
-                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
+                glm_rotate_at(item_trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(270), (vec3){0.0f, 1.0f, 0.0f});
                 break;
             case DIR_SOUTH:
-                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
+                glm_rotate_at(item_trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(180), (vec3){0.0f, 1.0f, 0.0f});
                 break;
             case DIR_WEST:
-                glm_rotate_at(model, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
+                glm_rotate_at(item_trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
                 break;
             default:
                 break;
         }
     }
 
-    glm_mat4_mul(trans, model, model);
+    glm_mat4_mul(trans, item_trans, item_trans);
 
+    // FIXME: Cleanup!
     if (item.type == ITEM_FLOOR) {
         if (((x + y) % 2) == 0) {
             minigl_set_color(16);
         } else {
             minigl_set_color(24);
         }
-        minigl_obj_to_objbuf_trans(obj_floor, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_floor, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_STATUE) {
         minigl_set_tex(tex_venus[bb_tex_i]);
-        minigl_obj_to_objbuf_trans(obj_statue, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_statue, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_BASE) {
         minigl_set_color(160);
-        minigl_obj_to_objbuf_trans(obj_base, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_base, item_trans, &obj_buf);
+        minigl_draw(obj_buf);
+    } else if (item.type == ITEM_NOTE) {
+        minigl_set_tex(tex_note);
+        glm_rotate_at(item_trans, (vec3){0.0f, 0.0f, 0.0f}, map_render_timer, (vec3){0.0f, 1.0f, 0.0f});
+        minigl_obj_to_objbuf_trans(obj_note, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_WETFLOOR) {
         minigl_set_tex(tex_wetfloor);
-        minigl_obj_to_objbuf_trans(obj_wetfloor, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_wetfloor, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_COLUMN) {
         minigl_set_color(160);
-        minigl_obj_to_objbuf_trans(obj_column, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_column, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_WALL) {
         switch (item.dir) {
@@ -176,12 +197,13 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
             case DIR_ANY:
                 assert(0);
         }
-        minigl_obj_to_objbuf_trans(obj_wall, model, &obj_buf);
+        minigl_obj_to_objbuf_trans(obj_wall, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     }
 }
 
-void map_renderer_draw(map_t map, mat4 trans, camera_t camera) {
+void map_renderer_draw(map_t map, mat4 trans, camera_t camera, float delta_t) {
+    map_render_timer += delta_t;
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             map_tile_t tile = map[y][x];

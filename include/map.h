@@ -13,7 +13,8 @@ typedef enum {
     ITEM_WALL,
     ITEM_COLUMN,
     ITEM_BASE,
-    ITEM_WETFLOOR
+    ITEM_WETFLOOR,
+    ITEM_NOTE
 } map_item_type_t;
 
 typedef enum {
@@ -27,14 +28,22 @@ typedef enum {
 typedef struct {
     map_item_type_t type;
     map_item_dir_t dir;
+    bool hidden;
+    bool action;
+    int id;
 } map_item_t;
 
 typedef struct {
     map_item_t *items;
     int item_cnt;
     bool collide;
-    bool visible;
+    bool visible;  // FIXME: Move elsewhere
 } map_tile_t;
+
+// clang-format off
+#define MAP_ITEM_STATIC_INIT(x,y) (map_item_t){x, y, false, false, 0}
+#define MAP_ITEM_ACTION_INIT(x,y,z) (map_item_t){x, y, false, true, z}
+// clang-format on
 
 typedef map_tile_t map_t[MAP_SIZE][MAP_SIZE];
 

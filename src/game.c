@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include "map.h"
+#include "pd_api.h"
 #include "random.h"
 #include "sound.h"
 #include "utils.h"
@@ -44,6 +45,9 @@
 
 const char* enemy_state_names[] = {"HIDDEN", "FOLLOW", "SPOTTED", "DESPAWN", "CHASING", "WON"};
 
+extern PlaydateAPI* pd;
+extern game_state_t gs;
+
 // Game state
 int enemy_path_prog = 0;
 float enemy_move_cnt = 0;
@@ -84,16 +88,37 @@ void game_init(void) {
     gs.enemy_spotted_cnt = 0;
 }
 
-static void handle_keys(PDButtons pushed, float delta_t) {
+void player_action_noteopen(int id) {
+    gs.note_id = id;
+    gs.player_state = PLAYER_READING;
+}
+
+static void player_check_interaction(void) {
+    // What is the tile directly in front of the player?
+    vec2 action_tile_pos;
+    glm_vec2_add(gs.camera.pos, gs.camera.front, action_tile_pos);
+    map_tile_t action_tile = map_get_tile_vec2(gs.map, action_tile_pos);
+    gs.player_interact = false;
+    for (int i = 0; i < action_tile.item_cnt; i++) {
+        if (action_tile.items[i].action) {
+            gs.player_interact = true;
+            gs.player_interact_item = &action_tile.items[i];
+            break;  // Only one interactable item per tile
+        }
+    }
+}
+
+static void player_action_move(PDButtons pushed, float delta_t) {
+    float old_bob = gs.camera.bob;
+
     vec2 old_pos;  // In case of collision we use this
     glm_vec2_copy(gs.camera.pos, old_pos);
-
-    float old_bob = gs.camera.bob;
 
     bool is_moving = false;
     float speed = 0;
     float bob_speed;
     float bob_range;
+
     if (pushed & kButtonUp) {
         // Walks forward
         if (pushed & kButtonA) {
@@ -164,6 +189,20 @@ static void handle_keys(PDButtons pushed, float delta_t) {
     } else {
         sound_effect_stop(SOUND_STEP0);
         sound_effect_stop(SOUND_STEP1);
+    }
+}
+
+static void handle_keys(PDButtons pushed, float delta_t) {
+    player_check_interaction();
+
+    if (gs.player_interact) {
+        if (pushed & kButtonA) {
+            if (gs.player_interact_item->type == ITEM_NOTE) {
+                player_action_noteopen(gs.player_interact_item->id);
+            }
+        }
+    } else {
+        player_action_move(pushed, delta_t);
     }
 }
 
@@ -317,9 +356,10 @@ void game_update(float delta_t) {
     }
 
     float crank_delta = fabsf(pd->system->getCrankChange());
-    gs.torch_charge += crank_delta * TORCH_CHARGE_RATE * delta_t;
     if (crank_delta == 0) {
         gs.torch_charge += -TORCH_DISCHARGE_RATE * delta_t;
+    } else {
+        gs.torch_charge += crank_delta * TORCH_CHARGE_RATE * delta_t;
     }
     gs.torch_charge = glm_clamp(gs.torch_charge, 0.0f, 1.0f);
 

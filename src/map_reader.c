@@ -22,7 +22,7 @@ static bool map_tile_is_empty(map_t map, int x, int y) {
 void map_square(map_t map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            map_tile_item_add(map, (map_item_t){ITEM_FLOOR, DIR_ANY}, pos_x + x, pos_y + y);
+            map_tile_item_add(map, (map_item_t){ITEM_FLOOR, DIR_ANY, false, 0, false}, pos_x + x, pos_y + y);
         }
     }
 }
@@ -50,14 +50,15 @@ void map_read(map_t map) {
     // Entrance
     map_square(map, 27, 26, 9, 11);
 
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 29, 28);
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 29, 31);
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 29, 34);
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 33, 28);
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 33, 31);
-    map_tile_item_add(map, (map_item_t){ITEM_COLUMN, DIR_ANY}, 33, 34);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 29, 28);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 29, 31);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 29, 34);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 33, 28);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 33, 31);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY), 33, 34);
 
-    map_tile_item_add(map, (map_item_t){ITEM_BASE, DIR_SOUTH}, 31, 31);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_BASE, DIR_SOUTH), 31, 31);
+    map_tile_item_add(map, MAP_ITEM_ACTION_INIT(ITEM_NOTE, DIR_ANY, 0), 31, 32);
 
     // Room 1
     map_square(map, 30, 24, 3, 2);
@@ -68,11 +69,11 @@ void map_read(map_t map) {
     map_square(map, 28, 20, 5, 1);
     map_square(map, 28, 19, 6, 1);
 
-    map_tile_item_add(map, (map_item_t){ITEM_WETFLOOR, DIR_WEST}, 29, 22);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_WETFLOOR, DIR_WEST), 29, 22);
 
-    map_tile_item_add(map, (map_item_t){ITEM_STATUE, DIR_WEST}, 33, 23);
-    map_tile_item_add(map, (map_item_t){ITEM_STATUE, DIR_WEST}, 33, 21);
-    map_tile_item_add(map, (map_item_t){ITEM_STATUE, DIR_WEST}, 33, 19);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_STATUE, DIR_WEST), 33, 23);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_STATUE, DIR_WEST), 33, 21);
+    map_tile_item_add(map, MAP_ITEM_STATIC_INIT(ITEM_STATUE, DIR_WEST), 33, 19);
 
     // Gallery corridor
     map_square(map, 30, 18, 2, 2);

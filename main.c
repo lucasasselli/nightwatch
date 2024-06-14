@@ -8,6 +8,7 @@
 #include "map_renderer.h"
 #include "minigl/minigl.h"
 #include "minimap_renderer.h"
+#include "notes.h"
 #include "pd_api.h"
 #include "pd_system.h"
 #include "random.h"
@@ -40,7 +41,9 @@ minigl_obj_t obj_enemy;
 // Object buffer
 minigl_objbuf_t obj_buf;
 
-LCDFont *font_system = NULL;
+// Fonts
+LCDFont *font_system;
+LCDFont *font_note;
 
 // Precalculated
 // TODO: Generate at compile time with Cog?
@@ -255,6 +258,7 @@ static int lua_load(lua_State *L) {
             case 1:
                 // Load Fonts
                 font_system = pd->graphics->loadFont("/System/Fonts/Asheville-Sans-14-Bold.pft", NULL);
+                font_note = pd->graphics->loadFont("res/fonts/handwriting.pft", NULL);
 
                 // Load textures
                 minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
@@ -312,6 +316,87 @@ static int lua_load(lua_State *L) {
     return 2;
 }
 
+void show_prompt(void) {
+    pd->graphics->setFont(font_system);
+    pd->graphics->setDrawMode(kDrawModeNXOR);
+    const char *msg = "\xE2\x93\x90 Read";
+    pd->graphics->drawText(msg, strlen(msg), kUTF8Encoding, 180, 160);
+}
+
+void show_game(float delta_t) {
+    // Real work is done here!
+    game_update(delta_t);
+
+    view_trans_update();
+
+    // Flush buffer
+    minigl_clear(0.0f, 1.0f);
+
+#ifdef DEBUG_MINIMAP
+    pd->graphics->clear(kColorBlack);
+#endif
+
+    // Draw map
+    map_renderer_draw(gs.map, trans, gs.camera, delta_t);
+
+    // Draw enemy
+    if (gs.enemy_state != ENEMY_HIDDEN) {
+        // TODO: More than one enemy?
+        mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
+        vec2 enemy_pos;
+        ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
+        glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
+        mat4_billboard(gs.camera, enemy_trans);
+        glm_mat4_mul(trans, enemy_trans, enemy_trans);
+
+        minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
+        minigl_set_tex(tex_enemy);
+        minigl_draw(obj_buf);
+    }
+
+    // Update the screen
+    screen_update();
+
+    // Show prompt
+    if (gs.player_interact) {
+        show_prompt();
+    }
+}
+
+void show_gameover(void) {
+    if (gameover_time++ == 0) {
+        sound_effect_play(SOUND_DISCOVERED);
+    }
+    pd->graphics->setDrawMode(kDrawModeCopy);
+    pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
+}
+
+int note_offset = 0;
+
+void show_note(void) {
+    const int MARGIN = 15;
+    const int LINE_HEIGHT = 18;
+    const int X_OFFSET = 30;
+    const int Y_OFFSET = 20;
+
+    const char **text = NOTES[gs.note_id];
+
+    note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, 310);
+
+    int y = Y_OFFSET - note_offset;
+
+    pd->graphics->setDrawMode(kDrawModeFillBlack);
+    pd->graphics->clear(kColorBlack);
+    pd->graphics->fillRect(X_OFFSET, y, 340, 510, kColorWhite);
+
+    pd->graphics->setFont(font_note);
+    int i = 0;
+    while (text[i][0] != '\0') {
+        pd->graphics->drawText(text[i], strlen(text[i]), kUTF8Encoding, X_OFFSET + MARGIN, y + MARGIN + i * LINE_HEIGHT);
+        i++;
+    }
+}
+
 static int lua_update(lua_State *L) {
     (void)L;  // Unused
 
@@ -320,52 +405,16 @@ static int lua_update(lua_State *L) {
     float update_delta_t = update_et_this - update_et_last;
     update_et_last = update_et_this;
 
-    // Real work is done here!
-    game_update(update_delta_t);
-
-    if (gs.player_state != PLAYER_GAMEOVER) {
-        //---------------------------------------------------------------------------
-        // Active game
-        //---------------------------------------------------------------------------
-
-        view_trans_update();
-
-        // Flush buffer
-        minigl_clear(0.0f, 1.0f);
-
-#ifdef DEBUG_MINIMAP
-        pd->graphics->clear(kColorBlack);
-#endif
-
-        // Draw map
-        map_renderer_draw(gs.map, trans, gs.camera);
-
-        // Draw enemy
-        if (gs.enemy_state != ENEMY_HIDDEN) {
-            // TODO: More than one enemy?
-            mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-            vec2 enemy_pos;
-            ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
-            glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
-            mat4_billboard(gs.camera, enemy_trans);
-            glm_mat4_mul(trans, enemy_trans, enemy_trans);
-
-            minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
-            minigl_set_tex(tex_enemy);
-            minigl_draw(obj_buf);
-        }
-
-        // Update the screen
-        screen_update();
-    } else {
-        //---------------------------------------------------------------------------
-        // Gameover
-        //---------------------------------------------------------------------------
-        if (gameover_time++ == 0) {
-            sound_effect_play(SOUND_DISCOVERED);
-        }
-        pd->graphics->setDrawMode(kDrawModeCopy);
-        pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
+    switch (gs.player_state) {
+        case PLAYER_ACTIVE:
+            show_game(update_delta_t);
+            break;
+        case PLAYER_READING:
+            show_note();
+            break;
+        case PLAYER_GAMEOVER:
+            show_gameover();
+            break;
     }
 
 #ifdef DEBUG

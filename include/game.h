@@ -2,12 +2,10 @@
 
 #include "a_star.h"
 #include "map.h"
-#include "pd_api.h"
-
-extern PlaydateAPI* pd;
 
 typedef enum {
     PLAYER_ACTIVE,
+    PLAYER_READING,
     PLAYER_GAMEOVER
 } player_state_t;
 
@@ -21,10 +19,13 @@ typedef enum {
 } enemy_state_t;
 
 typedef struct {
-    player_state_t player_state;
     map_t map;
 
     camera_t camera;
+
+    player_state_t player_state;
+    bool player_interact;
+    map_item_t* player_interact_item;
 
     enemy_state_t enemy_state;
     ivec2 enemy_tile;
@@ -37,10 +38,10 @@ typedef struct {
     float torch_charge;
     float torch_on;
 
+    int note_id;
+
     a_star_path_t path_to_player;
 } game_state_t;
-
-extern game_state_t gs;
 
 void game_init(void);
 
