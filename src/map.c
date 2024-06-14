@@ -158,3 +158,13 @@ bool map_viz_xy(map_t map, vec2 pos, int x, int y) {
 bool map_viz_ivec2(map_t map, vec2 pos, ivec2 tile) {
     return map_viz_xy(map, pos, tile[0], tile[1]);
 }
+
+void map_init(map_t map) {
+    for (int y = 0; y < MAP_SIZE; y++) {
+        for (int x = 0; x < MAP_SIZE; x++) {
+            // Initialize the tile
+            map[y][x].item_cnt = 0;  // No item by default
+            map[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
+        }
+    }
+}

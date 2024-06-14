@@ -29,13 +29,6 @@ void map_square(map_t map, int pos_x, int pos_y, int width, int height) {
 
 void map_read(map_t map) {
     // Initialize
-    for (int y = 0; y < MAP_SIZE; y++) {
-        for (int x = 0; x < MAP_SIZE; x++) {
-            // Initialize the tile
-            map[y][x].item_cnt = 0;  // No item by default
-            map[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
-        }
-    }
 
     // TODO: Implement read from file
 

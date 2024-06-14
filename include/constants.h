@@ -9,3 +9,5 @@
 
 #define MAP_SIZE 64
 #define MAP_DRAW_SIZE 24
+
+#define BB_SPRITE_SIZE 36

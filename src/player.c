@@ -40,6 +40,7 @@ void player_action_note(bool open) {
     } else {
         gs.player_state = PLAYER_ACTIVE;
         gs.player_interact_item->hidden = true;
+        gs.player_interact = false;
     }
 }
 

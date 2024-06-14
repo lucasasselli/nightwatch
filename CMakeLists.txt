@@ -43,7 +43,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
     target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
-    add_definitions(-DMINIGL_DEBUG_PERF)
+    # add_definitions(-DMINIGL_DEBUG_PERF)
     add_definitions(-DDEBUG_MINIMAP)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})

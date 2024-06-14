@@ -3,6 +3,7 @@
 #include "enemy.h"
 #include "game_state.h"
 #include "map.h"
+#include "map_reader.h"
 #include "pd_api.h"
 #include "player.h"
 #include "sound.h"
@@ -15,7 +16,7 @@
 extern game_state_t gs;
 extern PlaydateAPI* pd;
 
-void game_init(void) {
+void game_reset(void) {
     // Camera
     gs.camera.yaw = -90.0f;
     glm_vec2_copy((vec3){0.0f, -1.0f}, gs.camera.front);
@@ -23,6 +24,7 @@ void game_init(void) {
     // State
     player_reset();
     enemy_reset();
+    map_read(gs.map);
 
     gs.torch_charge = 0.0f;
 }

@@ -62,3 +62,5 @@ bool map_tile_collide(map_tile_t tile);
 bool map_viz_xy(map_t map, vec2 pos, int x, int y);
 
 bool map_viz_ivec2(map_t map, vec2 pos, ivec2 tile);
+
+void map_init(map_t map);

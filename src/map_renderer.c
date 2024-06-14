@@ -4,8 +4,6 @@
 #include "minigl/minigl.h"
 #include "utils.h"
 
-#define BB_SPRITE_SIZE 36
-
 // Geometry
 minigl_obj_t obj_floor;
 minigl_obj_t obj_wall;
@@ -16,9 +14,9 @@ minigl_obj_t obj_wetfloor;
 minigl_obj_t obj_note;
 
 // Textures
-minigl_tex_t tex_wetfloor;
-minigl_tex_t tex_note;
-minigl_tex_t tex_venus[BB_SPRITE_SIZE];
+extern minigl_tex_t tex_wetfloor;
+extern minigl_tex_t tex_note;
+extern minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 // Other
 float map_render_timer;
@@ -84,20 +82,6 @@ void map_renderer_init(void) {
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_scale(trans, (vec3){0.3f, 0.4, 1.0});
     minigl_obj_copy_trans(obj_tile, trans, &obj_note);
-
-    //---------------------------------------------------------------------------
-    // Textures
-    //---------------------------------------------------------------------------
-
-    char path[50];
-
-    for (int i = 0; i < BB_SPRITE_SIZE; i++) {
-        sprintf(path, "res/sprites/venus/venus_%02d.tex", i);
-        minigl_tex_read_file(path, &tex_venus[i]);
-    }
-
-    minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
-    minigl_tex_read_file("res/textures/note.tex", &tex_note);
 }
 
 int bb_tex_index(float a, map_item_dir_t dir) {

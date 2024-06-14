@@ -4,7 +4,6 @@
 
 #include "constants.h"
 #include "game.h"
-#include "map_reader.h"
 #include "map_renderer.h"
 #include "minigl/minigl.h"
 #include "minimap_renderer.h"
@@ -15,7 +14,7 @@
 #include "sound.h"
 #include "utils.h"
 
-#define LOAD_STEP_CNT 5
+#define LOAD_STEP_CNT 6
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
@@ -31,6 +30,9 @@ PlaydateAPI *pd;
 // Textures
 minigl_tex_t tex_dither;
 minigl_tex_t tex_enemy;
+minigl_tex_t tex_wetfloor;
+minigl_tex_t tex_note;
+minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 // Images
 LCDBitmap *img_gameover;
@@ -65,6 +67,7 @@ int load_step = 0;
 float update_et_last = 0.0f;
 int update_cnt = 0;
 int gameover_time = 0;
+player_state_t player_state_old;
 
 game_state_t gs;
 
@@ -239,12 +242,14 @@ void view_trans_update(void) {
 
 static int lua_reset(lua_State *L) {
     (void)L;  // Unused
-    game_init();
+    game_reset();
     return 0;
 }
 
 static int lua_load(lua_State *L) {
     (void)L;  // Unused
+
+    char path[50];
 
     if (load_step < LOAD_STEP_CNT) {
         debug("Loading %d...", load_step);
@@ -261,8 +266,12 @@ static int lua_load(lua_State *L) {
                 font_note = pd->graphics->loadFont("res/fonts/handwriting.pft", NULL);
 
                 // Load textures
+                // TODO: Move to object loader
+                // TODO: Convert everything to bitmap!
                 minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
                 minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
+                minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
+                minigl_tex_read_file("res/textures/note.tex", &tex_note);
 
                 // Load image
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
@@ -286,16 +295,22 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 2:
+                for (int i = 0; i < BB_SPRITE_SIZE; i++) {
+                    sprintf(path, "res/sprites/venus/venus_%02d.tex", i);
+                    minigl_tex_read_file(path, &tex_venus[i]);
+                }
+
+            case 3:
                 gen_torch_mask();
                 break;
 
-            case 3:
+            case 4:
                 map_renderer_init();
                 break;
 
-            case 4:
+            case 5:
                 // Setup map
-                map_read(gs.map);
+                map_init(gs.map);
 
 #ifdef DEBUG_MINIMAP
                 // Setup minimap
@@ -303,7 +318,7 @@ static int lua_load(lua_State *L) {
 #endif
 
                 // Initialize game
-                game_init();
+                game_reset();
                 break;
         }
         load_step++;
@@ -318,7 +333,7 @@ static int lua_load(lua_State *L) {
 
 void show_prompt(void) {
     pd->graphics->setFont(font_system);
-    pd->graphics->setDrawMode(kDrawModeNXOR);
+    pd->graphics->setDrawMode(kDrawModeFillWhite);
     const char *msg = "\xE2\x93\x90 Read";
     pd->graphics->drawText(msg, strlen(msg), kUTF8Encoding, 330, 210);
 }
@@ -405,6 +420,11 @@ static int lua_update(lua_State *L) {
     // Real work is done here!
     game_update(update_delta_t);
 
+    if (player_state_old != gs.player_state) {
+        // Clear screen when changing state!
+        pd->graphics->clear(kColorBlack);
+    }
+
     switch (gs.player_state) {
         case PLAYER_ACTIVE:
             show_game(update_delta_t);
@@ -416,6 +436,8 @@ static int lua_update(lua_State *L) {
             show_gameover();
             break;
     }
+
+    player_state_old = gs.player_state;
 
 #ifdef DEBUG
 
