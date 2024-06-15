@@ -170,7 +170,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
         for (pos[1] = y_range[0]; pos[1] < y_range[1]; pos[1]++) {
             for (pos[0] = x_range[0]; pos[0] < x_range[1]; pos[0]++) {
                 map_tile_t tile = map_get_tile_ivec2(map, pos);
-                if (map_tile_get_collide(tile)) {
+                if (tile_get_collide(tile)) {
                     coll_nearby = true;
                     break;
                 }
@@ -184,7 +184,7 @@ bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
                 int h = a_star_manhattan_dist(pos, stop);
                 int g = best->g + 1;  // FIXME: Should diag be more expensive?
 
-                if (a_star_list_search(closed_list, pos) == NULL && !map_tile_get_collide(tile)) {
+                if (a_star_list_search(closed_list, pos) == NULL && !tile_get_collide(tile)) {
                     // Check if on open list
                     a_star_node_t* match = a_star_list_search(open_list, pos);
                     if (match == NULL) {

@@ -29,6 +29,7 @@ void sound_init(void) {
 
 bool sound_bg_playing(void) {
     // return pd->sound->fileplayer->isPlaying(bg_music);
+    return 0;
 }
 
 // FIXME: Are we going to keep this?

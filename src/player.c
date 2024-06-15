@@ -28,7 +28,7 @@ void player_reset(void) {
     // Pick a random starting position in the map
     ivec2 t;
     t[0] = 31;  // TODO: Encode in the map or the level itself
-    t[1] = 36;
+    t[1] = 59;
     ivec2_to_vec2_center(t, gs.camera.pos);
     map_viz_update(gs.map, gs.camera);
 }
@@ -55,6 +55,7 @@ void player_action_keypad(bool show) {
 }
 
 void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_t) {
+    (void)delta_t;
     if (pushed_old == 0) {
         if (pushed & kButtonUp) {
             if (gs.keypad_sel == 0) {
@@ -81,9 +82,10 @@ void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_
                     insert_pin += gs.keypad_val[i];
                 }
 
-                if (insert_pin == gs.player_interact_item->arg) {
+                if (insert_pin == gs.player_interact_item->action.arg) {
                     sound_effect_play(SOUND_KEYPAD_CORRECT);
-                    gs.player_interact_item->action = false;
+                    gs.player_interact_item->action.type = ACTION_NONE;
+                    gs.player_interact_item->tex_id = TEX_FENCE_OPEN;
                     gs.player_interact = false;
                     sound_effect_play(SOUND_FENCE_OPEN);
                     player_action_keypad(false);
@@ -108,14 +110,18 @@ void player_check_interaction(void) {
     // What is the tile directly in front of the player?
     vec2 action_tile_pos;
     glm_vec2_add(gs.camera.pos, gs.camera.front, action_tile_pos);
-    map_tile_t action_tile = map_get_tile_vec2(gs.map, action_tile_pos);
+    map_tile_t tile = map_get_tile_vec2(gs.map, action_tile_pos);
     gs.player_interact = false;
-    for (int i = 0; i < action_tile.item_cnt; i++) {
-        if (action_tile.items[i].action && !action_tile.items[i].hidden) {
+
+    // TODO: Use callback to game?
+    item_t* item = tile.items;
+    while (item != NULL) {
+        if (item->action.type != ACTION_NONE && !item->hidden) {
             gs.player_interact = true;
-            gs.player_interact_item = &action_tile.items[i];
+            gs.player_interact_item = item;
             break;  // Only one interactable item per tile
         }
+        item = item->next;
     }
 }
 
@@ -123,14 +129,14 @@ static bool player_collide(vec2 pos) {
     // TODO: Make collisions not sticky!
     map_tile_t tile = map_get_tile_vec2(gs.map, pos);
 
-    if (map_tile_get_collide(tile)) {
+    if (tile_get_collide(tile)) {
         return true;
     }
 
     // Special case for doors!
-    map_item_t* item = map_tile_find_item(tile, ITEM_DOOR, DIR_ANY);
+    item_t* item = tile_find_item(tile, -1, -1, ACTION_KEYPAD);
     if (item != NULL) {
-        return item->action;
+        return true;
     }
 
     return false;

@@ -4,17 +4,17 @@
 
 #include "constants.h"
 #include "game.h"
-#include "map_renderer.h"
 #include "minigl/minigl.h"
-#include "minimap_renderer.h"
+#include "minimap.h"
 #include "notes.h"
 #include "pd_api.h"
 #include "pd_system.h"
 #include "random.h"
+#include "renderer.h"
 #include "sound.h"
 #include "utils.h"
 
-#define LOAD_STEP_CNT 6
+#define LOAD_STEP_CNT 5
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
@@ -36,12 +36,6 @@ const char *PROMPT_STR_CLOSE = "\xE2\x92\xB7 Close";
 
 // Textures
 minigl_tex_t tex_dither;
-minigl_tex_t tex_enemy;
-minigl_tex_t tex_wetfloor;
-minigl_tex_t tex_note;
-minigl_tex_t tex_fence_open;
-minigl_tex_t tex_fence_closed;
-minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 // Images
 LCDBitmap *img_gameover;
@@ -278,19 +272,17 @@ static int lua_load(lua_State *L) {
                 font_keypad = pd->graphics->loadFont("res/fonts/Sasser-Slab-Bold.pft", NULL);
 
                 // Load textures
-                // TODO: Move to object loader
-                // TODO: Convert everything to bitmap!
-                minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_dither);
-                minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
-                minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
-                minigl_tex_read_file("res/textures/note.tex", &tex_note);
-                minigl_tex_read_file("res/textures/fence_open.tex", &tex_fence_open);
-                minigl_tex_read_file("res/textures/fence_closed.tex", &tex_fence_closed);
+                tex_init();
+
+                // load Objects
+                // FIXME
+                obj_init();
 
                 // Load image
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
 
                 // Config dither texture
+                tex_dither = *tex_get(TEX_DITHER);
                 minigl_set_dither(tex_dither);
 
                 // Object buffer
@@ -299,20 +291,10 @@ static int lua_load(lua_State *L) {
                 // Perspective transform
                 glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), CAMERA_MIN_Z, CAMERA_MAX_Z, proj);
                 view_trans_update();  // Setup view matrix
-
-                // Enemy model
-                minigl_obj_read_file("res/models/tile.obj", &obj_enemy, MINIGL_OBJ_TEXFLIPY);
-                glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-                glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
-                minigl_obj_trans(&obj_enemy, trans);
-
                 break;
 
             case 2:
-                for (int i = 0; i < BB_SPRITE_SIZE; i++) {
-                    sprintf(str_buffer, "res/sprites/venus/venus_%02d.tex", i);
-                    minigl_tex_read_file(str_buffer, &tex_venus[i]);
-                }
+                tex_mdbb_load(TEX_VENUS);
                 break;
 
             case 3:
@@ -320,10 +302,6 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 4:
-                map_renderer_init();
-                break;
-
-            case 5:
                 // Setup map
                 map_init(gs.map);
 
@@ -349,10 +327,16 @@ static int lua_load(lua_State *L) {
 void show_prompt(void) {
     pd->graphics->setFont(font_gui);
     pd->graphics->setDrawMode(kDrawModeFillWhite);
-    if (gs.player_interact_item->type == ITEM_NOTE) {
-        DRAW_UTF8_STRING(PROMPT_STR_READ, 330, 210);
-    } else {
-        DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
+
+    switch (gs.player_interact_item->action.type) {
+        case ACTION_NONE:
+            break;
+        case ACTION_NOTE:
+            DRAW_UTF8_STRING(PROMPT_STR_READ, 330, 210);
+            break;
+        case ACTION_KEYPAD:
+            DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
+            break;
     }
 }
 
@@ -366,23 +350,8 @@ void show_game(float delta_t) {
     pd->graphics->clear(kColorBlack);
 #endif
 
-    // Draw map
-    map_renderer_draw(gs.map, trans, gs.camera, delta_t);
-
-    // Draw enemy
-    if (gs.enemy_state != ENEMY_HIDDEN) {
-        // TODO: More than one enemy?
-        mat4 enemy_trans = GLM_MAT4_IDENTITY_INIT;
-        vec2 enemy_pos;
-        ivec2_to_vec2_center(gs.enemy_tile, enemy_pos);
-        glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
-        mat4_billboard(gs.camera, enemy_trans);
-        glm_mat4_mul(trans, enemy_trans, enemy_trans);
-
-        minigl_obj_to_objbuf_trans(obj_enemy, enemy_trans, &obj_buf);
-        minigl_set_tex(tex_enemy);
-        minigl_draw(obj_buf);
-    }
+    // Draw
+    renderer_draw(&gs, trans, gs.camera, delta_t);
 
     // Update the screen
     screen_update();
@@ -401,7 +370,7 @@ void show_note(void) {
     const int X_OFFSET = (LCD_COLUMNS - NOTE_WIDTH) / 2;
     const int Y_OFFSET = 20;
 
-    const char **text = NOTES[gs.player_interact_item->id];
+    const char **text = NOTES[gs.player_interact_item->action.arg];
 
     note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - MARGIN);
 
@@ -530,6 +499,7 @@ static int lua_update(lua_State *L) {
     // Print periodically
     if (update_cnt++ % 100 == 0) {
         print_perf();
+        // TODO: Print on screen!
         debug("Charge    : %f", (double)gs.torch_charge);
         debug("Awareness : %f", (double)gs.enemy_awareness);
         debug("Aggression: %f", (double)gs.enemy_aggression);

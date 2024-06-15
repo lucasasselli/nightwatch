@@ -36,11 +36,18 @@ static void handle_keys(PDButtons pushed, float delta_t) {
 
     if (gs.player_state == PLAYER_ACTIVE) {
         if (gs.player_interact && pushed_old == 0) {
+            action_t action = gs.player_interact_item->action;
             if (pushed & kButtonA) {
-                if (gs.player_interact_item->type == ITEM_NOTE) {
-                    player_action_note(true);
-                } else if (gs.player_interact_item->type == ITEM_DOOR) {
-                    player_action_keypad(true);
+                switch (action.type) {
+                    case ACTION_NONE:
+                        assert(0);
+                        break;
+                    case ACTION_NOTE:
+                        player_action_note(true);
+                        break;
+                    case ACTION_KEYPAD:
+                        player_action_keypad(true);
+                        break;
                 }
             }
         }
@@ -66,10 +73,6 @@ void action_torch_flicker(bool enable) {
 }
 
 void game_update(float delta_t) {
-    //---------------------------------------------------------------------------
-    // Handle input
-    //---------------------------------------------------------------------------
-
     // Handle keys
     PDButtons pushed;
     pd->system->getButtonState(&pushed, NULL, NULL);

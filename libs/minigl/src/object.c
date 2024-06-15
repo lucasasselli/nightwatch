@@ -5,6 +5,8 @@
 
 #include "minigl/system.h"
 
+#define LINE_BUFFER_SIZE 70
+
 // TODO: Add ability to read bitmaps
 
 int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
@@ -14,7 +16,7 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
         return 1;
     }
 
-    char line_buffer[OBJ_LINE_BUFFER_SIZE];
+    char line_buffer[LINE_BUFFER_SIZE];
     int char_index = 0;
 
     // Read file line by line into the buffer

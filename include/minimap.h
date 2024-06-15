@@ -8,4 +8,4 @@
 
 void minimap_init(void);
 
-void minimap_debug_draw(int x, int y, game_state_t* state);
+void minimap_debug_draw(int x, int y, game_state_t* gs);

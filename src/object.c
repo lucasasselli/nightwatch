@@ -1,0 +1,74 @@
+#include "object.h"
+
+minigl_obj_t obj_array[OBJ_NUM];
+
+int obj_init(void) {
+    const float WALL_SCALE_Y = 1.5f;
+    const float FLOOR_Y_OFF = WALL_SCALE_Y / 2.0f;
+
+    minigl_obj_t obj_tile;
+
+    int result = 0;
+    result |= minigl_obj_read_file("res/models/tile.obj", &obj_tile, MINIGL_OBJ_TEXFLIPY);
+    result |= minigl_obj_read_file("res/models/wall.obj", &obj_array[OBJ_WALL], 0);
+    result |= minigl_obj_read_file("res/models/cube.obj", &obj_array[OBJ_COLUMN], 0);
+    result |= minigl_obj_read_file("res/models/cube.obj", &obj_array[OBJ_BASE], 0);
+    result |= minigl_obj_read_file("res/models/wetfloor.obj", &obj_array[OBJ_WETFLOOR], 0);
+
+    if (result) return result;
+
+    mat4 trans;
+
+    // Floor
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){0.0f, -FLOOR_Y_OFF, 0.0f});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_FLOOR]);
+
+    // Wall N
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){0.0f, 0.0f, -0.5f});
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
+    minigl_obj_trans(&obj_array[OBJ_WALL], trans);
+
+    // Enemy
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ENEMY]);
+
+    // Statue
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
+    glm_translate(trans, (vec3){0.0f, 0.0f, 0.0f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_STATUE]);
+
+    // Column
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){0.0f, 0.8f, 0.0f});
+    glm_scale(trans, (vec3){0.4f, 3.0, 0.4});
+    minigl_obj_trans(&obj_array[OBJ_COLUMN], trans);
+
+    // Base
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){1.0f, 0.8, 1.0});
+    glm_translate(trans, (vec3){0.0f, -0.5f, 0.0f});
+    minigl_obj_trans(&obj_array[OBJ_BASE], trans);
+
+    // Wetfloor
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale_uni(trans, 0.7f);
+    glm_translate(trans, (vec3){0.0f, -1.2f, 0.0f});
+    minigl_obj_trans(&obj_array[OBJ_WETFLOOR], trans);
+
+    // Note
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){0.3f, 0.4, 1.0});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_NOTE]);
+
+    return 0;
+}
+
+minigl_obj_t* obj_get(obj_id_t id) {
+    assert(id < OBJ_NUM);
+    return &obj_array[id];
+}

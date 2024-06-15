@@ -3,43 +3,147 @@
 static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            map_item_add_xy(map, pos_x + x, pos_y + y, MAP_ITEM_STATIC_INIT(ITEM_FLOOR, DIR_ANY));
+            item_t* item = item_new();
+            item->type = ITEM_FLOOR;
+            item->obj_id = OBJ_FLOOR;
+            if (((x + y) % 2) == 0) {
+                item_set_color(item, 16);
+            } else {
+                item_set_color(item, 24);
+            }
+            map_item_add_xy(map, pos_x + x, pos_y + y, item);
         }
     }
 }
 
-static void add_note(map_t map, int x, int y, int id) {
-    map_item_t item = {.type = ITEM_NOTE, .dir = DIR_ANY, .hidden = false, .action = true, .arg = id};
+static void add_door(map_t map, int x, int y, dir_t dir, int pin) {
+    item_t* item = item_new();
+    item->type = ITEM_NORMAL;
+    item->obj_id = OBJ_WALL;
+    item->tex_id = TEX_FENCE_CLOSED;
+    item->tex_mode = TEX_MODE_IMAGE;
+    item->dir = dir;
+    item->action.type = ACTION_KEYPAD;
+    item->action.arg = pin;
     map_item_add_xy(map, x, y, item);
 }
 
-static void add_door(map_t map, int x, int y, map_item_dir_t dir, int pin) {
-    map_item_t item = {.type = ITEM_DOOR, .dir = dir, .hidden = false, .action = true, .arg = pin};
+static void add_note(map_t map, int x, int y, int id) {
+    item_t* item = item_new_tex(OBJ_NOTE, TEX_NOTE, DIR_NORTH);
+    item->effects = EFFECT_SPIN;
+    item->action.type = ACTION_NOTE;
+    item->action.arg = id;
+    map_item_add_xy(map, x, y, item);
+}
+
+static void add_wall(map_t map, int x, int y, dir_t dir) {
+    item_t* item = item_new();
+    item->type = ITEM_WALL;
+    item->obj_id = OBJ_WALL;
+    item->dir = dir;
+
+    switch (dir) {
+        case DIR_NORTH:
+            item_set_color(item, 160);
+            break;
+        case DIR_EAST:
+            item_set_color(item, 128);
+            break;
+        case DIR_SOUTH:
+            item_set_color(item, 160);
+            break;
+        case DIR_WEST:
+            item_set_color(item, 128);
+            break;
+    }
     map_item_add_xy(map, x, y, item);
 }
 
 void map_read(map_t map) {
-    // Initialize
+    // TODO: Implement read from file?
 
-    // TODO: Implement read from file
-
-    // Mens Bathroom
-    add_room(map, 36, 34, 1, 1);
-    add_room(map, 37, 34, 6, 3);
-
-    // Womens Bathroom
-    add_room(map, 36, 32, 1, 1);
-    add_room(map, 37, 30, 6, 3);
-
+    //---------------------------------------------------------------------------
     // Entrance
-    add_room(map, 27, 26, 9, 11);
+    //---------------------------------------------------------------------------
 
-    map_item_add_xy(map, 29, 28, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
-    map_item_add_xy(map, 29, 31, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
-    map_item_add_xy(map, 29, 34, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
-    map_item_add_xy(map, 33, 28, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
-    map_item_add_xy(map, 33, 31, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
-    map_item_add_xy(map, 33, 34, MAP_ITEM_STATIC_INIT(ITEM_COLUMN, DIR_ANY));
+    // This section is normally unreachable
+    map_item_add_xy(map, 28, 62, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+    map_item_add_xy(map, 30, 62, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+    map_item_add_xy(map, 32, 62, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+    map_item_add_xy(map, 34, 62, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+
+    add_door(map, 30, 60, DIR_NORTH, 1234);
+    add_door(map, 31, 60, DIR_NORTH, 1234);
+    add_door(map, 32, 60, DIR_NORTH, 1234);
+
+    for (int y = 0; y < 3; y++) {
+        for (int x = 0; x < 8; x++) {
+            // map_item_add_xy(map, 28 + x, 60 + y, item_new_color(OBJ_FLOOR, 100, DIR_NORTH));
+        }
+    }
+
+    //---------------------------------------------------------------------------
+    // Section 1
+    //---------------------------------------------------------------------------
+
+    {
+        const int X = 27;
+        const int Y = 49;
+        const int WIDTH = 9;
+        const int HEIGHT = 11;
+
+        // Entrance
+        add_room(map, X, Y, WIDTH, HEIGHT);
+
+        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+
+        add_note(map, X + 4, Y + 7, 0);
+
+        // Mens Bathroom
+        // Unreachable
+        add_room(map, 36, 58, 1, 1);
+        add_room(map, 37, 58, 6, 3);
+
+        map_item_add_xy(map, 36, 58, item_new_tex(OBJ_WETFLOOR, TEX_WETFLOOR, DIR_WEST));
+
+        // Womens Bathroom
+        add_room(map, 36, 56, 1, 1);
+        add_room(map, 37, 54, 6, 3);
+
+        // Section 1 door
+        add_room(map, X + 3, Y - 1, 3, 1);
+        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 1234);
+        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 1234);
+        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 1234);
+    }
+
+    //---------------------------------------------------------------------------
+    // Section 2
+    //---------------------------------------------------------------------------
+
+    {
+        const int X = 26;
+        const int Y = 41;
+        const int WIDTH = 11;
+        const int HEIGHT = 7;
+
+        // Room 1
+        add_room(map, X, Y, WIDTH, HEIGHT);
+
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 3, Y + 2 + 0, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 6, Y + 2 + 0, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 3, Y + 2 + 2, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 6, Y + 2 + 2, item_new_mdbb(TEX_VENUS, DIR_NORTH));
+    }
+
+    /*
 
     map_item_add_xy(map, 31, 31, MAP_ITEM_STATIC_INIT(ITEM_BASE, DIR_SOUTH));
 
@@ -93,21 +197,23 @@ void map_read(map_t map) {
 
     add_room(map, 1, 22, 4, 4);  // Room
 
+    */
+
     // Add walls
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            if (map_tile_has_item(map[y][x], ITEM_FLOOR, DIR_ANY)) {
-                if (map_tile_is_empty_xy(map, x, y - 1)) {
-                    map_item_add_xy(map, x, y, (map_item_t){ITEM_WALL, DIR_NORTH});
+            if (tile_has_item(map[y][x], ITEM_FLOOR, -1, -1)) {
+                if (map_is_empty_xy(map, x, y - 1)) {
+                    add_wall(map, x, y, DIR_NORTH);
                 }
-                if (map_tile_is_empty_xy(map, x + 1, y)) {
-                    map_item_add_xy(map, x, y, (map_item_t){ITEM_WALL, DIR_EAST});
+                if (map_is_empty_xy(map, x + 1, y)) {
+                    add_wall(map, x, y, DIR_EAST);
                 }
-                if (map_tile_is_empty_xy(map, x, y + 1)) {
-                    map_item_add_xy(map, x, y, (map_item_t){ITEM_WALL, DIR_SOUTH});
+                if (map_is_empty_xy(map, x, y + 1)) {
+                    add_wall(map, x, y, DIR_SOUTH);
                 }
-                if (map_tile_is_empty_xy(map, x - 1, y)) {
-                    map_item_add_xy(map, x, y, (map_item_t){ITEM_WALL, DIR_WEST});
+                if (map_is_empty_xy(map, x - 1, y)) {
+                    add_wall(map, x, y, DIR_WEST);
                 }
             }
         }

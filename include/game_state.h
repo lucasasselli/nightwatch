@@ -3,7 +3,6 @@
 #include <cglm/cglm.h>
 
 #include "a_star.h"
-#include "constants.h"
 
 typedef enum {
     ENEMY_HIDDEN,
@@ -29,7 +28,7 @@ typedef struct {
 
     player_state_t player_state;
     bool player_interact;
-    map_item_t* player_interact_item;
+    item_t* player_interact_item;
 
     int keypad_sel;
     int keypad_cnt;

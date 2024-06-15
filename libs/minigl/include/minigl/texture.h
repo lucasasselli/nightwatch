@@ -2,8 +2,6 @@
 
 #include <spng.h>
 
-#define OBJ_LINE_BUFFER_SIZE 50
-
 // FIXME: Make opacity optional
 typedef struct {
     uint8_t** color;

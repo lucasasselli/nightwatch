@@ -2,8 +2,6 @@
 
 #include <cglm/cglm.h>
 
-#define OBJ_LINE_BUFFER_SIZE 70
-
 typedef struct {
     vec4* vcoord_ptr;
     vec2* tcoord_ptr;

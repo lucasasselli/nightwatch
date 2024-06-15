@@ -19,47 +19,66 @@ map_tile_t map_get_tile_vec2(map_t map, vec2 pos) {
     return map_get_tile_xy(map, pos[0], pos[1]);
 }
 
-map_item_t *map_tile_find_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
-    for (int i = 0; i < tile.item_cnt; i++) {
-        map_item_t item = tile.items[i];
-        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return &tile.items[i];
+item_t *tile_find_item(map_tile_t tile, int item_type, int dir, int action_type) {
+    item_t *item = tile.items;
+    while (item != NULL) {
+        bool match = true;
+        if (item_type >= 0) match &= ((int)item->type == item_type);
+        if (dir >= 0) match &= ((int)item->dir == dir);
+        if (action_type >= 0) match &= ((int)item->action.type == action_type);
+
+        if (match) {
+            return item;
+        }
+        item = item->next;
     }
     return NULL;
 }
 
-bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
-    return (map_tile_find_item(tile, type, dir) != NULL);
+bool tile_has_item(map_tile_t tile, int item_type, int dir, int action_type) {
+    return (tile_find_item(tile, item_type, dir, action_type) != NULL);
 }
 
-bool map_tile_is_empty_xy(map_t map, int x, int y) {
+bool tile_get_collide(map_tile_t tile) {
+    // Collide when tiles are empty (map borders) or marked as
+    // such (used for game behaviour)
+    return (tile.items == NULL || tile.collide);
+}
+
+bool map_is_empty_xy(map_t map, int x, int y) {
     map_tile_t *tile = &map[y][x];
     if (x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE) {
-        return tile->item_cnt == 0;
+        return tile->items == NULL;
     } else {
         return true;
     }
 }
 
-bool map_tile_get_collide(map_tile_t tile) {
-    // Collide when tiles are empty (map borders) or marked as
-    // such (used for game behaviour)
-    return (tile.item_cnt == 0 || tile.collide);
-}
-
-void map_item_add_xy(map_t map, int x, int y, map_item_t item) {
+void map_item_add_xy(map_t map, int x, int y, item_t *new) {
     assert(x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE);
     map_tile_t *tile = &map[y][x];
-    assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
-    tile->items[tile->item_cnt] = item;
-    tile->item_cnt++;
+
+    if (tile->items == NULL) {
+        tile->items = new;
+        return;
+    }
+
+    item_t *this = tile->items;
+    while (this != NULL) {
+        if (this->next == NULL) {
+            this->next = new;
+            return;
+        }
+        this = this->next;
+    }
 }
 
 bool map_get_collide_xy(map_t map, int x, int y) {
-    return map_tile_get_collide(map_get_tile_xy(map, x, y));
+    return tile_get_collide(map_get_tile_xy(map, x, y));
 }
 
 bool map_get_collide_ivec2(map_t map, ivec2 pos) {
-    return map_tile_get_collide(map_get_tile_ivec2(map, pos));
+    return tile_get_collide(map_get_tile_ivec2(map, pos));
 }
 
 void map_set_collide_xy(map_t map, int x, int y, bool collide) {
@@ -130,16 +149,16 @@ static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
         if (side) {
             // North-south
             if (stepY > 0) {
-                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_SOUTH);
+                hit |= tile_has_item(*tile, ITEM_WALL, DIR_SOUTH, -1);
             } else {
-                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_NORTH);
+                hit |= tile_has_item(*tile, ITEM_WALL, DIR_NORTH, -1);
             }
         } else {
             // East-west
             if (stepX > 0) {
-                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_EAST);
+                hit |= tile_has_item(*tile, ITEM_WALL, DIR_EAST, -1);
             } else {
-                hit |= map_tile_has_item(*tile, ITEM_WALL, DIR_WEST);
+                hit |= tile_has_item(*tile, ITEM_WALL, DIR_WEST, -1);
             }
         }
 
@@ -198,8 +217,7 @@ void map_init(map_t map) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             // Initialize the tile
-            map[y][x].item_cnt = 0;  // No item by default
-            map[y][x].items = malloc(sizeof(map_item_t) * MAP_TILE_MAX_ITEMS);
+            map[y][x].items = NULL;
         }
     }
 }
