@@ -74,14 +74,23 @@ void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_
             if (gs.keypad_cnt < KEYPAD_PIN_SIZE) {
                 sound_effect_play(SOUND_KEY);
             } else {
-                // sound_effect_play(SOUND_KEYPAD_WRONG);
-                // gs.keypad_cnt = 0;
-                // sound_effect_play(SOUND_KEYPAD_WRONG);
-                sound_effect_play(SOUND_KEYPAD_CORRECT);
-                gs.player_interact_item->action = false;
-                gs.player_interact = false;
-                sound_effect_play(SOUND_FENCE_OPEN);
-                player_action_keypad(false);
+                int insert_pin = 0;
+                // Check if pin is correct
+                for (int i = 0; i < KEYPAD_PIN_SIZE; i++) {
+                    insert_pin *= 10;
+                    insert_pin += gs.keypad_val[i];
+                }
+
+                if (insert_pin == gs.player_interact_item->arg) {
+                    sound_effect_play(SOUND_KEYPAD_CORRECT);
+                    gs.player_interact_item->action = false;
+                    gs.player_interact = false;
+                    sound_effect_play(SOUND_FENCE_OPEN);
+                    player_action_keypad(false);
+                } else {
+                    sound_effect_play(SOUND_KEYPAD_WRONG);
+                    gs.keypad_cnt = 0;
+                }
             }
         } else if (pushed & kButtonB) {
             player_action_keypad(false);
@@ -110,14 +119,28 @@ void player_check_interaction(void) {
     }
 }
 
+static bool player_collide(vec2 pos) {
+    // TODO: Make collisions not sticky!
+    map_tile_t tile = map_get_tile_vec2(gs.map, pos);
+
+    if (map_tile_get_collide(tile)) {
+        return true;
+    }
+
+    // Special case for doors!
+    map_item_t* item = map_tile_find_item(tile, ITEM_DOOR, DIR_ANY);
+    if (item != NULL) {
+        return item->action;
+    }
+
+    return false;
+}
+
 void player_action_move(PDButtons pushed, float delta_t) {
     // Player movement is pretty expensive!
     if (pushed == 0) return;
 
     float old_bob = gs.camera.bob;
-
-    vec2 old_pos;  // In case of collision we use this
-    glm_vec2_copy(gs.camera.pos, old_pos);
 
     bool is_moving = false;
     float speed = 0;
@@ -145,11 +168,14 @@ void player_action_move(PDButtons pushed, float delta_t) {
     }
 
     vec2 camera_delta;
+    vec2 new_pos;
     glm_vec2_scale_as(gs.camera.front, speed * delta_t, camera_delta);
+
+    // Do bobbing effect only when moving
     if (speed != 0) {
         headbob_timer += delta_t * bob_speed;
         gs.camera.bob = sinf(headbob_timer) * bob_range;
-        glm_vec2_add(gs.camera.pos, camera_delta, gs.camera.pos);
+        glm_vec2_add(gs.camera.pos, camera_delta, new_pos);
     }
 
     if (pushed & kButtonRight) {
@@ -159,22 +185,16 @@ void player_action_move(PDButtons pushed, float delta_t) {
         gs.camera.yaw -= INPUT_CAMERA_RSPEED;
     }
 
-    //---------------------------------------------------------------------------
-    // Collisions
-    //---------------------------------------------------------------------------
-
-    // TODO: Make collisions not sticky!
-    map_tile_t tile = map_get_tile_vec2(gs.map, gs.camera.pos);
-    if (map_tile_collide(tile)) {
-        glm_vec2_copy(old_pos, gs.camera.pos);
+    if (!player_collide(new_pos)) {
+        glm_vec2_copy(new_pos, gs.camera.pos);
     }
 
     // Update the direction
     vec2 direction;
     direction[0] = cosf(glm_rad(gs.camera.yaw));
     direction[1] = sinf(glm_rad(gs.camera.yaw));
-    glm_vec2_normalize_to(direction, gs.camera.front);
 
+    glm_vec2_normalize_to(direction, gs.camera.front);
     // Update map visibility
     map_viz_update(gs.map, gs.camera);
 

@@ -36,7 +36,7 @@ typedef struct {
 } map_item_t;
 
 typedef struct {
-    map_item_t *items;
+    map_item_t* items;
     int item_cnt;
     bool collide;
     bool visible;  // FIXME: Move elsewhere
@@ -55,11 +55,23 @@ map_tile_t map_get_tile_ivec2(map_t map, ivec2 pos);
 
 map_tile_t map_get_tile_vec2(map_t map, vec2 pos);
 
+map_item_t* map_tile_find_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir);
+
 bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir);
 
-void map_viz_update(map_t map, camera_t camera);
+bool map_tile_is_empty_xy(map_t map, int x, int y);
 
-bool map_tile_collide(map_tile_t tile);
+bool map_tile_get_collide(map_tile_t tile);
+
+void map_item_add_xy(map_t map, int x, int y, map_item_t item);
+
+bool map_get_collide_xy(map_t map, int x, int y);
+
+bool map_get_collide_ivec2(map_t map, ivec2 pos);
+
+void map_set_collide_xy(map_t map, int x, int y, bool collide);
+
+void map_viz_update(map_t map, camera_t camera);
 
 bool map_viz_xy(map_t map, vec2 pos, int x, int y);
 

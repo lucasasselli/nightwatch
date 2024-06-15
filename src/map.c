@@ -19,16 +19,51 @@ map_tile_t map_get_tile_vec2(map_t map, vec2 pos) {
     return map_get_tile_xy(map, pos[0], pos[1]);
 }
 
-bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
+map_item_t *map_tile_find_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
     for (int i = 0; i < tile.item_cnt; i++) {
         map_item_t item = tile.items[i];
-        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return true;
+        if (item.type == type && (item.dir == dir || dir == DIR_ANY)) return &tile.items[i];
     }
-    return false;
+    return NULL;
 }
 
-bool map_tile_collide(map_tile_t tile) {
+bool map_tile_has_item(map_tile_t tile, map_item_type_t type, map_item_dir_t dir) {
+    return (map_tile_find_item(tile, type, dir) != NULL);
+}
+
+bool map_tile_is_empty_xy(map_t map, int x, int y) {
+    map_tile_t *tile = &map[y][x];
+    if (x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE) {
+        return tile->item_cnt == 0;
+    } else {
+        return true;
+    }
+}
+
+bool map_tile_get_collide(map_tile_t tile) {
+    // Collide when tiles are empty (map borders) or marked as
+    // such (used for game behaviour)
     return (tile.item_cnt == 0 || tile.collide);
+}
+
+void map_item_add_xy(map_t map, int x, int y, map_item_t item) {
+    assert(x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE);
+    map_tile_t *tile = &map[y][x];
+    assert(tile->item_cnt < MAP_TILE_MAX_ITEMS);
+    tile->items[tile->item_cnt] = item;
+    tile->item_cnt++;
+}
+
+bool map_get_collide_xy(map_t map, int x, int y) {
+    return map_tile_get_collide(map_get_tile_xy(map, x, y));
+}
+
+bool map_get_collide_ivec2(map_t map, ivec2 pos) {
+    return map_tile_get_collide(map_get_tile_ivec2(map, pos));
+}
+
+void map_set_collide_xy(map_t map, int x, int y, bool collide) {
+    map[y][x].collide = collide;
 }
 
 static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
@@ -74,7 +109,7 @@ static void viz_dda_raycast(map_t map, ivec2 ppos, ivec2 tpos) {
 
     do {
         // Check if ray has hit a wall
-        map_tile_t* tile = &map[i[1]][i[0]];
+        map_tile_t *tile = &map[i[1]][i[0]];
         tile->visible = true;
 
         if (hit) break;

@@ -73,12 +73,10 @@ static void enemy_fsm_change_state(enemy_state_t next_state) {
         case ENEMY_FOLLOW:
             if (gs.enemy_state == ENEMY_HIDDEN) {
                 // Spawn the enemy
-                map_tile_t tile;
                 do {
                     gs.enemy_tile[0] = rand() % MAP_SIZE;
                     gs.enemy_tile[1] = rand() % MAP_SIZE;
-                    tile = map_get_tile_ivec2(gs.map, gs.enemy_tile);
-                } while (map_tile_collide(tile) || map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
+                } while (map_get_collide_ivec2(gs.map, gs.enemy_tile) || map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
             }
             break;
 
