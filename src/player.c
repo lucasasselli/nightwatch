@@ -33,14 +33,65 @@ void player_reset(void) {
     map_viz_update(gs.map, gs.camera);
 }
 
-void player_action_note(bool open) {
-    if (open) {
+void player_action_note(bool show) {
+    if (show) {
         gs.player_state = PLAYER_READING;
         sound_effect_play(SOUND_NOTE);
     } else {
         gs.player_state = PLAYER_ACTIVE;
         gs.player_interact_item->hidden = true;
         gs.player_interact = false;
+    }
+}
+
+void player_action_keypad(bool show) {
+    if (show) {
+        gs.player_state = PLAYER_KEYPAD;
+        gs.keypad_sel = 5;
+        gs.keypad_cnt = 0;
+    } else {
+        gs.player_state = PLAYER_ACTIVE;
+    }
+}
+
+void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_t) {
+    if (pushed_old == 0) {
+        if (pushed & kButtonUp) {
+            if (gs.keypad_sel == 0) {
+                gs.keypad_sel = 8;
+            } else {
+                gs.keypad_sel -= 3;
+            }
+        } else if (pushed & kButtonDown) {
+            gs.keypad_sel += 3;
+        } else if (pushed & kButtonRight) {
+            gs.keypad_sel += 1;
+        } else if (pushed & kButtonLeft) {
+            gs.keypad_sel -= 1;
+        } else if (pushed & kButtonA) {
+            gs.keypad_val[gs.keypad_cnt] = gs.keypad_sel;
+            gs.keypad_cnt++;
+            if (gs.keypad_cnt < KEYPAD_PIN_SIZE) {
+                sound_effect_play(SOUND_KEY);
+            } else {
+                // sound_effect_play(SOUND_KEYPAD_WRONG);
+                // gs.keypad_cnt = 0;
+                // sound_effect_play(SOUND_KEYPAD_WRONG);
+                sound_effect_play(SOUND_KEYPAD_CORRECT);
+                gs.player_interact_item->action = false;
+                gs.player_interact = false;
+                sound_effect_play(SOUND_FENCE_OPEN);
+                player_action_keypad(false);
+            }
+        } else if (pushed & kButtonB) {
+            player_action_keypad(false);
+        }
+
+        if (gs.keypad_sel < 0) {
+            gs.keypad_sel = 9;
+        } else if (gs.keypad_sel > 9) {
+            gs.keypad_sel = 0;
+        }
     }
 }
 
@@ -60,6 +111,9 @@ void player_check_interaction(void) {
 }
 
 void player_action_move(PDButtons pushed, float delta_t) {
+    // Player movement is pretty expensive!
+    if (pushed == 0) return;
+
     float old_bob = gs.camera.bob;
 
     vec2 old_pos;  // In case of collision we use this

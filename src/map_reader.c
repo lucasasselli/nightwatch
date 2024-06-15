@@ -96,6 +96,7 @@ void map_read(map_t map) {
 
     // Employee area
     map_square(map, 5, 23, 4, 1);  // Corridor
+    map_tile_item_add(map, MAP_ITEM_ACTION_INIT(ITEM_DOOR, DIR_WEST, 0), 9, 23);
 
     map_square(map, 1, 22, 4, 4);  // Room
 

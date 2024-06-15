@@ -14,6 +14,7 @@ typedef enum {
     ITEM_COLUMN,
     ITEM_BASE,
     ITEM_WETFLOOR,
+    ITEM_DOOR,
     ITEM_NOTE
 } map_item_type_t;
 
@@ -31,6 +32,7 @@ typedef struct {
     bool hidden;
     bool action;
     int id;
+    int arg;
 } map_item_t;
 
 typedef struct {
@@ -41,8 +43,8 @@ typedef struct {
 } map_tile_t;
 
 // clang-format off
-#define MAP_ITEM_STATIC_INIT(x,y) (map_item_t){x, y, false, false, 0}
-#define MAP_ITEM_ACTION_INIT(x,y,z) (map_item_t){x, y, false, true, z}
+#define MAP_ITEM_STATIC_INIT(x,y) (map_item_t){x, y, false, false, 0, 0}
+#define MAP_ITEM_ACTION_INIT(x,y,z) (map_item_t){x, y, false, true, z, 0}
 // clang-format on
 
 typedef map_tile_t map_t[MAP_SIZE][MAP_SIZE];

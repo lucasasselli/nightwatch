@@ -16,6 +16,8 @@
 extern game_state_t gs;
 extern PlaydateAPI* pd;
 
+PDButtons pushed_old;
+
 void game_reset(void) {
     // Camera
     gs.camera.yaw = -90.0f;
@@ -33,10 +35,12 @@ static void handle_keys(PDButtons pushed, float delta_t) {
     player_check_interaction();
 
     if (gs.player_state == PLAYER_ACTIVE) {
-        if (gs.player_interact) {
+        if (gs.player_interact && pushed_old == 0) {
             if (pushed & kButtonA) {
                 if (gs.player_interact_item->type == ITEM_NOTE) {
                     player_action_note(true);
+                } else if (gs.player_interact_item->type == ITEM_DOOR) {
+                    player_action_keypad(true);
                 }
             }
         }
@@ -45,7 +49,11 @@ static void handle_keys(PDButtons pushed, float delta_t) {
         if (pushed & kButtonB) {
             player_action_note(false);
         }
+    } else if (gs.player_state == PLAYER_KEYPAD) {
+        player_action_keypress(pushed, pushed_old, delta_t);
     }
+
+    pushed_old = pushed;
 }
 
 void action_torch_flicker(bool enable) {
@@ -65,10 +73,7 @@ void game_update(float delta_t) {
     // Handle keys
     PDButtons pushed;
     pd->system->getButtonState(&pushed, NULL, NULL);
-
-    if (pushed) {
-        handle_keys(pushed, delta_t);
-    }
+    handle_keys(pushed, delta_t);
 
     if (gs.player_state == PLAYER_ACTIVE) {
         // Torch

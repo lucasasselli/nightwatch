@@ -16,6 +16,10 @@ void sound_init(void) {
     audio_sample[SOUND_STEP0] = pd->sound->sample->load("res/sounds/step0.pda");
     audio_sample[SOUND_STEP1] = pd->sound->sample->load("res/sounds/step1.pda");
     audio_sample[SOUND_NOTE] = pd->sound->sample->load("res/sounds/note.pda");
+    audio_sample[SOUND_KEY] = pd->sound->sample->load("res/sounds/key.pda");
+    audio_sample[SOUND_KEYPAD_WRONG] = pd->sound->sample->load("res/sounds/keypad_wrong.pda");
+    audio_sample[SOUND_KEYPAD_CORRECT] = pd->sound->sample->load("res/sounds/keypad_correct.pda");
+    audio_sample[SOUND_FENCE_OPEN] = pd->sound->sample->load("res/sounds/fence_open.pda");
 
     for (int i = 0; i < SOUNDS_NUM; i++) {
         sample_player[i] = pd->sound->sampleplayer->newPlayer();

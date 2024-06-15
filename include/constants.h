@@ -11,3 +11,5 @@
 #define MAP_DRAW_SIZE 24
 
 #define BB_SPRITE_SIZE 36
+
+#define KEYPAD_PIN_SIZE 4

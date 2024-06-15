@@ -16,6 +16,8 @@ minigl_obj_t obj_note;
 // Textures
 extern minigl_tex_t tex_wetfloor;
 extern minigl_tex_t tex_note;
+extern minigl_tex_t tex_fence_open;
+extern minigl_tex_t tex_fence_closed;
 extern minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 // Other
@@ -159,6 +161,14 @@ void map_item_draw(map_item_t item, camera_t camera, mat4 trans, int x, int y) {
     } else if (item.type == ITEM_WETFLOOR) {
         minigl_set_tex(tex_wetfloor);
         minigl_obj_to_objbuf_trans(obj_wetfloor, item_trans, &obj_buf);
+        minigl_draw(obj_buf);
+    } else if (item.type == ITEM_DOOR) {
+        if (item.action) {
+            minigl_set_tex(tex_fence_closed);
+        } else {
+            minigl_set_tex(tex_fence_open);
+        }
+        minigl_obj_to_objbuf_trans(obj_wall, item_trans, &obj_buf);
         minigl_draw(obj_buf);
     } else if (item.type == ITEM_COLUMN) {
         minigl_set_color(160);

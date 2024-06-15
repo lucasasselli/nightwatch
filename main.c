@@ -23,6 +23,13 @@
 // API handle
 PlaydateAPI *pd;
 
+const char *PROMPT_STR_READ = "\xE2\x92\xB6 Read";
+const char *PROMPT_STR_ENTER = "\xE2\x92\xB6 Enter";
+const char *PROMPT_STR_KEYPAD = "\xE2\x92\xB6 Keypad";
+const char *PROMPT_STR_CLOSE = "\xE2\x92\xB7 Close";
+
+#define DRAW_UTF8_STRING(s, x, y) pd->graphics->drawText(s, strlen(s), kUTF8Encoding, x, y)
+
 //---------------------------------------------------------------------------
 // Resources
 //---------------------------------------------------------------------------
@@ -32,6 +39,8 @@ minigl_tex_t tex_dither;
 minigl_tex_t tex_enemy;
 minigl_tex_t tex_wetfloor;
 minigl_tex_t tex_note;
+minigl_tex_t tex_fence_open;
+minigl_tex_t tex_fence_closed;
 minigl_tex_t tex_venus[BB_SPRITE_SIZE];
 
 // Images
@@ -44,8 +53,9 @@ minigl_obj_t obj_enemy;
 minigl_objbuf_t obj_buf;
 
 // Fonts
-LCDFont *font_system;
+LCDFont *font_gui;
 LCDFont *font_note;
+LCDFont *font_keypad;
 
 // Precalculated
 // TODO: Generate at compile time with Cog?
@@ -63,11 +73,14 @@ RANDW_CONSTR_END;
 // Global vars
 //---------------------------------------------------------------------------
 
+char str_buffer[50];
+
 int load_step = 0;
 float update_et_last = 0.0f;
 int update_cnt = 0;
 int gameover_time = 0;
 player_state_t player_state_old;
+int note_offset = 0;
 
 game_state_t gs;
 
@@ -249,8 +262,6 @@ static int lua_reset(lua_State *L) {
 static int lua_load(lua_State *L) {
     (void)L;  // Unused
 
-    char path[50];
-
     if (load_step < LOAD_STEP_CNT) {
         debug("Loading %d...", load_step);
 
@@ -262,8 +273,9 @@ static int lua_load(lua_State *L) {
 
             case 1:
                 // Load Fonts
-                font_system = pd->graphics->loadFont("/System/Fonts/Asheville-Sans-14-Bold.pft", NULL);
+                font_gui = pd->graphics->loadFont("/System/Fonts/Asheville-Sans-14-Light.pft", NULL);
                 font_note = pd->graphics->loadFont("res/fonts/handwriting.pft", NULL);
+                font_keypad = pd->graphics->loadFont("res/fonts/Sasser-Slab-Bold.pft", NULL);
 
                 // Load textures
                 // TODO: Move to object loader
@@ -272,6 +284,8 @@ static int lua_load(lua_State *L) {
                 minigl_tex_read_file("res/textures/monster_idle.tex", &tex_enemy);
                 minigl_tex_read_file("res/textures/wetfloor.tex", &tex_wetfloor);
                 minigl_tex_read_file("res/textures/note.tex", &tex_note);
+                minigl_tex_read_file("res/textures/fence_open.tex", &tex_fence_open);
+                minigl_tex_read_file("res/textures/fence_closed.tex", &tex_fence_closed);
 
                 // Load image
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
@@ -280,7 +294,7 @@ static int lua_load(lua_State *L) {
                 minigl_set_dither(tex_dither);
 
                 // Object buffer
-                obj_buf = minigl_objbuf_init(200);
+                obj_buf = minigl_objbuf_init(1000);
 
                 // Perspective transform
                 glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), CAMERA_MIN_Z, CAMERA_MAX_Z, proj);
@@ -296,9 +310,10 @@ static int lua_load(lua_State *L) {
 
             case 2:
                 for (int i = 0; i < BB_SPRITE_SIZE; i++) {
-                    sprintf(path, "res/sprites/venus/venus_%02d.tex", i);
-                    minigl_tex_read_file(path, &tex_venus[i]);
+                    sprintf(str_buffer, "res/sprites/venus/venus_%02d.tex", i);
+                    minigl_tex_read_file(str_buffer, &tex_venus[i]);
                 }
+                break;
 
             case 3:
                 gen_torch_mask();
@@ -332,10 +347,13 @@ static int lua_load(lua_State *L) {
 }
 
 void show_prompt(void) {
-    pd->graphics->setFont(font_system);
+    pd->graphics->setFont(font_gui);
     pd->graphics->setDrawMode(kDrawModeFillWhite);
-    const char *msg = "\xE2\x93\x90 Read";
-    pd->graphics->drawText(msg, strlen(msg), kUTF8Encoding, 330, 210);
+    if (gs.player_interact_item->type == ITEM_NOTE) {
+        DRAW_UTF8_STRING(PROMPT_STR_READ, 330, 210);
+    } else {
+        DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
+    }
 }
 
 void show_game(float delta_t) {
@@ -375,38 +393,99 @@ void show_game(float delta_t) {
     }
 }
 
-void show_gameover(void) {
-    if (gameover_time++ == 0) {
-        sound_effect_play(SOUND_DISCOVERED);
-    }
-    pd->graphics->setDrawMode(kDrawModeCopy);
-    pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
-}
-
-int note_offset = 0;
-
 void show_note(void) {
     const int MARGIN = 15;
     const int LINE_HEIGHT = 18;
-    const int X_OFFSET = 30;
+    const int NOTE_WIDTH = 340;
+    const int NOTE_HEIGHT = 510;
+    const int X_OFFSET = (LCD_COLUMNS - NOTE_WIDTH) / 2;
     const int Y_OFFSET = 20;
 
     const char **text = NOTES[gs.player_interact_item->id];
 
-    note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, 310);
+    note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - MARGIN);
 
     int y = Y_OFFSET - note_offset;
 
-    pd->graphics->setDrawMode(kDrawModeFillBlack);
+    // Paper
     pd->graphics->clear(kColorBlack);
-    pd->graphics->fillRect(X_OFFSET, y, 340, 510, kColorWhite);
+    pd->graphics->fillRect(X_OFFSET, y, NOTE_WIDTH, NOTE_HEIGHT, kColorWhite);
 
+    // Lines
+    pd->graphics->setDrawMode(kDrawModeFillBlack);
     pd->graphics->setFont(font_note);
     int i = 0;
     while (text[i][0] != '\0') {
         pd->graphics->drawText(text[i], strlen(text[i]), kUTF8Encoding, X_OFFSET + MARGIN, y + MARGIN + i * LINE_HEIGHT);
         i++;
     }
+
+    // Close prompt
+    pd->graphics->setFont(font_gui);
+    pd->graphics->setDrawMode(kDrawModeFillWhite);
+    DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 170, y + NOTE_HEIGHT + MARGIN);
+}
+
+void show_keypad(void) {
+    const int KEY_SIZE = 40;
+    const int KEY_MARGIN = 5;
+    const int DIGIT_X_MARGIN = 15;
+    const int DIGIT_Y_MARGIN = 12;
+
+    const int KEY_X_MARGIN = (LCD_COLUMNS - 2 * KEY_MARGIN - 3 * KEY_SIZE) / 2;
+    const int KEY_Y_MARGIN = 50;
+
+    const int PIN_X_MARGIN = (LCD_COLUMNS - (KEYPAD_PIN_SIZE - 1) * KEY_MARGIN - KEYPAD_PIN_SIZE * KEY_SIZE) / 2;
+    const int PIN_Y_MARGIN = 20;
+
+    pd->graphics->setFont(font_keypad);
+    pd->graphics->clear(kColorBlack);
+
+    // Draw display
+    for (int i = 0; i < KEYPAD_PIN_SIZE; i++) {
+        int x = PIN_X_MARGIN + i * (KEY_MARGIN + KEY_SIZE);
+        pd->graphics->setDrawMode(kDrawModeFillWhite);
+        if (i < gs.keypad_cnt) {
+            sprintf(str_buffer, "%d", gs.keypad_val[i]);
+            pd->graphics->drawText(str_buffer, 1, kUTF8Encoding, x + DIGIT_X_MARGIN, PIN_Y_MARGIN);
+        } else {
+            pd->graphics->drawText("_", 1, kUTF8Encoding, x + DIGIT_X_MARGIN, PIN_Y_MARGIN);
+        }
+    }
+
+    // Draw keys
+    int n = 1;
+    for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < 3; i++) {
+            if (j == 3 && i != 1) continue;
+            int x = KEY_X_MARGIN + i * (KEY_MARGIN + KEY_SIZE);
+            int y = KEY_Y_MARGIN + j * (KEY_MARGIN + KEY_SIZE);
+            sprintf(str_buffer, "%d", n);
+            if (n == gs.keypad_sel) {
+                pd->graphics->setDrawMode(kDrawModeFillBlack);
+                pd->graphics->fillRect(x, y, KEY_SIZE, KEY_SIZE, kColorWhite);
+                pd->graphics->drawText(str_buffer, 1, kUTF8Encoding, x + DIGIT_X_MARGIN, y + DIGIT_Y_MARGIN);
+            } else {
+                pd->graphics->setDrawMode(kDrawModeFillWhite);
+                pd->graphics->drawRect(x, y, KEY_SIZE, KEY_SIZE, kColorWhite);
+                pd->graphics->drawText(str_buffer, 1, kUTF8Encoding, x + DIGIT_X_MARGIN, y + DIGIT_Y_MARGIN);
+            }
+            if (++n > 9) n = 0;
+        }
+    }
+
+    // Draw prompt
+    pd->graphics->setFont(font_gui);
+    DRAW_UTF8_STRING(PROMPT_STR_ENTER, 325, 190);
+    DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 325, 210);
+}
+
+void show_gameover(void) {
+    if (gameover_time++ == 0) {
+        sound_effect_play(SOUND_DISCOVERED);
+    }
+    pd->graphics->setDrawMode(kDrawModeCopy);
+    pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
 }
 
 static int lua_update(lua_State *L) {
@@ -431,6 +510,9 @@ static int lua_update(lua_State *L) {
             break;
         case PLAYER_READING:
             show_note();
+            break;
+        case PLAYER_KEYPAD:
+            show_keypad();
             break;
         case PLAYER_GAMEOVER:
             show_gameover();
