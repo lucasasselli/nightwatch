@@ -148,7 +148,8 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     x_l[start_i] = floorf(x_range[start_i]);
     x_l[stop_i] = ceilf(x_range[stop_i]);
 
-    float delta_k = 1.0f / (x_l[stop_i] - x_l[start_i]);
+    float delta_k = 1.0f / (float)(x_l[stop_i] - x_l[start_i]);
+
     float z_delta = (z_range[stop_i] - z_range[start_i]) * delta_k;
     float u_delta = (u_range[stop_i] - u_range[start_i]) * delta_k;
     float v_delta = (v_range[stop_i] - v_range[start_i]) * delta_k;
@@ -310,6 +311,8 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         vec3 slope_tex_u;
         vec3 slope_tex_v;
 
+        if (v[2][1] == v[0][1]) return;
+
         scanline_slopes(v[0][0], v[1][0], v[2][0], v, slope_x);
         scanline_slopes(v[0][2], v[1][2], v[2][2], v, slope_z);
         scanline_slopes(t[0][0], t[1][0], t[2][0], v, slope_tex_u);
@@ -327,7 +330,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         vec2 tex_v;
 
         // Draw scanline
-        if (!isinf(slope_x[0]) && !isinf(slope_x[1])) {
+        if (v[1][1] != v[0][1]) {
             scanline_range1(v[0][0], v[1][0], v, slope_x, y, x);
             scanline_range1(v[0][2], v[1][2], v, slope_z, y, z);
             scanline_range1(t[0][0], t[1][0], v, slope_tex_u, y, tex_u);
@@ -343,7 +346,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
             }
         }
 
-        if (!isinf(slope_x[1]) && !isinf(slope_x[2])) {
+        if (v[2][1] != v[1][1]) {
             scanline_range2(v[0][0], v[1][0], v, slope_x, y, x);
             scanline_range2(v[0][2], v[1][2], v, slope_z, y, z);
             scanline_range2(t[0][0], t[1][0], v, slope_tex_u, y, tex_u);

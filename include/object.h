@@ -10,10 +10,15 @@ typedef enum {
     OBJ_COLUMN,
     OBJ_BASE,
     OBJ_WETFLOOR,
-    OBJ_NOTE
+    OBJ_NOTE,
+    OBJ_BENCH,
+    OBJ_WC_PANEL,
+    OBJ_WC_COLUMN,
+    OBJ_WC_SINK,
+    OBJ_WC_SIGN,
 } obj_id_t;
 
-#define OBJ_NUM 9
+#define OBJ_NUM 13
 
 int obj_init(void);
 

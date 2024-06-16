@@ -8,10 +8,14 @@ typedef enum {
     TEX_WETFLOOR,
     TEX_NOTE,
     TEX_FENCE_OPEN,
-    TEX_FENCE_CLOSED
+    TEX_FENCE_CLOSED,
+    TEX_WOOD,
+    TEX_WC_SINK,
+    TEX_SIGN_WC_MAN,
+    TEX_SIGN_WC_WOMEN
 } tex_id_t;
 
-#define TEX_NUM 6
+#define TEX_NUM 10
 
 typedef enum {
     TEX_VENUS

@@ -16,7 +16,7 @@
 
 #define LOAD_STEP_CNT 5
 
-// #define TORCH_DISABLE
+#define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
 #define TORCH_FADE_STEPS 512
 
@@ -360,6 +360,11 @@ void show_game(float delta_t) {
     if (gs.player_interact) {
         show_prompt();
     }
+    // FIXME: Clear the screen when interact state changes
+
+#ifdef DEBUG_MINIMAP
+    minimap_debug_draw(0, 0, &gs);
+#endif
 }
 
 void show_note(void) {
@@ -491,10 +496,6 @@ static int lua_update(lua_State *L) {
     player_state_old = gs.player_state;
 
 #ifdef DEBUG
-
-#ifdef DEBUG_MINIMAP
-    minimap_debug_draw(0, 0, &gs);
-#endif
 
     // Print periodically
     if (update_cnt++ % 100 == 0) {

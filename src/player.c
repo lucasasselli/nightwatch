@@ -148,7 +148,6 @@ void player_action_move(PDButtons pushed, float delta_t) {
 
     float old_bob = gs.camera.bob;
 
-    bool is_moving = false;
     float speed = 0;
     float bob_speed;
     float bob_range;
@@ -164,52 +163,28 @@ void player_action_move(PDButtons pushed, float delta_t) {
             bob_speed = HEADBOB_SPEED0;
             bob_range = HEADBOB_RANGE0;
         }
-        is_moving = true;
     } else if (pushed & kButtonDown) {
         // Walk backward
         speed = INPUT_CAMERA_TSPEEDB;
         bob_speed = HEADBOB_SPEED0;
         bob_range = HEADBOB_RANGE0;
-        is_moving = true;
     }
 
-    vec2 camera_delta;
-    vec2 new_pos;
-    glm_vec2_scale_as(gs.camera.front, speed * delta_t, camera_delta);
-
-    // Do bobbing effect only when moving
     if (speed != 0) {
+        // Moving!
+        vec2 new_pos;
+        vec2 camera_delta;
+        glm_vec2_scale_as(gs.camera.front, speed * delta_t, camera_delta);
         headbob_timer += delta_t * bob_speed;
         gs.camera.bob = sinf(headbob_timer) * bob_range;
         glm_vec2_add(gs.camera.pos, camera_delta, new_pos);
-    }
 
-    if (pushed & kButtonRight) {
-        gs.camera.yaw += INPUT_CAMERA_RSPEED;
-    }
-    if (pushed & kButtonLeft) {
-        gs.camera.yaw -= INPUT_CAMERA_RSPEED;
-    }
+        if (!player_collide(new_pos)) {
+            glm_vec2_copy(new_pos, gs.camera.pos);
+        }
 
-    if (!player_collide(new_pos)) {
-        glm_vec2_copy(new_pos, gs.camera.pos);
-    }
-
-    // Update the direction
-    vec2 direction;
-    direction[0] = cosf(glm_rad(gs.camera.yaw));
-    direction[1] = sinf(glm_rad(gs.camera.yaw));
-
-    glm_vec2_normalize_to(direction, gs.camera.front);
-    // Update map visibility
-    map_viz_update(gs.map, gs.camera);
-
-    //---------------------------------------------------------------------------
-    // Steps
-    //---------------------------------------------------------------------------
-
-    if (is_moving) {
         if (old_bob > 0 && gs.camera.bob < 0) {
+            // Play the step sound
             if (step_sound) {
                 sound_effect_play(SOUND_STEP0);
             } else {
@@ -218,7 +193,26 @@ void player_action_move(PDButtons pushed, float delta_t) {
             step_sound ^= 1;
         }
     } else {
+        // Not moving
         sound_effect_stop(SOUND_STEP0);
         sound_effect_stop(SOUND_STEP1);
     }
+
+    // Look left/right
+    if (pushed & kButtonRight) {
+        gs.camera.yaw += INPUT_CAMERA_RSPEED;
+    }
+    if (pushed & kButtonLeft) {
+        gs.camera.yaw -= INPUT_CAMERA_RSPEED;
+    }
+
+    // Update the direction
+    vec2 direction;
+    direction[0] = cosf(glm_rad(gs.camera.yaw));
+    direction[1] = sinf(glm_rad(gs.camera.yaw));
+
+    glm_vec2_normalize_to(direction, gs.camera.front);
+
+    // Update map visibility
+    map_viz_update(gs.map, gs.camera);
 }

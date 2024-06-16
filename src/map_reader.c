@@ -83,7 +83,9 @@ void map_read(map_t map) {
     }
 
     //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
     // Section 1
+    //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 
     {
@@ -104,18 +106,49 @@ void map_read(map_t map) {
 
         add_note(map, X + 4, Y + 7, 0);
 
-        // Mens Bathroom
-        // Unreachable
+        map_item_add_xy(map, X + 4, Y + 7, item_new_tex(OBJ_BENCH, TEX_WOOD, DIR_WEST));
+
+        //---------------------------------------------------------------------------
+        // Man bathroom
+        //---------------------------------------------------------------------------
+
+        // NOTE: Unreachable
+
+        map_item_add_xy(map, 35, 59, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_MAN, DIR_EAST));
+
         add_room(map, 36, 58, 1, 1);
         add_room(map, 37, 58, 6, 3);
 
         map_item_add_xy(map, 36, 58, item_new_tex(OBJ_WETFLOOR, TEX_WETFLOOR, DIR_WEST));
 
-        // Womens Bathroom
+        //---------------------------------------------------------------------------
+        // Women bathroom
+        //---------------------------------------------------------------------------
+
+        map_item_add_xy(map, 35, 57, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_WOMEN, DIR_EAST));
+
         add_room(map, 36, 56, 1, 1);
         add_room(map, 37, 54, 6, 3);
 
-        // Section 1 door
+        // Stalls
+        map_item_add_xy(map, 37, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, 37, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, 38, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, 38, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_EAST));
+
+        add_note(map, 41, 54, 1);
+
+        // Sinks
+        map_item_add_xy(map, 40, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+        map_item_add_xy(map, 41, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+        map_item_add_xy(map, 42, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+
+        //---------------------------------------------------------------------------
+        // Section 2 gate
+        //---------------------------------------------------------------------------
         add_room(map, X + 3, Y - 1, 3, 1);
         add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 1234);
         add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 1234);

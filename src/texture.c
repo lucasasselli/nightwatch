@@ -1,9 +1,8 @@
 #include "texture.h"
 
 #include <assert.h>
+#include <cglm/cglm.h>
 #include <math.h>
-
-#include "cglm/affine.h"
 
 minigl_tex_t tex_array[TEX_NUM];
 minigl_tex_t tex_mdbb_array[TEX_NUM][MDBB_SIZE];
@@ -18,6 +17,10 @@ int tex_init(void) {
     result |= minigl_tex_read_file("res/textures/note.tex", &tex_array[TEX_NOTE]);
     result |= minigl_tex_read_file("res/textures/fence_open.tex", &tex_array[TEX_FENCE_OPEN]);
     result |= minigl_tex_read_file("res/textures/fence_closed.tex", &tex_array[TEX_FENCE_CLOSED]);
+    result |= minigl_tex_read_file("res/textures/wood.tex", &tex_array[TEX_WOOD]);
+    result |= minigl_tex_read_file("res/textures/sink.tex", &tex_array[TEX_WC_SINK]);
+    result |= minigl_tex_read_file("res/textures/sign_wc_man.tex", &tex_array[TEX_SIGN_WC_MAN]);
+    result |= minigl_tex_read_file("res/textures/sign_wc_women.tex", &tex_array[TEX_SIGN_WC_WOMEN]);
 
     return result;
 }

@@ -44,5 +44,3 @@ void ivec2_to_vec2_center(ivec2, vec2 out);
 float vec2_angle(vec2 a, vec2 b);
 
 void tile_dir(ivec2 tile, vec2 pos, vec2 out);
-
-void mat4_billboard(camera_t camer, mat4 trans);
