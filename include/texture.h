@@ -32,7 +32,7 @@ typedef enum {
 #define TEX_MDBB_NUM 1
 #define MDBB_SIZE 36
 
-int tex_init(void);
+int tex_load(tex_id_t id);
 
 int tex_mdbb_load(tex_mdbb_id_t id);
 

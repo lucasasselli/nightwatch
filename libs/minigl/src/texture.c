@@ -2,8 +2,28 @@
 
 #include "minigl/system.h"
 
-// TODO: Add hooks to be agnostic to the Playdate library
-int minigl_tex_read_file(char *path, minigl_tex_t *out) {
+static void png_rgba8_to_ga8(uint8_t *in, size_t size, minigl_tex_t *out) {
+    const int STRIDE = 4;
+
+    for (size_t i = 0; i < size; i += STRIDE) {
+        uint8_t r = in[i];
+        uint8_t g = in[i + 1];
+        uint8_t b = in[i + 2];
+        uint8_t a = in[i + 3];
+
+        // Calculate row and column indices
+        size_t y = i / (STRIDE * out->size_x);
+        size_t x = (i / STRIDE) % out->size_x;
+
+        // Calculate pixel luminosity (https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color)
+        float lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
+
+        out->color[y][x] = (uint8_t)lum;
+        out->opacity[y][x] = a > 0 ? 255 : 0;
+    }
+}
+
+int minigl_tex_read_file(const char *path, minigl_tex_t *out) {
     // Get the file handle
     FILE *f = minigl_fopen(path, "r");
     if (f == NULL) {
@@ -54,24 +74,7 @@ int minigl_tex_read_file(char *path, minigl_tex_t *out) {
         out->opacity[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
     }
 
-    const int STRIDE = 4;
-
-    for (size_t i = 0; i < out_size; i += STRIDE) {
-        uint8_t r = temp[i];
-        uint8_t g = temp[i + 1];
-        uint8_t b = temp[i + 2];
-        uint8_t a = temp[i + 3];
-
-        // Calculate row and column indices
-        size_t y = i / (STRIDE * out->size_x);
-        size_t x = (i / STRIDE) % out->size_x;
-
-        // Calculate pixel luminosity (https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color)
-        float lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
-
-        out->color[y][x] = (uint8_t)lum;
-        out->opacity[y][x] = a > 0 ? 255 : 0;
-    }
+    png_rgba8_to_ga8(temp, out_size, out);
 
     // Free resources
     spng_ctx_free(ctx);

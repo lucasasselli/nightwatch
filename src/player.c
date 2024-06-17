@@ -30,6 +30,8 @@ void player_reset(void) {
     t[0] = 31;  // TODO: Encode in the map or the level itself
     t[1] = 59;
     ivec2_to_vec2_center(t, gs.camera.pos);
+
+    camera_update_trans(&gs.camera);
     map_viz_update(gs.map, gs.camera);
 }
 
@@ -212,6 +214,9 @@ void player_action_move(PDButtons pushed, float delta_t) {
     direction[1] = sinf(glm_rad(gs.camera.yaw));
 
     glm_vec2_normalize_to(direction, gs.camera.front);
+
+    // Update camera
+    camera_update_trans(&gs.camera);
 
     // Update map visibility
     map_viz_update(gs.map, gs.camera);

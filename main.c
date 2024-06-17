@@ -14,7 +14,8 @@
 #include "sound.h"
 #include "utils.h"
 
-#define LOAD_STEP_CNT 6
+#define LOAD_STEP_LOCAL_CNT 6
+#define LOAD_STEP_CNT LOAD_STEP_LOCAL_CNT + TEX_NUM
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
@@ -74,13 +75,11 @@ float update_et_last = 0.0f;
 int update_cnt = 0;
 int gameover_time = 0;
 player_state_t player_state_old;
+bool prompt_shown = true;
 int note_offset = 0;
+bool req_clear;
 
 game_state_t gs;
-
-// Transforms
-mat4 proj;
-mat4 trans;
 
 void screen_update(void) {
     // Offset to center in screen
@@ -224,29 +223,6 @@ void gen_torch_mask(void) {
     }
 }
 
-void view_trans_update(void) {
-    mat4 view;
-    vec3 camera_center;
-
-    vec3 vec3_pos;
-    vec3_pos[0] = gs.camera.pos[0];
-    vec3_pos[1] = gs.camera.bob;
-    vec3_pos[2] = gs.camera.pos[1];
-
-    vec3 vec3_front;
-    vec3_front[0] = gs.camera.front[0];
-    vec3_front[1] = 0.0f;
-    vec3_front[2] = gs.camera.front[1];
-
-    glm_vec3_add(vec3_pos, vec3_front, camera_center);
-
-    // Update camera position
-
-    glm_vec3_add(vec3_pos, vec3_front, camera_center);
-    glm_lookat(vec3_pos, camera_center, CAMERA_UP, view);
-    glm_mat4_mul(proj, view, trans);
-}
-
 static int lua_reset(lua_State *L) {
     (void)L;  // Unused
     game_reset();
@@ -256,10 +232,13 @@ static int lua_reset(lua_State *L) {
 static int lua_load(lua_State *L) {
     (void)L;  // Unused
 
-    if (load_step < LOAD_STEP_CNT) {
-        debug("Loading %d...", load_step);
-
-        switch (load_step) {
+    if (load_step < TEX_NUM) {
+        // Load textures
+        tex_load(load_step);
+    } else if (load_step < (TEX_MDBB_NUM + TEX_NUM)) {
+        tex_mdbb_load(load_step - TEX_NUM);
+    } else if (load_step < (LOAD_STEP_LOCAL_CNT + TEX_NUM + TEX_MDBB_NUM)) {
+        switch (load_step - TEX_NUM - TEX_MDBB_NUM) {
             case 0:
                 // Sound
                 sound_init();
@@ -278,16 +257,11 @@ static int lua_load(lua_State *L) {
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
 
                 // Object buffer
-                obj_buf = minigl_objbuf_init(1000);
+                obj_buf = minigl_objbuf_init(200);
 
-                // Perspective transform
-                glm_perspective(glm_rad(CAMERA_FOV), ((float)SCREEN_SIZE_X) / ((float)SCREEN_SIZE_Y), CAMERA_MIN_Z, CAMERA_MAX_Z, proj);
-                view_trans_update();  // Setup view matrix
                 break;
 
             case 2:
-                tex_init();
-
                 // Set the dither texture
                 // FIXME:
                 tex_dither = *tex_get(TEX_DITHER);
@@ -295,14 +269,10 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 3:
-                tex_mdbb_load(TEX_VENUS);
-                break;
-
-            case 4:
                 gen_torch_mask();
                 break;
 
-            case 5:
+            case 4:
                 // Setup map
                 map_init(gs.map);
 
@@ -315,10 +285,10 @@ static int lua_load(lua_State *L) {
                 game_reset();
                 break;
         }
-        load_step++;
     } else {
         debug("Loading done!");
     }
+    load_step++;
 
     pd->lua->pushInt(load_step);
     pd->lua->pushInt(LOAD_STEP_CNT);
@@ -339,11 +309,10 @@ void show_prompt(void) {
             DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
             break;
     }
+    prompt_shown = true;
 }
 
 void show_game(float delta_t) {
-    view_trans_update();
-
     // Flush buffer
     minigl_clear(0.0f, 1.0f);
 
@@ -352,7 +321,7 @@ void show_game(float delta_t) {
 #endif
 
     // Draw
-    renderer_draw(&gs, trans, gs.camera, delta_t);
+    renderer_draw(&gs, delta_t);
 
     // Update the screen
     screen_update();
@@ -360,6 +329,8 @@ void show_game(float delta_t) {
     // Show prompt
     if (gs.player_interact) {
         show_prompt();
+    } else {
+        if (prompt_shown) req_clear = true;
     }
     // FIXME: Clear the screen when interact state changes
 
@@ -378,7 +349,7 @@ void show_note(void) {
 
     const char **text = NOTES[gs.player_interact_item->action.arg];
 
-    note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - MARGIN);
+    note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - LCD_ROWS / 2);
 
     int y = Y_OFFSET - note_offset;
 
@@ -474,9 +445,10 @@ static int lua_update(lua_State *L) {
     // Real work is done here!
     game_update(update_delta_t);
 
-    if (player_state_old != gs.player_state) {
+    if (player_state_old != gs.player_state || req_clear) {
         // Clear screen when changing state!
         pd->graphics->clear(kColorBlack);
+        req_clear = false;
     }
 
     switch (gs.player_state) {

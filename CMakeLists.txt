@@ -7,7 +7,8 @@ set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 
 set(CMAKE_C_FLAGS "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_RELEASE "-Ofast")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Get the SDK
 set(SDK $ENV{PLAYDATE_SDK_PATH})
@@ -44,7 +45,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
     target_link_options(${TARGET_NAME} PUBLIC -specs=nosys.specs)
 else()
     # add_definitions(-DMINIGL_DEBUG_PERF)
-    add_definitions(-DDEBUG_MINIMAP)
+    # add_definitions(-DDEBUG_MINIMAP)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 

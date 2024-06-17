@@ -78,17 +78,17 @@ static void draw_item(item_t* item, camera_t camera, mat4 trans, int x, int y) {
     minigl_draw(obj_buf);
 }
 
-void renderer_draw(game_state_t* gs, mat4 trans, camera_t camera, float delta_t) {
+void renderer_draw(game_state_t* gs, float delta_t) {
     render_timer += delta_t;
 
     // Draw map
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             map_tile_t tile = gs->map[y][x];
-            if (map_viz_xy(gs->map, camera.pos, x, y)) {
+            if (map_viz_xy(gs->map, gs->camera.pos, x, y)) {
                 item_t* item = tile.items;
                 while (item != NULL) {
-                    draw_item(item, camera, trans, x, y);
+                    draw_item(item, gs->camera, gs->camera.trans, x, y);
                     item = item->next;
                 }
             }
@@ -102,7 +102,7 @@ void renderer_draw(game_state_t* gs, mat4 trans, camera_t camera, float delta_t)
         ivec2_to_vec2_center(gs->enemy_tile, enemy_pos);
         glm_translate(enemy_trans, CAMERA_VEC3(enemy_pos));
         mat4_billboard(gs->camera, enemy_trans);
-        glm_mat4_mul(trans, enemy_trans, enemy_trans);
+        glm_mat4_mul(gs->camera.trans, enemy_trans, enemy_trans);
 
         minigl_obj_to_objbuf_trans(*obj_get(OBJ_ENEMY), enemy_trans, &obj_buf);
         minigl_set_tex(*tex_get(TEX_ENEMY));

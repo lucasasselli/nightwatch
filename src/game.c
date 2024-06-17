@@ -20,8 +20,7 @@ PDButtons pushed_old;
 
 void game_reset(void) {
     // Camera
-    gs.camera.yaw = -90.0f;
-    glm_vec2_copy((vec3){0.0f, -1.0f}, gs.camera.front);
+    camera_init(&gs.camera);
 
     // State
     player_reset();

@@ -10,4 +10,4 @@ typedef struct {
     uint32_t size_y;
 } minigl_tex_t;
 
-int minigl_tex_read_file(char* path, minigl_tex_t* tex);
+int minigl_tex_read_file(const char* path, minigl_tex_t* tex);
