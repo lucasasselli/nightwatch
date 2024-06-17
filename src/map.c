@@ -81,6 +81,10 @@ bool map_get_collide_ivec2(map_t map, ivec2 pos) {
     return tile_get_collide(map_get_tile_ivec2(map, pos));
 }
 
+bool map_get_collide_vec2(map_t map, vec2 pos) {
+    return tile_get_collide(map_get_tile_vec2(map, pos));
+}
+
 void map_set_collide_xy(map_t map, int x, int y, bool collide) {
     map[y][x].collide = collide;
 }

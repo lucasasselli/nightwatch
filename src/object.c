@@ -69,10 +69,11 @@ int obj_init(void) {
     glm_scale(trans, (vec3){0.3f, 0.4, 1.0});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_NOTE]);
 
-    // Note
+    // Bench
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_scale(trans, (vec3){0.9, 0.8, 0.8});
     glm_translate(trans, (vec3){0.0f, -0.9f, 0.0f});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
     minigl_obj_trans(&obj_array[OBJ_BENCH], trans);
 
     // WC Panel

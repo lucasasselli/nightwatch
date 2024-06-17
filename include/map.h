@@ -36,6 +36,8 @@ bool map_get_collide_xy(map_t map, int x, int y);
 
 bool map_get_collide_ivec2(map_t map, ivec2 pos);
 
+bool map_get_collide_vec2(map_t map, vec2 pos);
+
 void map_set_collide_xy(map_t map, int x, int y, bool collide);
 
 void map_viz_update(map_t map, camera_t camera);

@@ -16,7 +16,7 @@
 
 #define LOAD_STEP_CNT 5
 
-#define TORCH_DISABLE
+// #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
 #define TORCH_FADE_STEPS 512
 
