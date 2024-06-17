@@ -29,11 +29,17 @@ int obj_init(void) {
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){1.0f, 0.0f, 0.0f});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_FLOOR]);
 
-    // Wall N
+    // Wall
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.0f, -0.5f});
     glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     minigl_obj_copy_trans(obj_wall, trans, &obj_array[OBJ_WALL]);
+
+    // Wall graffiti
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
+    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_WALL_GRAFFITI]);
 
     // Enemy
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -49,8 +55,14 @@ int obj_init(void) {
     // Column
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.8f, 0.0f});
-    glm_scale(trans, (vec3){0.4f, 3.0, 0.4});
+    glm_scale(trans, (vec3){0.2f, 1.5, 0.2});
     minigl_obj_copy_trans(obj_cube, trans, &obj_array[OBJ_COLUMN]);
+
+    // Column graffiti
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, 0.21f});
+    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_COLUMN_GRAFFITI]);
 
     // Base
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -95,7 +107,7 @@ int obj_init(void) {
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
     minigl_obj_trans(&obj_array[OBJ_WC_SINK], trans);
 
-    // WC Sink
+    // WC Sign
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.3f, 0.2f, -0.49f});
     glm_scale(trans, (vec3){0.2f, 0.2, 0.2});

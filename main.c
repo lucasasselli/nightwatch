@@ -14,7 +14,7 @@
 #include "sound.h"
 #include "utils.h"
 
-#define LOAD_STEP_CNT 5
+#define LOAD_STEP_CNT 6
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
@@ -271,19 +271,11 @@ static int lua_load(lua_State *L) {
                 font_note = pd->graphics->loadFont("res/fonts/handwriting.pft", NULL);
                 font_keypad = pd->graphics->loadFont("res/fonts/Sasser-Slab-Bold.pft", NULL);
 
-                // Load textures
-                tex_init();
-
                 // load Objects
-                // FIXME
                 obj_init();
 
                 // Load image
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
-
-                // Config dither texture
-                tex_dither = *tex_get(TEX_DITHER);
-                minigl_set_dither(tex_dither);
 
                 // Object buffer
                 obj_buf = minigl_objbuf_init(1000);
@@ -294,14 +286,23 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 2:
-                tex_mdbb_load(TEX_VENUS);
+                tex_init();
+
+                // Set the dither texture
+                // FIXME:
+                tex_dither = *tex_get(TEX_DITHER);
+                minigl_set_dither(tex_dither);
                 break;
 
             case 3:
-                gen_torch_mask();
+                tex_mdbb_load(TEX_VENUS);
                 break;
 
             case 4:
+                gen_torch_mask();
+                break;
+
+            case 5:
                 // Setup map
                 map_init(gs.map);
 

@@ -4,23 +4,38 @@
 #include <cglm/cglm.h>
 #include <math.h>
 
+#include "utils.h"
+
 minigl_tex_t tex_array[TEX_NUM];
 minigl_tex_t tex_mdbb_array[TEX_NUM][MDBB_SIZE];
+
+static int tex_file_read(const char* path, tex_id_t id) {
+    debug("Reading %s ...", path);
+    return minigl_tex_read_file(path, &tex_array[id]);
+}
 
 int tex_init(void) {
     int result = 0;
 
     // TODO: Convert everything to bitmap!
-    result |= minigl_tex_read_file("res/dither/bayer16tile2.tex", &tex_array[TEX_DITHER]);
-    result |= minigl_tex_read_file("res/textures/monster_idle.tex", &tex_array[TEX_ENEMY]);
-    result |= minigl_tex_read_file("res/textures/wetfloor.tex", &tex_array[TEX_WETFLOOR]);
-    result |= minigl_tex_read_file("res/textures/note.tex", &tex_array[TEX_NOTE]);
-    result |= minigl_tex_read_file("res/textures/fence_open.tex", &tex_array[TEX_FENCE_OPEN]);
-    result |= minigl_tex_read_file("res/textures/fence_closed.tex", &tex_array[TEX_FENCE_CLOSED]);
-    result |= minigl_tex_read_file("res/textures/wood.tex", &tex_array[TEX_WOOD]);
-    result |= minigl_tex_read_file("res/textures/sink.tex", &tex_array[TEX_WC_SINK]);
-    result |= minigl_tex_read_file("res/textures/sign_wc_man.tex", &tex_array[TEX_SIGN_WC_MAN]);
-    result |= minigl_tex_read_file("res/textures/sign_wc_women.tex", &tex_array[TEX_SIGN_WC_WOMEN]);
+    result |= tex_file_read("res/dither/bayer16tile2.tex", TEX_DITHER);
+    result |= tex_file_read("res/textures/base.tex", TEX_BASE);
+    result |= tex_file_read("res/textures/monster_idle.tex", TEX_ENEMY);
+    result |= tex_file_read("res/textures/wetfloor.tex", TEX_WETFLOOR);
+    result |= tex_file_read("res/textures/note.tex", TEX_NOTE);
+    result |= tex_file_read("res/textures/fence_open.tex", TEX_FENCE_OPEN);
+    result |= tex_file_read("res/textures/fence_closed.tex", TEX_FENCE_CLOSED);
+    result |= tex_file_read("res/textures/wood.tex", TEX_WOOD);
+    result |= tex_file_read("res/textures/sink.tex", TEX_WC_SINK);
+    result |= tex_file_read("res/textures/sign_wc_man.tex", TEX_SIGN_WC_MAN);
+    result |= tex_file_read("res/textures/sign_wc_women.tex", TEX_SIGN_WC_WOMEN);
+    result |= tex_file_read("res/textures/single_digit_0.tex", TEX_COLUMN_DIG_0);
+    result |= tex_file_read("res/textures/single_digit_1.tex", TEX_COLUMN_DIG_1);
+    result |= tex_file_read("res/textures/single_digit_3.tex", TEX_COLUMN_DIG_3);
+    result |= tex_file_read("res/textures/single_digit_4.tex", TEX_COLUMN_DIG_4);
+    result |= tex_file_read("res/textures/single_digit_6.tex", TEX_COLUMN_DIG_6);
+    result |= tex_file_read("res/textures/single_digit_7.tex", TEX_COLUMN_DIG_7);
+    result |= tex_file_read("res/textures/level1_code_cypher.tex", TEX_LVL1_CYPHER);
 
     return result;
 }

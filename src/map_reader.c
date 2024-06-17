@@ -64,10 +64,11 @@ void map_read(map_t map) {
 
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
-    // Section 1
+    // Level 1
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 
+    // Atrium
     {
         const int X = 27;
         const int Y = 49;
@@ -76,73 +77,106 @@ void map_read(map_t map) {
 
         // Entrance
         add_room(map, X, Y, WIDTH, HEIGHT);
-
-        // Entrance
         add_door(map, 30, 60, DIR_NORTH, 1234);
         add_door(map, 31, 60, DIR_NORTH, 1234);
         add_door(map, 32, 60, DIR_NORTH, 1234);
 
-        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
-        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
-        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_color(OBJ_COLUMN, 100, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_7, DIR_SOUTH));
 
-        add_note(map, X + 4, Y + 7, 0);
+        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_3, DIR_SOUTH));
 
-        //---------------------------------------------------------------------------
-        // Man bathroom
-        //---------------------------------------------------------------------------
+        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_0, DIR_SOUTH));
 
-        // NOTE: Unreachable
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_6, DIR_SOUTH));
 
-        map_item_add_xy(map, 35, 59, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_MAN, DIR_EAST));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_1, DIR_SOUTH));
 
-        add_room(map, 36, 58, 1, 1);
-        add_room(map, 37, 58, 6, 3);
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_COLUMN, TEX_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_COLUMN_GRAFFITI, TEX_COLUMN_DIG_4, DIR_SOUTH));
 
-        map_item_add_xy(map, 36, 58, item_new_tex(OBJ_WETFLOOR, TEX_WETFLOOR, DIR_WEST));
-
-        //---------------------------------------------------------------------------
-        // Women bathroom
-        //---------------------------------------------------------------------------
-
-        map_item_add_xy(map, 35, 57, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_WOMEN, DIR_EAST));
-
-        add_room(map, 36, 56, 1, 1);
-        add_room(map, 37, 54, 6, 3);
-
-        // Stalls
-        map_item_add_xy(map, 37, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
-        map_item_add_xy(map, 37, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
-        map_item_add_xy(map, 38, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
-        map_item_add_xy(map, 38, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
-        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
-        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
-        map_item_add_xy(map, 39, 54, item_new_color(OBJ_WC_PANEL, 32, DIR_EAST));
-
-        add_note(map, 41, 54, 1);
-
-        // Sinks
-        map_item_add_xy(map, 40, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
-        map_item_add_xy(map, 41, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
-        map_item_add_xy(map, 42, 54, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
-
-        //---------------------------------------------------------------------------
-        // Section 2 gate
-        //---------------------------------------------------------------------------
+        // Level 2 gate
         add_room(map, X + 3, Y - 1, 3, 1);
-        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 1234);
-        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 1234);
-        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 1234);
+        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 4673);
+        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 4673);
+        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 4673);
+
+        // Note(s)
+        add_note(map, X + 4, Y + 7, 0);
     }
 
     //---------------------------------------------------------------------------
-    // Section 2
+    // Man bathroom
+    //---------------------------------------------------------------------------
+    // NOTE: Unreachable
+    {
+        const int X = 37;
+        const int Y = 57;
+        const int WIDTH = 6;
+        const int HEIGHT = 3;
+
+        add_room(map, X, Y, WIDTH, HEIGHT);
+
+        // Entrance(s)
+        add_room(map, X - 1, Y, 1, 1);
+
+        // Sign
+        map_item_add_xy(map, X - 2, Y + 1, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_MAN, DIR_EAST));
+
+        // Barrier
+        map_item_add_xy(map, X - 1, Y, item_new_tex(OBJ_WETFLOOR, TEX_WETFLOOR, DIR_WEST));
+    }
+
+    //---------------------------------------------------------------------------
+    // Women bathroom
+    //---------------------------------------------------------------------------
+    {
+        const int X = 37;
+        const int Y = 53;
+        const int WIDTH = 6;
+        const int HEIGHT = 3;
+
+        add_room(map, X, Y, WIDTH, HEIGHT);
+
+        // Entrance(s)
+        add_room(map, X - 1, Y + HEIGHT - 1, 1, 1);
+
+        // Sign
+        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_WC_SIGN, TEX_SIGN_WC_WOMEN, DIR_EAST));
+
+        // Stalls
+        map_item_add_xy(map, X + 0, Y, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, X + 0, Y, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, X + 1, Y, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, X + 1, Y, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_WC_PANEL, 32, DIR_SOUTH));
+        map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_WC_COLUMN, 96, DIR_SOUTH));
+        map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_WC_PANEL, 32, DIR_EAST));
+
+        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_WALL_GRAFFITI, TEX_LVL1_CYPHER, DIR_WEST));
+
+        // Sinks
+        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+        map_item_add_xy(map, X + 4, Y, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+        map_item_add_xy(map, X + 5, Y, item_new_tex(OBJ_WC_SINK, TEX_WC_SINK, DIR_NORTH));
+
+        // Note(s)
+        add_note(map, X + 4, Y, 1);
+    }
+
+    //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
+    // Level 2
+    //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 
+    //---------------------------------------------------------------------------
     // Room 1
+    //---------------------------------------------------------------------------
     {
         const int X = 27;
         const int Y = 41;
@@ -159,7 +193,9 @@ void map_read(map_t map) {
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_VENUS, DIR_NORTH));
     }
 
+    //---------------------------------------------------------------------------
     // Room 2
+    //---------------------------------------------------------------------------
     {
         const int X = 27;
         const int Y = 33;
@@ -173,7 +209,9 @@ void map_read(map_t map) {
         add_room(map, X + WIDTH - 4, Y + HEIGHT, 2, 1);
     }
 
+    //---------------------------------------------------------------------------
     // Gallery
+    //---------------------------------------------------------------------------
     {
         const int X = 37;
         const int Y = 33;
@@ -216,7 +254,9 @@ void map_read(map_t map) {
     }
 
     //---------------------------------------------------------------------------
-    // Entrance
+    //---------------------------------------------------------------------------
+    // Outside
+    //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 
     {

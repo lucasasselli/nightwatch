@@ -4,6 +4,7 @@
 
 typedef enum {
     TEX_DITHER,
+    TEX_BASE,
     TEX_ENEMY,
     TEX_WETFLOOR,
     TEX_NOTE,
@@ -12,10 +13,17 @@ typedef enum {
     TEX_WOOD,
     TEX_WC_SINK,
     TEX_SIGN_WC_MAN,
-    TEX_SIGN_WC_WOMEN
+    TEX_SIGN_WC_WOMEN,
+    TEX_COLUMN_DIG_0,
+    TEX_COLUMN_DIG_1,
+    TEX_COLUMN_DIG_3,
+    TEX_COLUMN_DIG_4,
+    TEX_COLUMN_DIG_6,
+    TEX_COLUMN_DIG_7,
+    TEX_LVL1_CYPHER
 } tex_id_t;
 
-#define TEX_NUM 10
+#define TEX_NUM 18
 
 typedef enum {
     TEX_VENUS
