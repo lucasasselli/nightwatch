@@ -87,7 +87,7 @@ void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_
                 if (insert_pin == gs.player_interact_item->action.arg) {
                     sound_effect_play(SOUND_KEYPAD_CORRECT);
                     gs.player_interact_item->action.type = ACTION_NONE;
-                    gs.player_interact_item->tex_id = TEX_FENCE_OPEN;
+                    gs.player_interact_item->tex_id = TEX_ID_FENCE_OPEN;
                     gs.player_interact = false;
                     sound_effect_play(SOUND_FENCE_OPEN);
                     player_action_keypad(false);

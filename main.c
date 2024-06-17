@@ -14,8 +14,8 @@
 #include "sound.h"
 #include "utils.h"
 
-#define LOAD_STEP_LOCAL_CNT 6
-#define LOAD_STEP_CNT LOAD_STEP_LOCAL_CNT + TEX_NUM
+#define LOAD_STEP_LOCAL_CNT 5
+#define LOAD_STEP_CNT LOAD_STEP_LOCAL_CNT + TEX_ID_NUM + TEX_MDBB_ID_NUM
 
 // #define TORCH_DISABLE
 #define TORCH_INT_STEPS 32
@@ -232,13 +232,13 @@ static int lua_reset(lua_State *L) {
 static int lua_load(lua_State *L) {
     (void)L;  // Unused
 
-    if (load_step < TEX_NUM) {
+    if (load_step < TEX_ID_NUM) {
         // Load textures
         tex_load(load_step);
-    } else if (load_step < (TEX_MDBB_NUM + TEX_NUM)) {
-        tex_mdbb_load(load_step - TEX_NUM);
-    } else if (load_step < (LOAD_STEP_LOCAL_CNT + TEX_NUM + TEX_MDBB_NUM)) {
-        switch (load_step - TEX_NUM - TEX_MDBB_NUM) {
+    } else if (load_step < (TEX_MDBB_ID_NUM + TEX_ID_NUM)) {
+        tex_mdbb_load(load_step - TEX_ID_NUM);
+    } else if (load_step < (LOAD_STEP_LOCAL_CNT + TEX_ID_NUM + TEX_MDBB_ID_NUM)) {
+        switch (load_step - TEX_ID_NUM - TEX_MDBB_ID_NUM) {
             case 0:
                 // Sound
                 sound_init();
@@ -264,7 +264,7 @@ static int lua_load(lua_State *L) {
             case 2:
                 // Set the dither texture
                 // FIXME:
-                tex_dither = *tex_get(TEX_DITHER);
+                tex_dither = *tex_get(TEX_ID_DITHER);
                 minigl_set_dither(tex_dither);
                 break;
 

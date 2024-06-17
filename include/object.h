@@ -3,24 +3,24 @@
 #include "minigl/object.h"
 
 typedef enum {
-    OBJ_FLOOR,
-    OBJ_WALL,
-    OBJ_WALL_GRAFFITI,
-    OBJ_ENEMY,
-    OBJ_STATUE,
-    OBJ_COLUMN,
-    OBJ_COLUMN_GRAFFITI,
-    OBJ_BASE,
-    OBJ_WETFLOOR,
-    OBJ_NOTE,
-    OBJ_BENCH,
-    OBJ_WC_PANEL,
-    OBJ_WC_COLUMN,
-    OBJ_WC_SINK,
-    OBJ_WC_SIGN,
+    OBJ_ID_FLOOR,
+    OBJ_ID_WALL,
+    OBJ_ID_WALL_GRAFFITI,
+    OBJ_ID_ENEMY,
+    OBJ_ID_STATUE,
+    OBJ_ID_COLUMN,
+    OBJ_ID_COLUMN_GRAFFITI,
+    OBJ_ID_BASE,
+    OBJ_ID_WETFLOOR,
+    OBJ_ID_NOTE,
+    OBJ_ID_BENCH,
+    OBJ_ID_WC_PANEL,
+    OBJ_ID_WC_COLUMN,
+    OBJ_ID_WC_SINK,
+    OBJ_ID_WC_SIGN,
 } obj_id_t;
 
-#define OBJ_NUM 15
+#define OBJ_ID_NUM 15
 
 int obj_init(void);
 

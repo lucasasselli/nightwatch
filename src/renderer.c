@@ -104,8 +104,8 @@ void renderer_draw(game_state_t* gs, float delta_t) {
         mat4_billboard(gs->camera, enemy_trans);
         glm_mat4_mul(gs->camera.trans, enemy_trans, enemy_trans);
 
-        minigl_obj_to_objbuf_trans(*obj_get(OBJ_ENEMY), enemy_trans, &obj_buf);
-        minigl_set_tex(*tex_get(TEX_ENEMY));
+        minigl_obj_to_objbuf_trans(*obj_get(OBJ_ID_ENEMY), enemy_trans, &obj_buf);
+        minigl_set_tex(*tex_get(TEX_ID_ENEMY));
         minigl_draw(obj_buf);
     }
 }

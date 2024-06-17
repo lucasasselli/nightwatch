@@ -31,7 +31,7 @@ item_t* item_new_mdbb(tex_mdbb_id_t tex_id, dir_t dir) {
     item_t* item = item_new();
     item->type = ITEM_BILLBOARD;
     item->dir = dir;
-    item->obj_id = OBJ_STATUE;
+    item->obj_id = OBJ_ID_STATUE;
     item->tex_mdbb_id = tex_id;
     item->tex_mode = TEX_MODE_MDBB;
     return item;

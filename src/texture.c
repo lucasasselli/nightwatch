@@ -6,8 +6,8 @@
 
 #include "utils.h"
 
-minigl_tex_t tex_array[TEX_NUM];
-minigl_tex_t tex_mdbb_array[TEX_NUM][MDBB_SIZE];
+minigl_tex_t tex_array[TEX_ID_NUM];
+minigl_tex_t tex_mdbb_array[TEX_MDBB_ID_NUM][MDBB_SIZE];
 
 #define TEXID_LOAD_CASE(path, id) \
     case id:                      \
@@ -20,23 +20,23 @@ static int tex_file_read(const char* path, tex_id_t id) {
 
 int tex_load(tex_id_t id) {
     switch (id) {
-        TEXID_LOAD_CASE("res/dither/bayer16tile2.tex", TEX_DITHER);
-        TEXID_LOAD_CASE("res/textures/base.tex", TEX_BASE);
-        TEXID_LOAD_CASE("res/textures/monster_idle.tex", TEX_ENEMY);
-        TEXID_LOAD_CASE("res/textures/wetfloor.tex", TEX_WETFLOOR);
-        TEXID_LOAD_CASE("res/textures/note.tex", TEX_NOTE);
-        TEXID_LOAD_CASE("res/textures/fence_open.tex", TEX_FENCE_OPEN);
-        TEXID_LOAD_CASE("res/textures/fence_closed.tex", TEX_FENCE_CLOSED);
-        TEXID_LOAD_CASE("res/textures/wood.tex", TEX_WOOD);
-        TEXID_LOAD_CASE("res/textures/sink.tex", TEX_WC_SINK);
-        TEXID_LOAD_CASE("res/textures/sign_wc_man.tex", TEX_SIGN_WC_MAN);
-        TEXID_LOAD_CASE("res/textures/sign_wc_women.tex", TEX_SIGN_WC_WOMEN);
-        TEXID_LOAD_CASE("res/textures/single_digit_0.tex", TEX_COLUMN_DIG_0);
-        TEXID_LOAD_CASE("res/textures/single_digit_1.tex", TEX_COLUMN_DIG_1);
-        TEXID_LOAD_CASE("res/textures/single_digit_3.tex", TEX_COLUMN_DIG_3);
-        TEXID_LOAD_CASE("res/textures/single_digit_4.tex", TEX_COLUMN_DIG_4);
-        TEXID_LOAD_CASE("res/textures/single_digit_6.tex", TEX_COLUMN_DIG_6);
-        TEXID_LOAD_CASE("res/textures/single_digit_7.tex", TEX_COLUMN_DIG_7);
+        TEXID_LOAD_CASE("res/dither/bayer16tile2.tex", TEX_ID_DITHER);
+        TEXID_LOAD_CASE("res/textures/base.tex", TEX_ID_BASE);
+        TEXID_LOAD_CASE("res/textures/monster_idle.tex", TEX_ID_ENEMY);
+        TEXID_LOAD_CASE("res/textures/wetfloor.tex", TEX_ID_WETFLOOR);
+        TEXID_LOAD_CASE("res/textures/note.tex", TEX_ID_NOTE);
+        TEXID_LOAD_CASE("res/textures/fence_open.tex", TEX_ID_FENCE_OPEN);
+        TEXID_LOAD_CASE("res/textures/fence_closed.tex", TEX_ID_FENCE_CLOSED);
+        TEXID_LOAD_CASE("res/textures/wood.tex", TEX_ID_WOOD);
+        TEXID_LOAD_CASE("res/textures/sink.tex", TEX_ID_WC_SINK);
+        TEXID_LOAD_CASE("res/textures/sign_wc_man.tex", TEX_ID_SIGN_WC_MAN);
+        TEXID_LOAD_CASE("res/textures/sign_wc_women.tex", TEX_ID_SIGN_WC_WOMEN);
+        TEXID_LOAD_CASE("res/textures/single_digit_0.tex", TEX_ID_COLUMN_DIG_0);
+        TEXID_LOAD_CASE("res/textures/single_digit_1.tex", TEX_ID_COLUMN_DIG_1);
+        TEXID_LOAD_CASE("res/textures/single_digit_3.tex", TEX_ID_COLUMN_DIG_3);
+        TEXID_LOAD_CASE("res/textures/single_digit_4.tex", TEX_ID_COLUMN_DIG_4);
+        TEXID_LOAD_CASE("res/textures/single_digit_6.tex", TEX_ID_COLUMN_DIG_6);
+        TEXID_LOAD_CASE("res/textures/single_digit_7.tex", TEX_ID_COLUMN_DIG_7);
         TEXID_LOAD_CASE("res/textures/level1_code_cypher.tex", TEX_LVL1_CYPHER);
     }
 }
@@ -47,7 +47,7 @@ int tex_mdbb_load(tex_mdbb_id_t id) {
 
     for (int i = 0; i < MDBB_SIZE; i++) {
         switch (id) {
-            case TEX_VENUS:
+            case TEX_ID_VENUS:
                 result |= sprintf(path, "res/sprites/venus/venus_%02d.tex", i);
         }
 
@@ -60,12 +60,12 @@ int tex_mdbb_load(tex_mdbb_id_t id) {
 }
 
 minigl_tex_t* tex_get(tex_id_t id) {
-    assert(id < TEX_NUM);
+    assert(id < TEX_ID_NUM);
     return &tex_array[id];
 }
 
 minigl_tex_t* tex_mdbb_get_i(tex_mdbb_id_t id, int i) {
-    assert(id < TEX_NUM);
+    assert(id < TEX_MDBB_ID_NUM);
     return &tex_mdbb_array[id][i];
 }
 
