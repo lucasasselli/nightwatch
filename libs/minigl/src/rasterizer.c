@@ -86,7 +86,9 @@ MINIGL_INLINE float max3_clampf(float a, float b, float c, float min, float max)
 
 MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
     assert(!isnanf(z));
-    if (z > frame.z_buff[y][x] || z > 1.0f || z < -1.0f) return;
+    // NOTE: Checking for z > 0.0 is also a good idea, but since z buffer is
+    // normally init at 0 it helps improve performance
+    if (z > frame.z_buff[y][x] || z < 0.0f) return;
     frame.z_buff[y][x] = z;
 
 #ifndef MINIGL_NO_DITHERING
@@ -262,9 +264,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
         // FIXME: Allow programmable backface Culling
         if (cw_wind_order) {
 #ifdef MINIGL_DEBUG_PERF
-            // minigl_perf_event(PERF_CULL);
+            minigl_perf_event(PERF_CULL);
 #endif
-            //  continue;
+            continue;
         }
 
         if (cw_wind_order) {
