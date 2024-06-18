@@ -10,7 +10,7 @@ minigl_cfg_t cfg = {0};
 minigl_frame_t frame;
 
 void minigl_set_tex(minigl_tex_t t) {
-    cfg.texture_mode = MINIGL_TEX_2D;
+    cfg.texture_mode = MINIGL_SHADE_TEX_2D;
     cfg.texture = t;
 }
 
@@ -19,8 +19,13 @@ void minigl_set_dither(minigl_tex_t t) {
 }
 
 void minigl_set_color(uint8_t color) {
-    cfg.texture_mode = MINIGL_TEX_0D;
-    cfg.draw_color = color;
+    cfg.texture_mode = MINIGL_SHADE_SOLID;
+    cfg.color = color;
+}
+
+void minigl_set_matgroup(minigl_matgroup_t* matgroup) {
+    cfg.texture_mode = MINIGL_SHADE_MATERIAL;
+    cfg.matgroup = matgroup;
 }
 
 void minigl_clear(uint8_t color, int depth) {
@@ -132,7 +137,7 @@ MINIGL_INLINE void scanline_add_slope2(vec3 slope, vec2 out) {
     out[1] += slope[1];
 }
 
-MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u_range, vec2 v_range, minigl_tex_mode_t tex_mode) {
+MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u_range, vec2 v_range, const uint8_t color, const bool use_tex) {
     vec2 x_l;
 
     // Swap x_l[0] and x_l[1]
@@ -169,10 +174,10 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
         minigl_perf_event(PERF_FRAG);
 #endif
 
-        if (tex_mode == MINIGL_TEX_2D) {
+        if (use_tex) {
             set_pixel_tex_2d(x, y, z, u, v);
         } else {
-            set_pixel(x, y, z, cfg.draw_color);
+            set_pixel(x, y, z, color);
         }
 
         z += z_delta;
@@ -181,15 +186,13 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     }
 }
 
-MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_mode) {
+MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
     vec4 v[3];
     vec2 t[3];
 
-#ifdef DEBUG
-    if (tex_mode == MINIGL_TEX_2D) {
+    if (use_tex) {
         assert(buf.tcoord_size > 0);
     }
-#endif
 
     // FIXME: Need to improve performance!!!
     for (int f = 0; f < buf.face_size; f++) {
@@ -223,7 +226,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         }
 
         // Get texture coordinates
-        if (tex_mode == MINIGL_TEX_2D) {
+        if (use_tex) {
             glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][0]], t[0]);
             glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][1]], t[1]);
             glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][2]], t[2]);
@@ -266,7 +269,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
 
         if (cw_wind_order) {
             vec4_swap(v[0], v[2]);
-            if (tex_mode == MINIGL_TEX_2D) {
+            if (use_tex) {
                 vec2_swap(t[0], t[2]);
             }
         }
@@ -287,6 +290,19 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         // Rasterization
         //---------------------------------------------------------------------------
 
+        uint8_t color;
+
+        if (!use_tex) {
+            if (cfg.texture_mode == MINIGL_SHADE_MATERIAL) {
+                assert(buf.mface_ptr != NULL);
+                int mat_i = buf.mface_ptr[f];
+                assert(mat_i < cfg.matgroup->size);
+                color = cfg.matgroup->color[buf.mface_ptr[f]];
+            } else {
+                color = cfg.color;
+            }
+        }
+
 #ifdef MINIGL_DEBUG_PERF
         minigl_perf_event(PERF_POLY);
 #endif
@@ -295,15 +311,15 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
         // Sort vertices by y-coordinate
         if (v[0][1] > v[1][1]) {
             vec4_swap(v[0], v[1]);
-            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[0], t[1]);
+            if (use_tex) vec2_swap(t[0], t[1]);
         }
         if (v[0][1] > v[2][1]) {
             vec4_swap(v[0], v[2]);
-            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[0], t[2]);
+            if (use_tex) vec2_swap(t[0], t[2]);
         }
         if (v[1][1] > v[2][1]) {
             vec4_swap(v[1], v[2]);
-            if (tex_mode == MINIGL_TEX_2D) vec2_swap(t[1], t[2]);
+            if (use_tex) vec2_swap(t[1], t[2]);
         }
 
         vec3 slope_x;
@@ -337,7 +353,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
             scanline_range1(t[0][1], t[1][1], v, slope_tex_v, y, tex_v);
 
             for (; y <= y1; y += 1.0f) {
-                scanline_draw(y, x, z, tex_u, tex_v, tex_mode);
+                scanline_draw(y, x, z, tex_u, tex_v, color, use_tex);
 
                 scanline_add_slope1(slope_x, x);
                 scanline_add_slope1(slope_z, z);
@@ -353,7 +369,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
             scanline_range2(t[0][1], t[1][1], v, slope_tex_v, y, tex_v);
 
             for (; y <= y2; y += 1.0f) {
-                scanline_draw(y, x, z, tex_u, tex_v, tex_mode);
+                scanline_draw(y, x, z, tex_u, tex_v, color, use_tex);
 
                 scanline_add_slope2(slope_x, x);
                 scanline_add_slope2(slope_z, z);
@@ -395,7 +411,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
                 // Interpolate Z
                 float z = interpolate(b, v[0][2], v[1][2], v[2][2]);
 
-                if (tex_mode == MINIGL_TEX_2D) {
+                if (use_tex) {
 
 #ifdef MINIGL_PERSP_CORRECT
                     // NOTE: https://stackoverflow.com/questions/24441631/how-exactly-does-opengl-do-perspectively-correct-linear-interpolation
@@ -422,10 +438,10 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const minigl_tex_mode_t tex_m
 }
 
 void minigl_draw(minigl_objbuf_t buf) {
-    if (cfg.texture_mode == MINIGL_TEX_2D) {
-        draw(buf, MINIGL_TEX_2D);
-    } else if (cfg.texture_mode == MINIGL_TEX_0D) {
-        draw(buf, MINIGL_TEX_0D);
+    if (cfg.texture_mode == MINIGL_SHADE_TEX_2D) {
+        draw(buf, true);
+    } else {
+        draw(buf, false);
     }
 }
 

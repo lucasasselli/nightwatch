@@ -4,7 +4,6 @@
 
 typedef enum {
     TEX_ID_DITHER,
-    TEX_ID_BASE,
     TEX_ID_ENEMY,
     TEX_ID_WETFLOOR,
     TEX_ID_NOTE,

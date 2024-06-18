@@ -21,7 +21,6 @@ static int tex_file_read(const char* path, tex_id_t id) {
 int tex_load(tex_id_t id) {
     switch (id) {
         TEXID_LOAD_CASE("res/dither/bayer16tile2.tex", TEX_ID_DITHER);
-        TEXID_LOAD_CASE("res/textures/base.tex", TEX_ID_BASE);
         TEXID_LOAD_CASE("res/textures/monster_idle.tex", TEX_ID_ENEMY);
         TEXID_LOAD_CASE("res/textures/wetfloor.tex", TEX_ID_WETFLOOR);
         TEXID_LOAD_CASE("res/textures/note.tex", TEX_ID_NOTE);

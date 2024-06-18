@@ -20,10 +20,11 @@ typedef enum {
 } item_type_t;
 
 typedef enum {
-    TEX_MODE_NONE,
-    TEX_MODE_IMAGE,
-    TEX_MODE_MDBB
-} tex_mode_t;
+    DRAW_MODE_COLOR,
+    DRAW_MODE_TEX,
+    DRAW_MODE_MATERIAL,
+    DRAW_MODE_MDBB
+} draw_mode_t;
 
 typedef enum {
     ACTION_NONE,
@@ -50,12 +51,13 @@ struct item_t {
     obj_id_t obj_id;
     dir_t dir;
 
-    tex_mode_t tex_mode;
+    draw_mode_t draw_mode;
     union {
         tex_id_t tex_id;
         tex_mdbb_id_t tex_mdbb_id;
     };
     uint8_t color;
+    minigl_matgroup_t* matgroup;
 
     int effects;
     action_t action;
@@ -65,9 +67,11 @@ struct item_t {
 
 item_t* item_new(void);
 
+item_t* item_new_color(obj_id_t obj_id, uint8_t color, dir_t dir);
+
 item_t* item_new_tex(obj_id_t obj_id, tex_id_t tex_id, dir_t dir);
 
-item_t* item_new_color(obj_id_t obj_id, uint8_t color, dir_t dir);
+item_t* item_new_mat(obj_id_t obj_id, minigl_matgroup_t* matgroup, dir_t dir);
 
 item_t* item_new_mdbb(tex_mdbb_id_t tex_id, dir_t dir);
 

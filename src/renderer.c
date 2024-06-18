@@ -51,16 +51,20 @@ static void draw_item(item_t* item, camera_t camera, mat4 trans, int x, int y) {
 
     vec2 dir;
     float a;
-    switch (item->tex_mode) {
-        case TEX_MODE_NONE:
+    switch (item->draw_mode) {
+        case DRAW_MODE_COLOR:
             minigl_set_color(item->color);
             break;
 
-        case TEX_MODE_IMAGE:
+        case DRAW_MODE_TEX:
             minigl_set_tex(*tex_get(item->tex_id));
             break;
 
-        case TEX_MODE_MDBB:
+        case DRAW_MODE_MATERIAL:
+            minigl_set_matgroup(item->matgroup);
+            break;
+
+        case DRAW_MODE_MDBB:
             tile_dir((ivec2){x, y}, camera.pos, dir);
 
             a = vec2_angle((vec2){0.0f, -1.0f}, dir) + item->dir * GLM_PI_2f;

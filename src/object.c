@@ -55,7 +55,7 @@ int obj_init(void) {
     // Column
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){0.0f, 0.8f, 0.0f});
-    glm_scale(trans, (vec3){0.2f, 1.5, 0.2});
+    glm_scale(trans, (vec3){0.4f, 3.0, 0.4});
     minigl_obj_copy_trans(obj_cube, trans, &obj_array[OBJ_ID_COLUMN]);
 
     // Column graffiti

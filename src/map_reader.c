@@ -1,5 +1,7 @@
 #include "map_reader.h"
 
+minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
+
 static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -21,7 +23,7 @@ static void add_door(map_t map, int x, int y, dir_t dir, int pin) {
     item->type = ITEM_NORMAL;
     item->obj_id = OBJ_ID_WALL;
     item->tex_id = TEX_ID_FENCE_CLOSED;
-    item->tex_mode = TEX_MODE_IMAGE;
+    item->draw_mode = DRAW_MODE_COLOR;
     item->dir = dir;
     item->action.type = ACTION_KEYPAD;
     item->action.arg = pin;
@@ -82,22 +84,22 @@ void map_read(map_t map) {
         add_door(map, 32, 60, DIR_NORTH, 1234);
 
         // Columns
-        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_7, DIR_SOUTH));
 
-        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_3, DIR_SOUTH));
 
-        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_0, DIR_SOUTH));
 
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_6, DIR_SOUTH));
 
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_1, DIR_SOUTH));
 
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN, TEX_ID_BASE, DIR_NORTH));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_4, DIR_SOUTH));
 
         // Statue

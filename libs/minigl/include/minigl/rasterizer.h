@@ -24,17 +24,18 @@ typedef enum {
 } minigl_face_cull_t;
 
 typedef enum {
-    MINIGL_TEX_0D,  // Solid color
-    MINIGL_TEX_2D   // 2D texture
-} minigl_tex_mode_t;
+    MINIGL_SHADE_SOLID,    // Solid color
+    MINIGL_SHADE_TEX_2D,   // 2D texture
+    MINIGL_SHADE_MATERIAL  // Material
+} minigl_shade_mode_t;
 
 // State objects
 typedef struct {
-    minigl_tex_t texture;
-    minigl_tex_mode_t texture_mode;
     minigl_tex_t dither;
-    minigl_face_cull_t face_cull;
-    uint8_t draw_color;
+    minigl_shade_mode_t texture_mode;
+    minigl_tex_t texture;
+    uint8_t color;
+    minigl_matgroup_t* matgroup;
 } minigl_cfg_t;
 
 void minigl_set_tex(minigl_tex_t t);
@@ -42,6 +43,8 @@ void minigl_set_tex(minigl_tex_t t);
 void minigl_set_dither(minigl_tex_t t);
 
 void minigl_set_color(uint8_t color);
+
+void minigl_set_matgroup(minigl_matgroup_t* matgroup);
 
 void minigl_clear(uint8_t color, int depth);
 

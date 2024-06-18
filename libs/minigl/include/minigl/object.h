@@ -3,26 +3,26 @@
 #include <cglm/cglm.h>
 
 typedef struct {
+    int size;
+    uint8_t color[];
+} minigl_matgroup_t;
+
+struct minigl_obj {
     vec4* vcoord_ptr;
     vec2* tcoord_ptr;
     ivec3* vface_ptr;
     ivec3* tface_ptr;
+    int* mface_ptr;
     int vcoord_size;
     int tcoord_size;
     int face_size;
-} minigl_obj_t;
+};
+
+typedef struct minigl_obj minigl_obj_t;
 
 // NOTE: This is identical to minigl_obj_t, but used to buffer geometry
 // Potentially can be used interchangeably.
-typedef struct {
-    vec4* vcoord_ptr;
-    vec2* tcoord_ptr;
-    ivec3* vface_ptr;
-    ivec3* tface_ptr;
-    int vcoord_size;
-    int tcoord_size;
-    int face_size;
-} minigl_objbuf_t;
+typedef struct minigl_obj minigl_objbuf_t;
 
 enum {
     MINIGL_OBJ_TEXFLIPY = 1,
