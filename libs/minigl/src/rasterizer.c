@@ -7,7 +7,10 @@
 #include "minigl/utils.h"
 
 minigl_cfg_t cfg = {0};
-minigl_frame_t frame;
+
+void minigl_set_frame(minigl_frame_t* frame) {
+    cfg.frame = frame;
+}
 
 void minigl_set_tex(minigl_tex_t t) {
     cfg.texture_mode = MINIGL_SHADE_TEX_2D;
@@ -26,15 +29,6 @@ void minigl_set_color(uint8_t color) {
 void minigl_set_matgroup(minigl_matgroup_t* matgroup) {
     cfg.texture_mode = MINIGL_SHADE_MATERIAL;
     cfg.matgroup = matgroup;
-}
-
-void minigl_clear(uint8_t color, int depth) {
-    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
-        for (int x = 0; x < SCREEN_SIZE_X; x++) {
-            frame.c_buff[y][x] = (uint8_t)color;  // Clear color buffer
-            frame.z_buff[y][x] = depth;           // Clear z buffer
-        }
-    }
 }
 
 MINIGL_INLINE float edge(vec4 a, vec4 b, vec4 c) {
@@ -86,33 +80,35 @@ MINIGL_INLINE float max3_clampf(float a, float b, float c, float min, float max)
 
 MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
     assert(!isnanf(z));
+
+    minigl_pixel_t* p = &cfg.frame->data[y][x];
+
     // NOTE: Checking for z > 0.0 is also a good idea, but since z buffer is
     // normally init at 0 it helps improve performance
-    if (z > frame.z_buff[y][x] || z < 0.0f) return;
-    frame.z_buff[y][x] = z;
+    if (z > p->depth || z < 0.0f) return;
+    p->depth = z;
 
 #ifndef MINIGL_NO_DITHERING
     // FIXME: use mask?
-    frame.c_buff[y][x] = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
+    p->color = (color >= cfg.dither.color[y % cfg.dither.size_y][x % cfg.dither.size_x]);
 #else
-    frame.c_buff[y][x] = color;
+    p->color = color;
 #endif
 }
 
 MINIGL_INLINE void set_pixel_tex_2d(int x, int y, float z, float uf, float vf) {
-    assert(uf <= 1.0);
-    assert(vf <= 1.0);
-
     // Scale
     uf *= (float)(cfg.texture.size_x - 1);
     vf *= (float)(cfg.texture.size_y - 1);
 
-    int u = uf;
-    int v = vf;
+    int u = clampi(uf, 0, cfg.texture.size_x - 1);
+    int v = clampi(vf, 0, cfg.texture.size_y - 1);
 
-    if (cfg.texture.opacity[v][u] == 0) return;
+    minigl_pixel_ga_t p = cfg.texture.data[v][u];
 
-    set_pixel(x, y, z, cfg.texture.color[v][u]);
+    if (p.alpha == 0) return;
+
+    set_pixel(x, y, z, p.color);
 }
 
 MINIGL_INLINE void scanline_slopes(float a, float b, float c, vec4 v[3], vec3 out) {
@@ -143,7 +139,7 @@ MINIGL_INLINE void scanline_add_slope2(vec3 slope, vec2 out) {
 }
 
 MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u_range, vec2 v_range, const uint8_t color, const bool use_tex) {
-    vec2 x_l;
+    ivec2 x_l;
 
     // Swap x_l[0] and x_l[1]
     int start_i = 0;
@@ -165,7 +161,7 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     float v_delta = (v_range[stop_i] - v_range[start_i]) * delta_k;
 
     // Clamp AFTER calculating slopes!
-    glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
+    glm_ivec2_clamp(x_l, 0, SCREEN_SIZE_X);
 
     float x_start_delta = fabs(x_l[start_i] - x_range[start_i]);
     float z = z_range[start_i] + x_start_delta * z_delta;
@@ -191,16 +187,16 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     }
 }
 
-MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
+MINIGL_INLINE void draw(const minigl_objbuf_t* buf, const bool use_tex) {
     vec4 v[3];
     vec2 t[3];
 
     if (use_tex) {
-        assert(buf.tcoord_size > 0);
+        assert(buf->tcoord_size > 0);
     }
 
     // FIXME: Need to improve performance!!!
-    for (int f = 0; f < buf.face_size; f++) {
+    for (int f = 0; f < buf->face_size; f++) {
         //---------------------------------------------------------------------------
         // Indexing
         //---------------------------------------------------------------------------
@@ -210,7 +206,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
 
         // FIXME: move out
         for (int i = 0; i < 3; i++) {
-            glm_vec4_copy(buf.vcoord_ptr[buf.vface_ptr[f][i]], v[i]);
+            glm_vec4_copy(buf->vcoord_ptr[buf->vface_ptr[f][i]], v[i]);
 
             if (v[i][3] <= 0) {
                 drop = true;
@@ -232,9 +228,9 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
 
         // Get texture coordinates
         if (use_tex) {
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][0]], t[0]);
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][1]], t[1]);
-            glm_vec2_copy(buf.tcoord_ptr[buf.tface_ptr[f][2]], t[2]);
+            glm_vec2_copy(buf->tcoord_ptr[buf->tface_ptr[f][0]], t[0]);
+            glm_vec2_copy(buf->tcoord_ptr[buf->tface_ptr[f][1]], t[1]);
+            glm_vec2_copy(buf->tcoord_ptr[buf->tface_ptr[f][2]], t[2]);
         }
 
         //---------------------------------------------------------------------------
@@ -299,10 +295,10 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
 
         if (!use_tex) {
             if (cfg.texture_mode == MINIGL_SHADE_MATERIAL) {
-                assert(buf.mface_ptr != NULL);
-                int mat_i = buf.mface_ptr[f];
+                assert(buf->mface_ptr != NULL);
+                int mat_i = buf->mface_ptr[f];
                 assert(mat_i < cfg.matgroup->size);
-                color = cfg.matgroup->color[buf.mface_ptr[f]];
+                color = cfg.matgroup->color[buf->mface_ptr[f]];
             } else {
                 color = cfg.color;
             }
@@ -442,7 +438,7 @@ MINIGL_INLINE void draw(const minigl_objbuf_t buf, const bool use_tex) {
     }
 }
 
-void minigl_draw(minigl_objbuf_t buf) {
+void minigl_draw(minigl_objbuf_t* buf) {
     if (cfg.texture_mode == MINIGL_SHADE_TEX_2D) {
         draw(buf, true);
     } else {
@@ -450,6 +446,12 @@ void minigl_draw(minigl_objbuf_t buf) {
     }
 }
 
-minigl_frame_t* minigl_get_frame(void) {
-    return &frame;
+void minigl_clear(uint8_t color, int depth) {
+    for (int y = 0; y < SCREEN_SIZE_Y; y++) {
+        for (int x = 0; x < SCREEN_SIZE_X; x++) {
+            minigl_pixel_t* p = &cfg.frame->data[y][x];
+            p->color = color;  // Clear color buffer
+            p->depth = depth;  // Clear z buffer
+        }
+    }
 }

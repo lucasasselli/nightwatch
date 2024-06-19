@@ -36,8 +36,8 @@ void minigl_obj_copy_trans(minigl_obj_t in, mat4 trans, minigl_obj_t* out);
 
 void minigl_obj_trans(minigl_obj_t* in, mat4 trans);
 
-minigl_objbuf_t minigl_objbuf_init(size_t size);
+minigl_objbuf_t* minigl_objbuf_new(size_t size);
 
-void minigl_objbuf_free(minigl_objbuf_t buf);
+void minigl_objbuf_free(minigl_objbuf_t* buf);
 
 void minigl_obj_to_objbuf_trans(minigl_obj_t in, mat4 trans, minigl_objbuf_t* out);

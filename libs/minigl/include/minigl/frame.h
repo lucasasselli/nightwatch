@@ -10,9 +10,24 @@
 #define SCREEN_SIZE_Y 240
 #endif
 
+#ifdef __arm__
+#include <arm_fp16.h>
+typedef __fp16 fp16_t;
+#else
+typedef float fp16_t;
+#endif
+
 typedef struct {
-    uint8_t c_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
-    float z_buff[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+    fp16_t depth;
+    uint8_t color;
+} minigl_pixel_t;
+
+typedef struct {
+    minigl_pixel_t** data;
+    int size_x;
+    int size_y;
 } minigl_frame_t;
 
-int minigl_frame_to_file(minigl_frame_t frame, char* path);
+minigl_frame_t* minigl_frame_new(int width, int height);
+
+int minigl_frame_to_file(minigl_frame_t* frame, char* path);

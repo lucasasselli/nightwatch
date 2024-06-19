@@ -35,6 +35,8 @@ const char *PROMPT_STR_CLOSE = "\xE2\x92\xB7 Close";
 // Resources
 //---------------------------------------------------------------------------
 
+minigl_frame_t *frame;
+
 // Textures
 minigl_tex_t tex_dither;
 
@@ -45,7 +47,7 @@ LCDBitmap *img_gameover;
 minigl_obj_t obj_enemy;
 
 // Object buffer
-minigl_objbuf_t obj_buf;
+minigl_objbuf_t *obj_buf;
 
 // Fonts
 LCDFont *font_gui;
@@ -102,31 +104,31 @@ void screen_update(void) {
 #endif
 
     uint8_t *pd_frame = pd->graphics->getFrame();
-    minigl_frame_t *minigl_frame = minigl_get_frame();
 
     for (int y = 0; y < SCREEN_SIZE_Y; y++) {
         for (int x = 0; x < SCREEN_SIZE_X; x++) {
-            uint8_t color = minigl_frame->c_buff[y][x];
+            minigl_pixel_t p = frame->data[y][x];
+
+            assert(p.depth >= 0.0f && p.depth <= 1.0f);
 
 #ifndef TORCH_DISABLE
             uint8_t m = torch_mask[torch_mask_i][y][x];
 
             if (m) {
-                if (color > 0) {
+                if (p.color > 0) {
                     // If pixel is already fully back, don't bother
-                    float z = minigl_frame->z_buff[y][x];
-                    int torch_fade_i = (TORCH_FADE_STEPS - 1) * z;
-                    color *= torch_fade[torch_mask_i][torch_fade_i];
-                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+                    int torch_fade_i = (TORCH_FADE_STEPS - 1) * p.depth;
+                    p.color *= torch_fade[torch_mask_i][torch_fade_i];
+                    p.color = (p.color >= tex_dither.data[y & 0x0000001F][x & 0x0000001F].color);
                 }
             } else {
-                color = 0;
+                p.color = 0;
             }
 #else
-            color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+            p.color = (p.color >= tex_dither.data[y & 0x0000001F][x & 0x0000001F].color);
 #endif
 
-            if (color) {
+            if (p.color) {
                 clearpixel(pd_frame, X_OFFSET + x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
             } else {
                 setpixel(pd_frame, X_OFFSET + x, SCREEN_SIZE_Y - y - 1, LCD_ROWSIZE);
@@ -178,7 +180,7 @@ void gen_torch_mask(void) {
                 }
 
                 if (color > 0) {
-                    color = (color >= tex_dither.color[y & 0x0000001F][x & 0x0000001F]);
+                    color = (color >= tex_dither.data[y & 0x0000001F][x & 0x0000001F].color);
                 }
                 torch_mask[i][y][x] = color;
             }
@@ -242,24 +244,26 @@ static int lua_load(lua_State *L) {
     } else if (load_step < (LOAD_STEP_LOCAL_CNT + TEX_ID_NUM + TEX_MDBB_ID_NUM)) {
         switch (load_step - TEX_ID_NUM - TEX_MDBB_ID_NUM) {
             case 0:
-                // Sound
+                // Load sounds
                 sound_init();
-                break;
 
-            case 1:
                 // Load Fonts
                 font_gui = pd->graphics->loadFont("/System/Fonts/Asheville-Sans-14-Light.pft", NULL);
                 font_note = pd->graphics->loadFont("res/fonts/handwriting.pft", NULL);
                 font_keypad = pd->graphics->loadFont("res/fonts/Sasser-Slab-Bold.pft", NULL);
 
-                // load Objects
-                obj_init();
-
                 // Load image
                 img_gameover = pd->graphics->loadBitmap("res/images/gameover.pdi", NULL);
+                break;
 
-                // Object buffer
-                obj_buf = minigl_objbuf_init(200);
+            case 1:
+                // Minigl
+                frame = minigl_frame_new(SCREEN_SIZE_X, SCREEN_SIZE_Y);
+                minigl_set_frame(frame);
+                obj_buf = minigl_objbuf_new(200);
+
+                // Load objects
+                obj_init();
 
                 break;
 

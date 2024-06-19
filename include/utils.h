@@ -11,13 +11,6 @@
 #define debug fake_printf
 #endif
 
-#ifdef __arm__
-#include <arm_fp16.h>
-typedef __fp16 fp16_t;
-#else
-typedef float fp16_t;
-#endif
-
 extern PlaydateAPI* pd;
 
 // Pixel handling macros

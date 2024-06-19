@@ -2,10 +2,14 @@
 
 #include <spng.h>
 
+typedef struct {
+    uint8_t color;
+    uint8_t alpha;
+} minigl_pixel_ga_t;
+
 // FIXME: Make opacity optional
 typedef struct {
-    uint8_t** color;
-    uint8_t** opacity;
+    minigl_pixel_ga_t** data;
     uint32_t size_x;
     uint32_t size_y;
 } minigl_tex_t;

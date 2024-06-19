@@ -4,6 +4,8 @@
 #include "minigl/minigl.h"
 #include "utils.h"
 
+extern minigl_objbuf_t* obj_buf;
+
 // Other
 float render_timer = 0;
 
@@ -78,7 +80,7 @@ static void draw_item(item_t* item, camera_t camera, mat4 trans, int x, int y) {
         glm_rotate_at(item_trans, (vec3){0.0f, 0.0f, 0.0f}, render_timer, (vec3){0.0f, 1.0f, 0.0f});
     }
 
-    minigl_obj_to_objbuf_trans(*obj_get(item->obj_id), item_trans, &obj_buf);
+    minigl_obj_to_objbuf_trans(*obj_get(item->obj_id), item_trans, obj_buf);
     minigl_draw(obj_buf);
 }
 
@@ -108,7 +110,7 @@ void renderer_draw(game_state_t* gs, float delta_t) {
         mat4_billboard(gs->camera, enemy_trans);
         glm_mat4_mul(gs->camera.trans, enemy_trans, enemy_trans);
 
-        minigl_obj_to_objbuf_trans(*obj_get(OBJ_ID_ENEMY), enemy_trans, &obj_buf);
+        minigl_obj_to_objbuf_trans(*obj_get(OBJ_ID_ENEMY), enemy_trans, obj_buf);
         minigl_set_tex(*tex_get(TEX_ID_ENEMY));
         minigl_draw(obj_buf);
     }

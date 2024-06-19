@@ -18,8 +18,8 @@ static void png_rgba8_to_ga8(uint8_t *in, size_t size, minigl_tex_t *out) {
         // Calculate pixel luminosity (https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color)
         float lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
 
-        out->color[y][x] = (uint8_t)lum;
-        out->opacity[y][x] = a > 0 ? 255 : 0;
+        out->data[y][x].color = (uint8_t)lum;
+        out->data[y][x].alpha = a > 0 ? 255 : 0;
     }
 }
 
@@ -67,11 +67,9 @@ int minigl_tex_read_file(const char *path, minigl_tex_t *out) {
     spng_decode_image(ctx, temp, out_size, SPNG_FMT_RGBA8, 0);
 
     // Allocate final texture memory location
-    out->color = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
-    out->opacity = (uint8_t **)malloc(out->size_y * sizeof(uint8_t *));
+    out->data = (minigl_pixel_ga_t **)malloc(out->size_y * sizeof(minigl_pixel_ga_t *));
     for (uint32_t j = 0; j < out->size_y; j++) {
-        out->color[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
-        out->opacity[j] = (uint8_t *)malloc(out->size_x * sizeof(uint8_t));
+        out->data[j] = (minigl_pixel_ga_t *)malloc(out->size_x * sizeof(minigl_pixel_ga_t));
     }
 
     png_rgba8_to_ga8(temp, out_size, out);

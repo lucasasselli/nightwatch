@@ -31,12 +31,15 @@ typedef enum {
 
 // State objects
 typedef struct {
+    minigl_frame_t* frame;
     minigl_tex_t dither;
     minigl_shade_mode_t texture_mode;
     minigl_tex_t texture;
     uint8_t color;
     minigl_matgroup_t* matgroup;
 } minigl_cfg_t;
+
+void minigl_set_frame(minigl_frame_t* frame);
 
 void minigl_set_tex(minigl_tex_t t);
 
@@ -46,8 +49,6 @@ void minigl_set_color(uint8_t color);
 
 void minigl_set_matgroup(minigl_matgroup_t* matgroup);
 
+void minigl_draw(minigl_objbuf_t* obj);
+
 void minigl_clear(uint8_t color, int depth);
-
-void minigl_draw(minigl_objbuf_t obj);
-
-minigl_frame_t* minigl_get_frame(void);
