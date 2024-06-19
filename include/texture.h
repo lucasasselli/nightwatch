@@ -7,7 +7,6 @@ typedef enum {
     TEX_ID_ENEMY,
     TEX_ID_WETFLOOR,
     TEX_ID_NOTE,
-    TEX_ID_WOOD,
     TEX_ID_WC_SINK,
     TEX_ID_SIGN_MUSEUM_HISTORY,
     TEX_ID_SIGN_WC_MAN,
@@ -27,7 +26,7 @@ typedef enum {
     TEX_ID_COLUMN_CYPHER,
 } tex_id_t;
 
-#define TEX_ID_NUM 22
+#define TEX_ID_NUM 21
 
 typedef enum {
     TEX_ID_VENUS

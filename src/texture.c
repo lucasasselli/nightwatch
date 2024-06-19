@@ -24,7 +24,6 @@ int tex_load(tex_id_t id) {
         TEXID_LOAD_CASE("res/textures/monster_idle.tex", TEX_ID_ENEMY);
         TEXID_LOAD_CASE("res/textures/wetfloor.tex", TEX_ID_WETFLOOR);
         TEXID_LOAD_CASE("res/textures/note.tex", TEX_ID_NOTE);
-        TEXID_LOAD_CASE("res/textures/wood.tex", TEX_ID_WOOD);
         TEXID_LOAD_CASE("res/textures/sink.tex", TEX_ID_WC_SINK);
         TEXID_LOAD_CASE("res/textures/museum_history.tex", TEX_ID_SIGN_MUSEUM_HISTORY);
         TEXID_LOAD_CASE("res/textures/sign_wc_man.tex", TEX_ID_SIGN_WC_MAN);
