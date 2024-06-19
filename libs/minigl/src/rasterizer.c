@@ -100,12 +100,15 @@ MINIGL_INLINE void set_pixel(int x, int y, float z, uint8_t color) {
 }
 
 MINIGL_INLINE void set_pixel_tex_2d(int x, int y, float z, float uf, float vf) {
+    assert(uf <= 1.0);
+    assert(vf <= 1.0);
+
     // Scale
     uf *= (float)(cfg.texture.size_x - 1);
     vf *= (float)(cfg.texture.size_y - 1);
 
-    int u = clampi(uf, 0, cfg.texture.size_x - 1);
-    int v = clampi(vf, 0, cfg.texture.size_y - 1);
+    int u = uf;
+    int v = vf;
 
     if (cfg.texture.opacity[v][u] == 0) return;
 
@@ -164,7 +167,7 @@ MINIGL_INLINE void scanline_draw(const int y, vec2 x_range, vec2 z_range, vec2 u
     // Clamp AFTER calculating slopes!
     glm_vec2_clamp(x_l, 0, SCREEN_SIZE_X);
 
-    float x_start_delta = x_l[start_i] - x_range[start_i];
+    float x_start_delta = fabs(x_l[start_i] - x_range[start_i]);
     float z = z_range[start_i] + x_start_delta * z_delta;
     float u = u_range[start_i] + x_start_delta * u_delta;
     float v = v_range[start_i] + x_start_delta * v_delta;
