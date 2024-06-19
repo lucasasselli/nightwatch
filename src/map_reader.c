@@ -1,6 +1,7 @@
 #include "map_reader.h"
 
 minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
+minigl_matgroup_t mat_shutter = {.size = 3, .color = {160, 128, 96}};
 
 static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
@@ -21,9 +22,9 @@ static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
 static void add_door(map_t map, int x, int y, dir_t dir, int pin) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;
-    item->obj_id = OBJ_ID_WALL;
-    item->tex_id = TEX_ID_FENCE_CLOSED;
-    item->draw_mode = DRAW_MODE_COLOR;
+    item->obj_id = OBJ_ID_SHUTTER_CLOSED;
+    item->draw_mode = DRAW_MODE_MATERIAL;
+    item->matgroup = &mat_shutter;
     item->dir = dir;
     item->action.type = ACTION_KEYPAD;
     item->action.arg = pin;
@@ -103,14 +104,17 @@ void map_read(map_t map) {
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_4, DIR_SOUTH));
 
         // Statue
-        // TODO: Replace with something else
+        // TODO: Replace with something else!
         map_item_add_xy(map, X + 4, Y + 4 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+
+        // Museum history sign
+        map_item_add_xy(map, X + WIDTH - 1, Y + 2, item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST));
 
         // Level 2 gate
         add_room(map, X + 3, Y - 1, 3, 1);
-        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 4673);
-        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 4673);
-        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 4673);
+        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 9568);
+        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 9568);
+        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 9568);
 
         // Note(s)
         add_note(map, X + 4, Y + 7, 0);
@@ -132,7 +136,7 @@ void map_read(map_t map) {
         add_room(map, X - 1, Y, 1, 1);
 
         // Sign
-        map_item_add_xy(map, X - 2, Y + 1, item_new_tex(OBJ_ID_WC_SIGN, TEX_ID_SIGN_WC_MAN, DIR_EAST));
+        map_item_add_xy(map, X - 2, Y + 1, item_new_tex(OBJ_ID_SIGN_SMALL_SIDE, TEX_ID_SIGN_WC_MAN, DIR_EAST));
 
         // Barrier
         map_item_add_xy(map, X - 1, Y, item_new_tex(OBJ_ID_WETFLOOR, TEX_ID_WETFLOOR, DIR_WEST));
@@ -153,7 +157,7 @@ void map_read(map_t map) {
         add_room(map, X - 1, Y + HEIGHT - 1, 1, 1);
 
         // Sign
-        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_WC_SIGN, TEX_ID_SIGN_WC_WOMEN, DIR_EAST));
+        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_SIGN_SMALL_SIDE, TEX_ID_SIGN_WC_WOMEN, DIR_EAST));
 
         // Stalls
         map_item_add_xy(map, X + 0, Y, item_new_color(OBJ_ID_WC_PANEL, 32, DIR_SOUTH));
@@ -163,8 +167,6 @@ void map_read(map_t map) {
         map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_ID_WC_PANEL, 32, DIR_SOUTH));
         map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_ID_WC_COLUMN, 96, DIR_SOUTH));
         map_item_add_xy(map, X + 2, Y, item_new_color(OBJ_ID_WC_PANEL, 32, DIR_EAST));
-
-        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_WALL_GRAFFITI, TEX_LVL1_CYPHER, DIR_WEST));
 
         // Sinks
         map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_WC_SINK, TEX_ID_WC_SINK, DIR_NORTH));
@@ -192,11 +194,13 @@ void map_read(map_t map) {
 
         add_room(map, X, Y, WIDTH, HEIGHT);
 
+        // Statues
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
+
+        // map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
+        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
     }
 
@@ -214,6 +218,15 @@ void map_read(map_t map) {
         // Entrance(s)
         add_room(map, X + 2, Y + HEIGHT, 2, 1);
         add_room(map, X + WIDTH - 4, Y + HEIGHT, 2, 1);
+
+        // Statues
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+        // map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH));
     }
 
     //---------------------------------------------------------------------------
@@ -232,9 +245,17 @@ void map_read(map_t map) {
         add_room(map, X - 1, Y + 11, 1, 2);
 
         // Benches
-        map_item_add_xy(map, X + 2, Y + 3, item_new_tex(OBJ_ID_BENCH, TEX_ID_WOOD, DIR_WEST));
-        map_item_add_xy(map, X + 2, Y + 7, item_new_tex(OBJ_ID_BENCH, TEX_ID_WOOD, DIR_WEST));
-        map_item_add_xy(map, X + 2, Y + 11, item_new_tex(OBJ_ID_BENCH, TEX_ID_WOOD, DIR_WEST));
+        map_item_add_xy(map, X + 2, Y + 3, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST));
+        map_item_add_xy(map, X + 2, Y + 7, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST));
+        map_item_add_xy(map, X + 2, Y + 11, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST));
+
+        // Pictures
+        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_0, DIR_EAST));
+        map_item_add_xy(map, X + 5, Y + 4, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_1, DIR_EAST));
+        map_item_add_xy(map, X + 5, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_2, DIR_EAST));
+        map_item_add_xy(map, X + 5, Y + 8, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_3, DIR_EAST));
+        map_item_add_xy(map, X + 5, Y + 10, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_4, DIR_EAST));
+        map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST));
     }
 
     //---------------------------------------------------------------------------

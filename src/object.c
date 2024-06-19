@@ -15,9 +15,12 @@ int obj_init(void) {
     result |= minigl_obj_read_file("res/models/wall.obj", &obj_wall, 0);
     result |= minigl_obj_read_file("res/models/cube.obj", &obj_cube, 0);
     result |= minigl_obj_read_file("res/models/cube.obj", &obj_array[OBJ_ID_BASE], 0);
-    result |= minigl_obj_read_file("res/models/wetfloor.obj", &obj_array[OBJ_ID_WETFLOOR], 0);
+    result |= minigl_obj_read_file("res/models/tile_high_poly.obj", &obj_array[OBJ_ID_SIGN_HUGE], MINIGL_OBJ_TEXFLIPY);
+    result |= minigl_obj_read_file("res/models/wetfloor.obj", &obj_array[OBJ_ID_WETFLOOR], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/bench.obj", &obj_array[OBJ_ID_BENCH], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/sink.obj", &obj_array[OBJ_ID_WC_SINK], MINIGL_OBJ_TEXFLIPY);
+    result |= minigl_obj_read_file("res/models/shutter_closed.obj", &obj_array[OBJ_ID_SHUTTER_CLOSED], MINIGL_OBJ_TEXFLIPY);
+    result |= minigl_obj_read_file("res/models/shutter_open.obj", &obj_array[OBJ_ID_SHUTTER_OPEN], MINIGL_OBJ_TEXFLIPY);
 
     if (result) return result;
 
@@ -41,6 +44,24 @@ int obj_init(void) {
     glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_WALL_GRAFFITI]);
 
+    // Sign square
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
+    // glm_scale(trans, (vec3){1.0f, 1.0, 1.0});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SQUARE]);
+
+    // Sign small side
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.3f, 0.2f, -0.49f});
+    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SMALL_SIDE]);
+
+    // Sign huge
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
+    glm_scale(trans, (vec3){4.0f, 1.5, 0.2});
+    minigl_obj_trans(&obj_array[OBJ_ID_SIGN_HUGE], trans);
+
     // Enemy
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_scale(trans, (vec3){1.0f, 1.5f, 1.0});
@@ -63,6 +84,14 @@ int obj_init(void) {
     glm_translate(trans, (vec3){-0.0f, 0.0f, 0.21f});
     glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_COLUMN_GRAFFITI]);
+
+    // Shutter open/closed
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_scale(trans, (vec3){0.5f, 1.0, 0.5});
+    glm_translate(trans, (vec3){0.0f, -1.0f, -1.0f});
+    glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
+    minigl_obj_trans(&obj_array[OBJ_ID_SHUTTER_CLOSED], trans);
+    minigl_obj_trans(&obj_array[OBJ_ID_SHUTTER_OPEN], trans);
 
     // Base
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -106,12 +135,6 @@ int obj_init(void) {
     glm_translate(trans, (vec3){0.0f, -3.5f, -1.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
     minigl_obj_trans(&obj_array[OBJ_ID_WC_SINK], trans);
-
-    // WC Sign
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.3f, 0.2f, -0.49f});
-    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_WC_SIGN]);
 
     return 0;
 }

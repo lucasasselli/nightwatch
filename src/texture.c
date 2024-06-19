@@ -24,19 +24,24 @@ int tex_load(tex_id_t id) {
         TEXID_LOAD_CASE("res/textures/monster_idle.tex", TEX_ID_ENEMY);
         TEXID_LOAD_CASE("res/textures/wetfloor.tex", TEX_ID_WETFLOOR);
         TEXID_LOAD_CASE("res/textures/note.tex", TEX_ID_NOTE);
-        TEXID_LOAD_CASE("res/textures/fence_open.tex", TEX_ID_FENCE_OPEN);
-        TEXID_LOAD_CASE("res/textures/fence_closed.tex", TEX_ID_FENCE_CLOSED);
         TEXID_LOAD_CASE("res/textures/wood.tex", TEX_ID_WOOD);
         TEXID_LOAD_CASE("res/textures/sink.tex", TEX_ID_WC_SINK);
+        TEXID_LOAD_CASE("res/textures/museum_history.tex", TEX_ID_SIGN_MUSEUM_HISTORY);
         TEXID_LOAD_CASE("res/textures/sign_wc_man.tex", TEX_ID_SIGN_WC_MAN);
         TEXID_LOAD_CASE("res/textures/sign_wc_women.tex", TEX_ID_SIGN_WC_WOMEN);
+        TEXID_LOAD_CASE("res/textures/picture_owl.tex", TEX_ID_PICTURE_0);
+        TEXID_LOAD_CASE("res/textures/picture_key.tex", TEX_ID_PICTURE_1);
+        TEXID_LOAD_CASE("res/textures/picture_sword.tex", TEX_ID_PICTURE_2);
+        TEXID_LOAD_CASE("res/textures/picture_telescope.tex", TEX_ID_PICTURE_3);
+        TEXID_LOAD_CASE("res/textures/picture_horse.tex", TEX_ID_PICTURE_4);
+        TEXID_LOAD_CASE("res/textures/picture_man.tex", TEX_ID_PICTURE_5);
         TEXID_LOAD_CASE("res/textures/single_digit_0.tex", TEX_ID_COLUMN_DIG_0);
         TEXID_LOAD_CASE("res/textures/single_digit_1.tex", TEX_ID_COLUMN_DIG_1);
         TEXID_LOAD_CASE("res/textures/single_digit_3.tex", TEX_ID_COLUMN_DIG_3);
         TEXID_LOAD_CASE("res/textures/single_digit_4.tex", TEX_ID_COLUMN_DIG_4);
         TEXID_LOAD_CASE("res/textures/single_digit_6.tex", TEX_ID_COLUMN_DIG_6);
         TEXID_LOAD_CASE("res/textures/single_digit_7.tex", TEX_ID_COLUMN_DIG_7);
-        TEXID_LOAD_CASE("res/textures/level1_code_cypher.tex", TEX_LVL1_CYPHER);
+        TEXID_LOAD_CASE("res/textures/column_cypher.tex", TEX_ID_COLUMN_CYPHER);
     }
 }
 

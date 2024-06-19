@@ -6,12 +6,22 @@
 #include "minigl/system.h"
 
 #define LINE_BUFFER_SIZE 70
+#define MAT_NAME_SIZE_MAX 20
+#define MAT_CNT_MAX 30
 
 // TODO: Add ability to read bitmaps
 
 static bool str_starts_with(const char *a, const char *b) {
     if (strncmp(a, b, strlen(b)) == 0) return 1;
     return 0;
+}
+
+static int get_mat_enum(const char *name, const char mat_array[MAT_CNT_MAX][MAT_NAME_SIZE_MAX], int mat_cnt) {
+    for (int i = 0; i < mat_cnt; i++) {
+        if (strcmp(name, mat_array[i]) == 0) return i;
+    }
+
+    return mat_cnt;
 }
 
 int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
@@ -23,6 +33,10 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
 
     char line_buffer[LINE_BUFFER_SIZE];
     int char_index = 0;
+
+    char mat_name[MAT_NAME_SIZE_MAX];
+    char mat_array[MAT_CNT_MAX][MAT_NAME_SIZE_MAX];
+    int mat_cnt = 0;
 
     bool has_uv = false;
     bool has_mat = false;
@@ -57,7 +71,14 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
             }
 
             if (str_starts_with(line_buffer, "usemtl ")) {
+                // Enumerate the materials
+                sscanf(line_buffer, "usemtl %s", mat_name);
                 has_mat = true;
+                if (get_mat_enum(mat_name, mat_array, mat_cnt) == mat_cnt) {
+                    // New material
+                    strcpy(mat_array[mat_cnt], mat_name);
+                    mat_cnt++;
+                }
             }
 
             // Reset line
@@ -154,7 +175,8 @@ int minigl_obj_read_file(char *path, minigl_obj_t *out, int flags) {
 
             if (str_starts_with(line_buffer, "usemtl ")) {
                 // Materials
-                active_mat++;
+                sscanf(line_buffer, "usemtl %s", mat_name);
+                active_mat = get_mat_enum(mat_name, mat_array, mat_cnt);
             }
 
             // Reset line
