@@ -8,6 +8,15 @@ item_t* item_new(void) {
     return item;
 }
 
+void item_list_free(item_t* item) {
+    item_t* this = item;
+    while (this != NULL) {
+        item_t* i = this;
+        this = this->next;
+        free(i);
+    }
+}
+
 item_t* item_new_color(obj_id_t obj_id, uint8_t color, dir_t dir) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;

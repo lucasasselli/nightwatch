@@ -46,6 +46,7 @@ typedef struct item_t item_t;
 
 struct item_t {
     bool hidden;
+    bool collide;
 
     item_type_t type;
     obj_id_t obj_id;
@@ -66,6 +67,8 @@ struct item_t {
 };
 
 item_t* item_new(void);
+
+void item_list_free(item_t* item);
 
 item_t* item_new_color(obj_id_t obj_id, uint8_t color, dir_t dir);
 

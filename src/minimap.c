@@ -65,8 +65,8 @@ void minimap_debug_draw(int x, int y, game_state_t* gs) {
         for (int x = 0; x < MAP_SIZE; x++) {
             int mmap_x = MINIMAP_TILE_SIZE * x;
             int mmap_y = MINIMAP_TILE_SIZE * y;
-            minimap_debug_tile_draw(gs->map[y][x], mmap_x, mmap_y, bitmap_data, bitmap_rowbytes);
-            if (map_viz_xy(gs->map, gs->camera.pos, x, y)) clearpixel(bitmap_data, mmap_x + 2, mmap_y + 2, bitmap_rowbytes);
+            minimap_debug_tile_draw(gs->map->grid[y][x], mmap_x, mmap_y, bitmap_data, bitmap_rowbytes);
+            if (map_viz_get_xy(gs->map, gs->camera.pos, x, y)) clearpixel(bitmap_data, mmap_x + 2, mmap_y + 2, bitmap_rowbytes);
         }
     }
 

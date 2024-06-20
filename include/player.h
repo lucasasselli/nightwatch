@@ -14,4 +14,4 @@ void player_action_keypad(bool show);
 
 void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_t);
 
-void player_action_move(PDButtons pushed, float delta_t);
+bool player_action_move(PDButtons pushed, float delta_t);

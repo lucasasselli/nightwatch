@@ -76,7 +76,7 @@ static void enemy_fsm_change_state(enemy_state_t next_state) {
                 do {
                     gs.enemy_tile[0] = rand() % MAP_SIZE;
                     gs.enemy_tile[1] = rand() % MAP_SIZE;
-                } while (map_get_collide_ivec2(gs.map, gs.enemy_tile) || map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
+                } while (map_get_collide_ivec2(gs.map, gs.enemy_tile) || map_viz_get_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
             }
             break;
 
@@ -183,7 +183,7 @@ void enemy_fsm_do(float delta_t) {
 void enemy_update_state(float delta_t) {
     // Is enemy visible?
     if (gs.enemy_state != ENEMY_HIDDEN && gs.torch_charge > 0.0f) {
-        gs.enemy_in_fov = map_viz_ivec2(gs.map, gs.camera.pos, gs.enemy_tile) && enemy_get_distance() <= ENEMY_DIST_MAX;
+        gs.enemy_in_fov = map_viz_get_ivec2(gs.map, gs.camera.pos, gs.enemy_tile) && enemy_get_distance() <= ENEMY_DIST_MAX;
     } else {
         gs.enemy_in_fov = false;
     }

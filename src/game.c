@@ -25,7 +25,15 @@ void game_reset(void) {
     // State
     player_reset();
     enemy_reset();
+
+    // Setup map
+    if (gs.map != NULL) {
+        // If map is not NULL free
+        map_free(gs.map);
+    }
+    gs.map = map_new();
     map_read(gs.map);
+    map_viz_update(gs.map, gs.camera);
 
     gs.torch_charge = 0.0f;
 }
@@ -50,7 +58,10 @@ static void handle_keys(PDButtons pushed, float delta_t) {
                 }
             }
         }
-        player_action_move(pushed, delta_t);
+        if (player_action_move(pushed, delta_t)) {
+            // Update map visibility
+            map_viz_update(gs.map, gs.camera);
+        }
     } else if (gs.player_state == PLAYER_READING) {
         if (pushed & kButtonB) {
             player_action_note(false);

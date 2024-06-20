@@ -4,4 +4,4 @@
 
 #include "map.h"
 
-void map_read(map_t map);
+void map_read(map_t* map);

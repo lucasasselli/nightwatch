@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include "constants.h"
 #include "game_state.h"
 #include "map.h"
 #include "sound.h"
@@ -32,7 +33,6 @@ void player_reset(void) {
     ivec2_to_vec2_center(t, gs.camera.pos);
 
     camera_update_trans(&gs.camera);
-    map_viz_update(gs.map, gs.camera);
 }
 
 void player_action_note(bool show) {
@@ -78,13 +78,13 @@ void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_
                 sound_effect_play(SOUND_KEY);
             } else {
                 int insert_pin = 0;
-                // Check if pin is correct
                 for (int i = 0; i < KEYPAD_PIN_SIZE; i++) {
                     insert_pin *= 10;
                     insert_pin += gs.keypad_val[i];
                 }
 
                 if (insert_pin == gs.player_interact_item->action.arg) {
+                    // Pin correct!
                     sound_effect_play(SOUND_KEYPAD_CORRECT);
                     gs.player_interact_item->action.type = ACTION_NONE;
                     gs.player_interact_item->obj_id = OBJ_ID_SHUTTER_OPEN;
@@ -92,6 +92,7 @@ void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_
                     sound_effect_play(SOUND_FENCE_OPEN);
                     player_action_keypad(false);
                 } else {
+                    // Pin incorrect
                     sound_effect_play(SOUND_KEYPAD_WRONG);
                     gs.keypad_cnt = 0;
                 }
@@ -144,9 +145,9 @@ static bool player_collide(vec2 pos) {
     return false;
 }
 
-void player_action_move(PDButtons pushed, float delta_t) {
+bool player_action_move(PDButtons pushed, float delta_t) {
     // Player movement is pretty expensive!
-    if (pushed == 0) return;
+    if (pushed == 0) return false;
 
     float old_bob = gs.camera.bob;
 
@@ -218,6 +219,5 @@ void player_action_move(PDButtons pushed, float delta_t) {
     // Update camera
     camera_update_trans(&gs.camera);
 
-    // Update map visibility
-    map_viz_update(gs.map, gs.camera);
+    return true;
 }

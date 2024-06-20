@@ -3,7 +3,7 @@
 minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
 minigl_matgroup_t mat_shutter = {.size = 3, .color = {160, 128, 96}};
 
-static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
+static void add_room(map_t* map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             item_t* item = item_new();
@@ -19,7 +19,7 @@ static void add_room(map_t map, int pos_x, int pos_y, int width, int height) {
     }
 }
 
-static void add_door(map_t map, int x, int y, dir_t dir, int pin) {
+static void add_door(map_t* map, int x, int y, dir_t dir, int pin) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;
     item->obj_id = OBJ_ID_SHUTTER_CLOSED;
@@ -31,7 +31,7 @@ static void add_door(map_t map, int x, int y, dir_t dir, int pin) {
     map_item_add_xy(map, x, y, item);
 }
 
-static void add_note(map_t map, int x, int y, int id) {
+static void add_note(map_t* map, int x, int y, int id) {
     item_t* item = item_new_tex(OBJ_ID_NOTE, TEX_ID_NOTE, DIR_NORTH);
     item->effects = EFFECT_SPIN;
     item->action.type = ACTION_NOTE;
@@ -39,7 +39,7 @@ static void add_note(map_t map, int x, int y, int id) {
     map_item_add_xy(map, x, y, item);
 }
 
-static void add_wall(map_t map, int x, int y, dir_t dir) {
+static void add_wall(map_t* map, int x, int y, dir_t dir) {
     item_t* item = item_new();
     item->type = ITEM_WALL;
     item->obj_id = OBJ_ID_WALL;
@@ -62,7 +62,7 @@ static void add_wall(map_t map, int x, int y, dir_t dir) {
     map_item_add_xy(map, x, y, item);
 }
 
-void map_read(map_t map) {
+void map_read(map_t* map) {
     // TODO: Implement read from file?
 
     //---------------------------------------------------------------------------
@@ -81,8 +81,8 @@ void map_read(map_t map) {
         // Entrance
         add_room(map, X, Y, WIDTH, HEIGHT);
         add_door(map, 30, 60, DIR_NORTH, 1234);
-        add_door(map, 31, 60, DIR_NORTH, 1234);
-        add_door(map, 32, 60, DIR_NORTH, 1234);
+        map_tile_clone_xy(map, 31, 60, 30, 60);
+        map_tile_clone_xy(map, 32, 60, 30, 60);
 
         // Columns
         map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH));
@@ -113,8 +113,8 @@ void map_read(map_t map) {
         // Level 2 gate
         add_room(map, X + 3, Y - 1, 3, 1);
         add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 9568);
-        add_door(map, X + 3 + 1, Y - 1, DIR_SOUTH, 9568);
-        add_door(map, X + 3 + 2, Y - 1, DIR_SOUTH, 9568);
+        map_tile_clone_xy(map, X + 3 + 1, Y - 1, X + 3 + 0, Y - 1);
+        map_tile_clone_xy(map, X + 3 + 2, Y - 1, X + 3 + 0, Y - 1);
 
         // Note(s)
         add_note(map, X + 4, Y + 7, 0);
@@ -264,7 +264,7 @@ void map_read(map_t map) {
 
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            if (tile_has_item(map[y][x], ITEM_FLOOR, -1, -1)) {
+            if (tile_has_item(map->grid[y][x], ITEM_FLOOR, -1, -1)) {
                 if (map_is_empty_xy(map, x, y - 1)) {
                     add_wall(map, x, y, DIR_NORTH);
                 }

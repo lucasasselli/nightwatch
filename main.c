@@ -279,8 +279,6 @@ static int lua_load(lua_State *L) {
                 break;
 
             case 4:
-                // Setup map
-                map_init(gs.map);
 
 #ifdef DEBUG_MINIMAP
                 // Setup minimap

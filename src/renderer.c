@@ -90,8 +90,8 @@ void renderer_draw(game_state_t* gs, float delta_t) {
     // Draw map
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
-            map_tile_t tile = gs->map[y][x];
-            if (map_viz_xy(gs->map, gs->camera.pos, x, y)) {
+            map_tile_t tile = gs->map->grid[y][x];
+            if (map_viz_get_xy(gs->map, gs->camera.pos, x, y)) {
                 item_t* item = tile.items;
                 while (item != NULL) {
                     draw_item(item, gs->camera, gs->camera.trans, x, y);

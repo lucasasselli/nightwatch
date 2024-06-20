@@ -7,7 +7,4 @@
 #define CAMERA_UP ((vec3){0.0f, 1.0f, 0.0f})
 #define CAMERA_VEC3(x) ((vec3){x[0], 0.0f, x[1]})
 
-#define MAP_SIZE 64
-#define MAP_DRAW_SIZE 24
-
 #define KEYPAD_PIN_SIZE 4

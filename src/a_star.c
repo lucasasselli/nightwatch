@@ -109,7 +109,7 @@ static int a_star_manhattan_dist(ivec2 a, ivec2 b) {
     return t[0] + t[1];
 }
 
-bool a_star_navigate(map_t map, ivec2 start, ivec2 stop, a_star_path_t* path) {
+bool a_star_navigate(map_t* map, ivec2 start, ivec2 stop, a_star_path_t* path) {
     // A* pathfinding
     // https://web.archive.org/web/20171022224528/http://www.policyalmanac.org:80/games/aStarTutorial.htm
     a_star_node_t* closed_list = NULL;

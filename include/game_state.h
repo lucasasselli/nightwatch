@@ -22,7 +22,7 @@ typedef enum {
 } player_state_t;
 
 typedef struct {
-    map_t map;
+    map_t* map;
 
     camera_t camera;
 
