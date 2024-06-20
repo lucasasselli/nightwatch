@@ -25,7 +25,6 @@ void camera_update_trans(camera_t* camera) {
     glm_vec3_add(vec3_pos, vec3_front, camera_center);
 
     // Update camera position
-
     glm_vec3_add(vec3_pos, vec3_front, camera_center);
     glm_lookat(vec3_pos, camera_center, CAMERA_UP, view);
     glm_mat4_mul(camera->proj, view, camera->trans);
