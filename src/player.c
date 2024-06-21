@@ -194,17 +194,19 @@ bool player_action_move(PDButtons pushed, float delta_t) {
             vec2 coll_normf;
             glm_ivec2_sub(new_posi, old_posi, coll_normi);
 
+            // Collision vector is the perpendicular to the
+            // tile coordinate direction
             vec2_to_ivec2(gs.camera.pos, old_posi);
             vec2_to_ivec2(new_pos, new_posi);
             glm_ivec2_sub(new_posi, old_posi, coll_normi);
             ivec2_to_vec2(coll_normi, coll_normf);
 
+            // Calculate perpendicular vector
             glm_swapf(&coll_normf[0], &coll_normf[1]);
+            coll_normf[0] *= -1.0;
 
-            if ((gs.camera.front[0] > 0) ^ (gs.camera.front[1] > 0)) {
-                coll_normf[0] *= -1.0;  // Perpendicular
-            } else {
-                coll_normf[1] *= -1.0;  // Perpendicular
+            if (glm_vec2_dot(gs.camera.front, coll_normf) < 0.0f) {
+                glm_vec2_scale_as(coll_normf, -1.0, coll_normf);
             }
 
             move_to_dir(gs.camera.pos, coll_normf, speed * delta_t, new_pos);

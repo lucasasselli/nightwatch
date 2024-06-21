@@ -228,7 +228,7 @@ void map_free(map_t *map) {
         for (int x = 0; x < MAP_SIZE; x++) {
             // Check if tile was cloned
             map_tile_t *tile = &map->grid[y][x];
-            if (tile->is_clone) {
+            if (!tile->is_clone) {
                 item_list_free(tile->items);
             }
         }
