@@ -26,8 +26,8 @@ float vec2_angle(vec2 a, vec2 b) {
 }
 
 void vec2_to_ivec2(vec2 in, ivec2 out) {
-    out[0] = roundf(in[0]);
-    out[1] = roundf(in[1]);
+    out[0] = in[0];
+    out[1] = in[1];
 }
 
 void ivec2_to_vec2(ivec2 in, vec2 out) {

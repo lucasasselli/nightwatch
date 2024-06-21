@@ -47,7 +47,7 @@ bool tile_get_collide(map_tile_t tile) {
     } else {
         item_t *this = tile.items;
         while (this != NULL) {
-            if (this->collide) {
+            if (this->collide && !this->hidden) {
                 return true;
             }
             this = this->next;
@@ -171,16 +171,16 @@ void map_viz_update(map_t *map, camera_t camera) {
             ray_posi[1] = ray_posf[1];
 
             map_tile_t tile = map_get_tile_ivec2(map, old_ray_posi);
-            if (tile_has_item(tile, ITEM_WALL, DIR_NORTH, -1)) {
+            if (tile_has_item(tile, ITEM_WALL, DIR_SOUTH, -1)) {
                 if (ray_posi[1] < old_ray_posi[1]) break;
             }
-            if (tile_has_item(tile, ITEM_WALL, DIR_EAST, -1)) {
+            if (tile_has_item(tile, ITEM_WALL, DIR_WEST, -1)) {
                 if (ray_posi[0] > old_ray_posi[0]) break;
             }
-            if (tile_has_item(tile, ITEM_WALL, DIR_SOUTH, -1)) {
+            if (tile_has_item(tile, ITEM_WALL, DIR_NORTH, -1)) {
                 if (ray_posi[1] > old_ray_posi[1]) break;
             }
-            if (tile_has_item(tile, ITEM_WALL, DIR_WEST, -1)) {
+            if (tile_has_item(tile, ITEM_WALL, DIR_EAST, -1)) {
                 if (ray_posi[0] < old_ray_posi[0]) break;
             }
         }

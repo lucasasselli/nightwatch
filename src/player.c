@@ -128,8 +128,7 @@ void player_check_interaction(void) {
     }
 }
 
-static bool player_collide(vec2 pos) {
-    // TODO: Make collisions not sticky!
+static bool is_colliding(vec2 pos) {
     map_tile_t tile = map_get_tile_vec2(gs.map, pos);
 
     if (tile_get_collide(tile)) {
@@ -143,6 +142,12 @@ static bool player_collide(vec2 pos) {
     }
 
     return false;
+}
+
+void move_to_dir(vec2 pos, vec2 dir, float speed, vec2 out) {
+    vec2 camera_delta;
+    glm_vec2_scale_as(dir, speed, camera_delta);
+    glm_vec2_add(pos, camera_delta, out);
 }
 
 bool player_action_move(PDButtons pushed, float delta_t) {
@@ -174,15 +179,39 @@ bool player_action_move(PDButtons pushed, float delta_t) {
     }
 
     if (speed != 0) {
+        // Head bobbing
+        gs.camera.bob = sinf(headbob_timer) * bob_range;
+        headbob_timer += delta_t * bob_speed;
+
         // Moving!
         vec2 new_pos;
-        vec2 camera_delta;
-        glm_vec2_scale_as(gs.camera.front, speed * delta_t, camera_delta);
-        headbob_timer += delta_t * bob_speed;
-        gs.camera.bob = sinf(headbob_timer) * bob_range;
-        glm_vec2_add(gs.camera.pos, camera_delta, new_pos);
+        move_to_dir(gs.camera.pos, gs.camera.front, speed * delta_t, new_pos);
 
-        if (!player_collide(new_pos)) {
+        if (is_colliding(new_pos)) {
+            ivec2 old_posi;
+            ivec2 new_posi;
+            ivec2 coll_normi;
+            vec2 coll_normf;
+            glm_ivec2_sub(new_posi, old_posi, coll_normi);
+
+            vec2_to_ivec2(gs.camera.pos, old_posi);
+            vec2_to_ivec2(new_pos, new_posi);
+            glm_ivec2_sub(new_posi, old_posi, coll_normi);
+            ivec2_to_vec2(coll_normi, coll_normf);
+
+            glm_swapf(&coll_normf[0], &coll_normf[1]);
+
+            if ((gs.camera.front[0] > 0) ^ (gs.camera.front[1] > 0)) {
+                coll_normf[0] *= -1.0;  // Perpendicular
+            } else {
+                coll_normf[1] *= -1.0;  // Perpendicular
+            }
+
+            move_to_dir(gs.camera.pos, coll_normf, speed * delta_t, new_pos);
+            if (!is_colliding(new_pos)) {
+                glm_vec2_copy(new_pos, gs.camera.pos);
+            }
+        } else {
             glm_vec2_copy(new_pos, gs.camera.pos);
         }
 
