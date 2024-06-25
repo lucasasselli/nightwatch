@@ -55,6 +55,9 @@ static void handle_keys(PDButtons pushed, float delta_t) {
                     case ACTION_KEYPAD:
                         player_action_keypad(true);
                         break;
+                    case ACTION_INSPECT:
+                        player_action_inspect(true);
+                        break;
                 }
             }
         }

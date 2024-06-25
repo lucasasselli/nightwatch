@@ -18,6 +18,7 @@ typedef enum {
     PLAYER_ACTIVE,
     PLAYER_READING,
     PLAYER_KEYPAD,
+    PLAYER_INSPECT,
     PLAYER_GAMEOVER
 } player_state_t;
 

@@ -6,6 +6,7 @@
 #include "minimap.h"
 #include "notes.h"
 #include "pd_api.h"
+#include "player.h"
 #include "random.h"
 #include "renderer.h"
 #include "sound.h"
@@ -15,9 +16,12 @@
 // Constants
 //---------------------------------------------------------------------------
 
+const char *PROMPT_STR_INSPECT = "\xE2\x92\xB6 Inspect";
 const char *PROMPT_STR_READ = "\xE2\x92\xB6 Read";
 const char *PROMPT_STR_ENTER = "\xE2\x92\xB6 Enter";
 const char *PROMPT_STR_KEYPAD = "\xE2\x92\xB6 Keypad";
+const char *PROMPT_STR_ZOOM = "\xF0\x9F\x9F\xA8 Zoom";
+const char *PROMPT_STR_MOVE = "\xE2\x9C\x9B Move";
 const char *PROMPT_STR_CLOSE = "\xE2\x92\xB7 Close";
 
 // clang-format off
@@ -60,8 +64,13 @@ fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
 
 #define DRAW_UTF8_STRING(s, x, y) pd->graphics->drawText(s, strlen(s), kUTF8Encoding, x, y)
 
-int note_offset = 0;
 char str_buffer[1000];
+int x_offset = 0;
+int y_offset = 0;
+float zoom = 1.0f;
+LCDBitmap *img_bm;
+int img_width;
+int img_height;
 
 static void torch_mask_init(void) {
     // Torch mask
@@ -178,6 +187,9 @@ void view_prompt_draw(void) {
         case ACTION_KEYPAD:
             DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
             break;
+        case ACTION_INSPECT:
+            DRAW_UTF8_STRING(PROMPT_STR_INSPECT, 310, 210);
+            break;
     }
 }
 
@@ -266,12 +278,12 @@ void view_note_draw(float time) {
     const char *text = NOTES[gs.player_interact_item->action.arg];
 
     if (time == 0.0f) {
-        note_offset = 0;
+        y_offset = 0;
     } else {
-        note_offset = clampi(note_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - LCD_ROWS / 2);
+        y_offset = clampi(y_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - LCD_ROWS / 2);
     }
 
-    int y = Y_OFFSET - note_offset;
+    int y = Y_OFFSET - y_offset;
 
     // Paper
     pd->graphics->clear(kColorBlack);
@@ -378,6 +390,116 @@ void view_keypad_draw(float time) {
     pd->graphics->setFont(font_gui);
     DRAW_UTF8_STRING(PROMPT_STR_ENTER, 325, 190);
     DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 325, 210);
+}
+
+void view_inspect_draw(float time) {
+    const float ZOOM_MAX = 3.0f;
+    const float ZOOM_K = 0.005f;
+    const float TEX_SCALE = 1.0f / ZOOM_MAX;
+    const int MARGIN = 18;
+    const int MOVE_SPEED = 3;
+
+    // Get the texture
+    tex_id_t tex_id = gs.player_interact_item->action.arg;
+    minigl_tex_t *tex = tex_get(tex_id);
+
+    if (time == 0.0f) {
+        // Init
+        x_offset = 0.0f;
+        y_offset = 0.0f;
+        zoom = 1.0f;
+
+        // Calculate the minimum zoom level to fit the biggest
+        // size of the image
+        float aspect_ratio = (float)tex->size_x / (float)tex->size_y;
+        if (aspect_ratio > 1.0f) {
+            // Lanscape
+            img_width = LCD_COLUMNS - 2 * MARGIN;
+            img_height = img_width / aspect_ratio;
+        } else {
+            // Portait
+            img_height = LCD_ROWS - 2 * MARGIN;
+            img_width = img_height / aspect_ratio;
+        }
+
+        // Create the bitmap
+        img_bm = pd->graphics->newBitmap(img_width * ZOOM_MAX, img_height * ZOOM_MAX, kColorWhite);
+
+        float tex_x_step = (float)tex->size_x / (img_width * ZOOM_MAX);
+        float tex_y_step = (float)tex->size_y / (img_height * ZOOM_MAX);
+
+        uint8_t *bm_data = NULL;
+        int bm_rowbytes = 0;
+        pd->graphics->getBitmapData(img_bm, NULL, NULL, &bm_rowbytes, NULL, &bm_data);
+
+        float tex_y = 0.0f;
+        for (int y = 0; y < img_height * ZOOM_MAX; y++) {
+            float tex_x = 0.0f;
+            for (int x = 0; x < img_width * ZOOM_MAX; x++) {
+                uint8_t alpha = tex->data[(int)tex_y][(int)tex_x].alpha;
+                uint8_t color = tex->data[(int)tex_y][(int)tex_x].color;
+                color = alpha > 0.0 ? color : 255;
+
+                if (color > tex_dither.data[y & 0x0000001F][x & 0x0000001F].color) {
+                    clearpixel(bm_data, x, y, bm_rowbytes);
+                } else {
+                    setpixel(bm_data, x, y, bm_rowbytes);
+                }
+                tex_x += tex_x_step;
+            }
+            tex_y += tex_y_step;
+        }
+    }
+
+    // Handle keys
+    PDButtons pushed;
+    pd->system->getButtonState(&pushed, NULL, NULL);
+
+    if (pushed & kButtonUp) {
+        y_offset += MOVE_SPEED;
+    }
+    if (pushed & kButtonDown) {
+        y_offset -= MOVE_SPEED;
+    }
+    if (pushed & kButtonRight) {
+        x_offset -= MOVE_SPEED;
+    }
+    if (pushed & kButtonLeft) {
+        x_offset += MOVE_SPEED;
+    }
+    if (pushed & kButtonB) {
+        player_action_inspect(false);
+        pd->graphics->freeBitmap(img_bm);
+    }
+
+    x_offset = clampi(x_offset, -LCD_COLUMNS, LCD_COLUMNS);
+    y_offset = clampi(y_offset, -LCD_ROWS, LCD_ROWS);
+
+    float crank_delta = pd->system->getCrankChange();
+
+    if (crank_delta != 0.0f) {
+        zoom += crank_delta * ZOOM_K;
+        zoom = glm_clamp(zoom, 1.0f, ZOOM_MAX);
+    }
+
+    // Clear screen
+    pd->graphics->clear(kColorBlack);
+
+    // Draw the image
+    int img_x = LCD_COLUMNS / 2 - (img_width / 2 - x_offset) * zoom;
+    int img_y = LCD_ROWS / 2 - (img_height / 2 - y_offset) * zoom;
+
+    pd->graphics->setDrawMode(kDrawModeCopy);
+    pd->graphics->drawScaledBitmap(img_bm, img_x, img_y, TEX_SCALE * zoom, TEX_SCALE * zoom);
+
+    // Commands
+    pd->graphics->setFont(font_gui);
+    pd->graphics->setDrawMode(kDrawModeFillBlack);
+    pd->graphics->fillRect(0, 215, LCD_COLUMNS, 25, kColorBlack);
+    pd->graphics->setDrawMode(kDrawModeNXOR);
+    DRAW_UTF8_STRING(PROMPT_STR_MOVE, 5, 218);
+    DRAW_UTF8_STRING(PROMPT_STR_ZOOM, 170, 218);
+    DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 330, 218);
 }
 
 void view_gameover_draw(float time) {

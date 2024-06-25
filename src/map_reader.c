@@ -139,7 +139,12 @@ void map_read(map_t* map) {
         map_item_add_xy(map, X + 4, Y + 4 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
 
         // Museum history sign
-        map_item_add_xy(map, X + WIDTH - 1, Y + 2, item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST, false));
+        item_t* sign_hist = item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST, false);
+        sign_hist->action.type = ACTION_INSPECT;
+        sign_hist->action.arg = TEX_ID_SIGN_MUSEUM_HISTORY;
+
+        map_item_add_xy(map, X + WIDTH - 1, Y + 2, sign_hist);
+        add_note(map, X + WIDTH - 2, Y + 2, 2);
 
         // Level 2 shutter
         add_room(map, X + 3, Y - 1, 3, 1);
@@ -233,6 +238,8 @@ void map_read(map_t* map) {
         // map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
         // map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
+
+        add_note(map, X + 2 + 2, Y + 2 + 4, 3);
     }
 
     //---------------------------------------------------------------------------

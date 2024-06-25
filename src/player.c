@@ -56,6 +56,14 @@ void player_action_keypad(bool show) {
     }
 }
 
+void player_action_inspect(bool show) {
+    if (show) {
+        gs.player_state = PLAYER_INSPECT;
+    } else {
+        gs.player_state = PLAYER_ACTIVE;
+    }
+}
+
 void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_t) {
     (void)delta_t;
     if (pushed_old == 0) {

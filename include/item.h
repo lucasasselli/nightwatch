@@ -29,7 +29,8 @@ typedef enum {
 typedef enum {
     ACTION_NONE,
     ACTION_NOTE,
-    ACTION_KEYPAD
+    ACTION_KEYPAD,
+    ACTION_INSPECT
 } action_type_t;
 
 typedef struct {
