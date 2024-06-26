@@ -96,6 +96,8 @@ static int lua_update(lua_State *L) {
     // FIXME: Move to player active once key handling is separated.
     game_update(update_delta_t);
 
+    player_state_time += update_delta_t;
+
     // Clear screen when changing state!
     // Or when requested by the view
     if (player_state_old != gs.player_state || screen_clear_req) {
@@ -103,10 +105,17 @@ static int lua_update(lua_State *L) {
         player_state_time = 0.0;
         screen_clear_req = false;
     }
+    player_state_old = gs.player_state;
 
     switch (gs.player_state) {
         case PLAYER_ACTIVE:
             view_game_draw(player_state_time, update_delta_t);
+
+            // Show prompt
+            if (gs.player_interact) {
+                view_prompt_draw();
+                prompt_shown = true;
+            }
             break;
         case PLAYER_READING:
             view_note_draw(player_state_time);
@@ -122,21 +131,12 @@ static int lua_update(lua_State *L) {
             break;
     }
 
-    // Show prompt
-    if (gs.player_interact && !prompt_shown) {
-        view_prompt_draw();
-        prompt_shown = true;
-    }
-
     if (!gs.player_interact && prompt_shown) {
         if (prompt_shown) {
             prompt_shown = false;
             screen_clear_req = true;
         }
     }
-
-    player_state_old = gs.player_state;
-    player_state_time += update_delta_t;
 
 #ifdef DEBUG
 

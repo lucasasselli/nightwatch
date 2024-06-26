@@ -486,8 +486,8 @@ void view_inspect_draw(float time) {
     pd->graphics->clear(kColorBlack);
 
     // Draw the image
-    int img_x = LCD_COLUMNS / 2 - (img_width / 2 - x_offset) * zoom;
-    int img_y = LCD_ROWS / 2 - (img_height / 2 - y_offset) * zoom;
+    int img_x = (float)LCD_COLUMNS / 2 - ((float)img_width / 2 - x_offset) * zoom;
+    int img_y = (float)LCD_ROWS / 2 - ((float)img_height / 2 - y_offset) * zoom;
 
     pd->graphics->setDrawMode(kDrawModeCopy);
     pd->graphics->drawScaledBitmap(img_bm, img_x, img_y, TEX_SCALE * zoom, TEX_SCALE * zoom);
