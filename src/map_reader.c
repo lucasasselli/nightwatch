@@ -117,22 +117,22 @@ void map_read(map_t* map) {
 
         // Columns
         map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_7, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_7, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_3, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_3, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_0, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_0, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_6, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_6, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_1, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_1, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_4, DIR_SOUTH, false));
+        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_4, DIR_SOUTH, false));
 
         // Statue
         // TODO: Replace with something else!
@@ -230,14 +230,19 @@ void map_read(map_t* map) {
 
         add_room(map, X, Y, WIDTH, HEIGHT);
 
-        // Statues
+        // Statues - Upper row
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 7
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_4, DIR_NORTH, false));
 
-        // map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
-        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 8
+
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 9
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_1, DIR_NORTH, false));
+
+        // Statues - Lower row
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 0
 
         add_note(map, X + 2 + 2, Y + 2 + 4, 3);
     }
@@ -257,14 +262,23 @@ void map_read(map_t* map) {
         add_room(map, X + 2, Y + HEIGHT, 2, 1);
         add_room(map, X + WIDTH - 4, Y + HEIGHT, 2, 1);
 
-        // Statues
+        // Statues - Upper row
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 1
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        // map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
-        // map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH));
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_2, DIR_NORTH, false));
 
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 2
+
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 3
+
+        // Statues - Lower row
+        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 4
+
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 5
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
+        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_3, DIR_NORTH, false));
+
+        map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 6
     }
 
     //---------------------------------------------------------------------------
@@ -289,16 +303,43 @@ void map_read(map_t* map) {
 
         // Pictures
         map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_0, DIR_EAST, false));
-        map_item_add_xy(map, X + 5, Y + 4, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_1, DIR_EAST, false));
-        map_item_add_xy(map, X + 5, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_2, DIR_EAST, false));
-        map_item_add_xy(map, X + 5, Y + 8, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_3, DIR_EAST, false));
-        map_item_add_xy(map, X + 5, Y + 10, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_4, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 5, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_2, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 9, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_4, DIR_EAST, false));
         map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
+
+        // Level 3 shutter
+        add_door(map, X + 1, Y + HEIGHT, DIR_NORTH, 2509);
+        add_note(map, X + 1, Y + HEIGHT - 1, 4);
+
+        // Level 4 shutter
+        add_door(map, X + 2 + 0, Y - 1, DIR_SOUTH, 9157);
+        map_tile_clone_xy(map, X + 2 + 1, Y - 1, X + 2 + 0, Y - 1);
     }
 
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
     // Level 3
+    //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
+
+    //---------------------------------------------------------------------------
+    // Break room
+    //---------------------------------------------------------------------------
+    {
+        const int X = 37;
+        const int Y = 49;
+        const int WIDTH = 6;
+        const int HEIGHT = 3;
+
+        add_room(map, X, Y, WIDTH, HEIGHT);
+
+        // Entrance(s)
+        add_room(map, X + 1, Y - 1, 1, 1);
+    }
+
+    //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
+    // Level 4
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 
@@ -313,8 +354,15 @@ void map_read(map_t* map) {
 
         add_room(map, X, Y, WIDTH, HEIGHT);
 
+        map_item_add_xy(map, X, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_1, DIR_WEST, false));
+        map_item_add_xy(map, X + WIDTH - 1, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_3, DIR_EAST, false));
+
         // Entrance(s)
         add_room(map, X + 1, Y + HEIGHT, 2, 1);
+
+        // Level 5 shutter
+        add_door(map, X + 1 + 0, Y - 1, DIR_SOUTH, 2509);  // FIXME:
+        map_tile_clone_xy(map, X + 1 + 1, Y - 1, X + 1 + 0, Y - 1);
     }
 
     //---------------------------------------------------------------------------
@@ -381,7 +429,7 @@ void map_read(map_t* map) {
 
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
-    // Level 4
+    // Level 5
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
 

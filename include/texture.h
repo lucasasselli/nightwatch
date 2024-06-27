@@ -17,16 +17,14 @@ typedef enum {
     TEX_ID_PICTURE_3,
     TEX_ID_PICTURE_4,
     TEX_ID_PICTURE_5,
-    TEX_ID_COLUMN_DIG_0,
-    TEX_ID_COLUMN_DIG_1,
-    TEX_ID_COLUMN_DIG_3,
-    TEX_ID_COLUMN_DIG_4,
-    TEX_ID_COLUMN_DIG_6,
-    TEX_ID_COLUMN_DIG_7,
+    TEX_ID_ROMAN_1,
+    TEX_ID_ROMAN_2,
+    TEX_ID_ROMAN_3,
+    TEX_ID_ROMAN_4,
     TEX_ID_COLUMN_CYPHER,
 } tex_id_t;
 
-#define TEX_ID_NUM 21
+#define TEX_ID_NUM 18
 
 typedef enum {
     TEX_ID_VENUS

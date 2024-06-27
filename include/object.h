@@ -9,6 +9,7 @@ typedef enum {
     OBJ_ID_SIGN_SQUARE,
     OBJ_ID_SIGN_HUGE,
     OBJ_ID_SIGN_SMALL_SIDE,
+    OBJ_ID_SIGN_BASE,
     OBJ_ID_ENEMY,
     OBJ_ID_STATUE,
     OBJ_ID_COLUMN,
@@ -24,7 +25,7 @@ typedef enum {
     OBJ_ID_WC_SINK
 } obj_id_t;
 
-#define OBJ_ID_NUM 19
+#define OBJ_ID_NUM 20
 
 int obj_init(void);
 

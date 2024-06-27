@@ -29,4 +29,18 @@ const char *NOTES[] = {
 
     // Note 3
     "Welcome to the north wing young Padawan. The first trial is over, and you passed it! Pat yourself on the back and be proud of yourself, because "
-    " it wasn't easy, but you made it!"};
+    " it wasn't easy, but you made it!",
+
+    // Note 4
+    "One is for the jester that dances with glee, "
+    "Two for the owl that eveything can see.\n"
+    "Three to the cat, prowling through the night, "
+    "Four to the stars, distant and bright.\n"
+    "Give Five to the sword, to keep it sharp, "
+    "Six to the poet, to buy a harp.\n"
+    "Seven its the sailor when he's on shore, "
+    "bacause on the see he's worth one more.\n"
+    "Nine to the painter to continue his call, "
+    "and to the poor horse, give nothing at all.\n"
+
+};

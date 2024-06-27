@@ -34,12 +34,10 @@ int tex_load(tex_id_t id) {
         TEXID_LOAD_CASE("res/textures/picture_telescope.tex", TEX_ID_PICTURE_3);
         TEXID_LOAD_CASE("res/textures/picture_horse.tex", TEX_ID_PICTURE_4);
         TEXID_LOAD_CASE("res/textures/picture_man.tex", TEX_ID_PICTURE_5);
-        TEXID_LOAD_CASE("res/textures/single_digit_0.tex", TEX_ID_COLUMN_DIG_0);
-        TEXID_LOAD_CASE("res/textures/single_digit_1.tex", TEX_ID_COLUMN_DIG_1);
-        TEXID_LOAD_CASE("res/textures/single_digit_3.tex", TEX_ID_COLUMN_DIG_3);
-        TEXID_LOAD_CASE("res/textures/single_digit_4.tex", TEX_ID_COLUMN_DIG_4);
-        TEXID_LOAD_CASE("res/textures/single_digit_6.tex", TEX_ID_COLUMN_DIG_6);
-        TEXID_LOAD_CASE("res/textures/single_digit_7.tex", TEX_ID_COLUMN_DIG_7);
+        TEXID_LOAD_CASE("res/textures/roman_1.tex", TEX_ID_ROMAN_1);
+        TEXID_LOAD_CASE("res/textures/roman_2.tex", TEX_ID_ROMAN_2);
+        TEXID_LOAD_CASE("res/textures/roman_3.tex", TEX_ID_ROMAN_3);
+        TEXID_LOAD_CASE("res/textures/roman_4.tex", TEX_ID_ROMAN_4);
         TEXID_LOAD_CASE("res/textures/column_cypher.tex", TEX_ID_COLUMN_CYPHER);
     }
 }
