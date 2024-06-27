@@ -19,6 +19,18 @@ static void add_room(map_t* map, int pos_x, int pos_y, int width, int height) {
     }
 }
 
+static void add_barrier(map_t* map, int pos_x, int pos_y, int width, int height) {
+    for (int y = 0; y < height; y++) {
+        map_item_add_xy(map, pos_x, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_WEST, true));
+        map_item_add_xy(map, pos_x + width - 1, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_EAST, true));
+    }
+
+    for (int x = 0; x < width; x++) {
+        map_item_add_xy(map, pos_x + x, pos_y, item_new_color(OBJ_ID_BARRIER, 64, DIR_NORTH, true));
+        map_item_add_xy(map, pos_x + x, pos_y + height - 1, item_new_color(OBJ_ID_BARRIER, 64, DIR_SOUTH, true));
+    }
+}
+
 static void add_door(map_t* map, int x, int y, dir_t dir, int pin) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;
@@ -136,6 +148,7 @@ void map_read(map_t* map) {
 
         // Statue
         // TODO: Replace with something else!
+        map_item_add_xy(map, X + 4, Y + 4, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));
         map_item_add_xy(map, X + 4, Y + 4 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
 
         // Museum history sign
@@ -375,6 +388,7 @@ void map_read(map_t* map) {
         const int HEIGHT = 6;
 
         add_room(map, X, Y, WIDTH, HEIGHT);
+        add_barrier(map, X + 2, Y + 2, 2, 2);
 
         // Entrance(s)
         add_room(map, X + WIDTH, Y + 2, 1, 2);
@@ -390,6 +404,7 @@ void map_read(map_t* map) {
         const int HEIGHT = 6;
 
         add_room(map, X, Y, WIDTH, HEIGHT);
+        add_barrier(map, X + 2, Y + 2, 2, 2);
 
         // Entrance(s)
         add_room(map, X + WIDTH, Y + 2, 1, 2);
@@ -406,6 +421,7 @@ void map_read(map_t* map) {
         const int HEIGHT = 6;
 
         add_room(map, X, Y, WIDTH, HEIGHT);
+        add_barrier(map, X + 2, Y + 2, 2, 2);
 
         // Entrance(s)
         add_room(map, X - 1, Y + 2, 1, 2);
@@ -421,6 +437,7 @@ void map_read(map_t* map) {
         const int HEIGHT = 6;
 
         add_room(map, X, Y, WIDTH, HEIGHT);
+        add_barrier(map, X + 2, Y + 2, 2, 2);
 
         // Entrance(s)
         add_room(map, X - 1, Y + 2, 1, 2);

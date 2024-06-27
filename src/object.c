@@ -21,6 +21,7 @@ int obj_init(void) {
     result |= minigl_obj_read_file("res/models/sink.obj", &obj_array[OBJ_ID_WC_SINK], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/shutter_closed.obj", &obj_array[OBJ_ID_SHUTTER_CLOSED], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/shutter_open.obj", &obj_array[OBJ_ID_SHUTTER_OPEN], MINIGL_OBJ_TEXFLIPY);
+    result |= minigl_obj_read_file("res/models/barrier.obj", &obj_array[OBJ_ID_BARRIER], 0);
 
     if (result) return result;
 
@@ -141,6 +142,12 @@ int obj_init(void) {
     glm_translate(trans, (vec3){0.0f, -3.5f, -1.0f});
     glm_rotate_at(trans, (vec3){0.0f, 0.0f, 0.0f}, glm_rad(90), (vec3){0.0f, 1.0f, 0.0f});
     minigl_obj_trans(&obj_array[OBJ_ID_WC_SINK], trans);
+
+    // Barrier
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});
+    glm_scale(trans, (vec3){0.1f, 0.05f, 0.1f});
+    minigl_obj_trans(&obj_array[OBJ_ID_BARRIER], trans);
 
     return 0;
 }

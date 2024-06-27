@@ -37,7 +37,7 @@ const char *NOTES[] = {
     "Three to the cat, prowling through the night, "
     "Four to the stars, distant and bright.\n"
     "Give Five to the sword, to keep it sharp, "
-    "Six to the poet, to buy a harp.\n"
+    "Six to the poet, to buy an harp.\n"
     "Seven its the sailor when he's on shore, "
     "bacause on the see he's worth one more.\n"
     "Nine to the painter to continue his call, "
