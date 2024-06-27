@@ -14,7 +14,7 @@ set(CMAKE_C_FLAGS_RELEASE "-Ofast")
 set(SDK $ENV{PLAYDATE_SDK_PATH})
 
 # Game Name Customization
-set(PLAYDATE_GAME_NAME hello_world)
+set(PLAYDATE_GAME_NAME nightwatch)
 set(PLAYDATE_GAME_DEVICE ${PLAYDATE_GAME_NAME}_DEVICE)
 
 project(${PLAYDATE_GAME_NAME} C ASM)
