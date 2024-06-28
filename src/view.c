@@ -516,18 +516,19 @@ void view_inspect_draw(float time) {
 
     // Handle keys
     PDButtons pressed;
-    pd->system->getButtonState(NULL, &pressed, NULL);
+    PDButtons pushed;
+    pd->system->getButtonState(&pushed, &pressed, NULL);
 
-    if (pressed & kButtonUp) {
+    if (pushed & kButtonUp) {
         y_offset += MOVE_SPEED;
     }
-    if (pressed & kButtonDown) {
+    if (pushed & kButtonDown) {
         y_offset -= MOVE_SPEED;
     }
-    if (pressed & kButtonRight) {
+    if (pushed & kButtonRight) {
         x_offset -= MOVE_SPEED;
     }
-    if (pressed & kButtonLeft) {
+    if (pushed & kButtonLeft) {
         x_offset += MOVE_SPEED;
     }
     if (pressed & kButtonB) {
