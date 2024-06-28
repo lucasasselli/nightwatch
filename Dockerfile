@@ -7,10 +7,11 @@ ARG SDK_VERSION=2.4.2
 RUN apt-get update -q && apt-get install -qy --no-install-recommends \
     curl \
     ca-certificates \
-    libpng-dev \
     git \
+    make \
     cmake \
     gcc-arm-none-eabi \
+    libpng-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
