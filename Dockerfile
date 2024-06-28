@@ -10,7 +10,7 @@ RUN apt-get update -q && apt-get install -qy --no-install-recommends \
     git \
     make \
     cmake \
-    gcc-arm-none-eabi \
+    gcc-arm-embedded \
     libpng-dev \
     libnewlib-dev \
  && apt-get clean \
