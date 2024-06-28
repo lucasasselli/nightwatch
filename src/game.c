@@ -10,7 +10,7 @@
 #include "utils.h"
 
 // Torch
-#define TORCH_DISCHARGE_RATE 0.2f
+#define TORCH_DISCHARGE_RATE 0.1f
 #define TORCH_CHARGE_RATE 0.01f  // Charge x deg x s
 
 extern game_state_t gs;
@@ -58,7 +58,7 @@ void game_update(float delta_t) {
 
     if (gs.player_state == PLAYER_ACTIVE) {
         // Torch
-        float crank_delta = fabsf(pd->system->getCrankChange());
+        float crank_delta = pd->system->getCrankChange();
         if (crank_delta == 0) {
             gs.torch_charge += -TORCH_DISCHARGE_RATE * delta_t;
         } else {

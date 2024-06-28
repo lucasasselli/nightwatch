@@ -120,7 +120,7 @@ static void torch_mask_init(void) {
 
         // NOTE: These thresholds are completely empirical
         const float TORCH_S0_I = 1.0f;
-        const float TORCH_S0_K = 0.99f;
+        const float TORCH_S0_K = 0.98f;
 
         const float TORCH_S1_I = 0.1f;
         const float TORCH_S1_K = 0.8f;
