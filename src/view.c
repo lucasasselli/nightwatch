@@ -402,6 +402,12 @@ void view_keypad_draw(float time) {
     DRAW_UTF8_STRING(PROMPT_STR_ENTER, 325, 190);
     DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 325, 210);
 
+#ifdef DEBUG
+    char debug_pin[10];
+    sprintf(debug_pin, "%d", gs.player_interact_item->action.arg);
+    DRAW_UTF8_STRING(debug_pin, 10, 210);
+#endif
+
     // Handle keys
     PDButtons pressed;
     pd->system->getButtonState(NULL, &pressed, NULL);

@@ -28,6 +28,7 @@ int tex_load(tex_id_t id) {
         TEXID_LOAD_CASE("res/textures/museum_history.tex", TEX_ID_SIGN_MUSEUM_HISTORY);
         TEXID_LOAD_CASE("res/textures/sign_wc_man.tex", TEX_ID_SIGN_WC_MAN);
         TEXID_LOAD_CASE("res/textures/sign_wc_women.tex", TEX_ID_SIGN_WC_WOMEN);
+        TEXID_LOAD_CASE("res/textures/sign_employeeonly.tex", TEX_ID_SIGN_EMPLOYEEONLY);
         TEXID_LOAD_CASE("res/textures/picture_owl.tex", TEX_ID_PICTURE_0);
         TEXID_LOAD_CASE("res/textures/picture_key.tex", TEX_ID_PICTURE_1);
         TEXID_LOAD_CASE("res/textures/picture_sword.tex", TEX_ID_PICTURE_2);
@@ -38,7 +39,13 @@ int tex_load(tex_id_t id) {
         TEXID_LOAD_CASE("res/textures/roman_2.tex", TEX_ID_ROMAN_2);
         TEXID_LOAD_CASE("res/textures/roman_3.tex", TEX_ID_ROMAN_3);
         TEXID_LOAD_CASE("res/textures/roman_4.tex", TEX_ID_ROMAN_4);
-        TEXID_LOAD_CASE("res/textures/column_cypher.tex", TEX_ID_COLUMN_CYPHER);
+        TEXID_LOAD_CASE("res/textures/column_symbol_0.tex", TEX_ID_COLUMN_SYMBOL_0);
+        TEXID_LOAD_CASE("res/textures/column_symbol_1.tex", TEX_ID_COLUMN_SYMBOL_1);
+        TEXID_LOAD_CASE("res/textures/column_symbol_2.tex", TEX_ID_COLUMN_SYMBOL_2);
+        TEXID_LOAD_CASE("res/textures/column_symbol_3.tex", TEX_ID_COLUMN_SYMBOL_3);
+        TEXID_LOAD_CASE("res/textures/column_symbol_4.tex", TEX_ID_COLUMN_SYMBOL_4);
+        TEXID_LOAD_CASE("res/textures/column_symbol_5.tex", TEX_ID_COLUMN_SYMBOL_5);
+        TEXID_LOAD_CASE("res/textures/whiteboard.tex", TEX_ID_WHITEBOARD);
     }
 }
 

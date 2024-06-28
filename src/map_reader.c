@@ -137,22 +137,22 @@ void map_read(map_t* map) {
 
         // Columns
         map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_7, DIR_SOUTH, false));
+        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_0, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_3, DIR_SOUTH, false));
+        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_1, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_0, DIR_SOUTH, false));
+        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_2, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_6, DIR_SOUTH, false));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_3, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_1, DIR_SOUTH, false));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_4, DIR_SOUTH, false));
 
         map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        // map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_COLUMN_GRAFFITI, TEX_ID_COLUMN_DIG_4, DIR_SOUTH, false));
+        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_5, DIR_SOUTH, false));
 
         // Statue
         // TODO: Replace with something else!
@@ -191,7 +191,7 @@ void map_read(map_t* map) {
         add_room(map, X - 1, Y, 1, 1);
 
         // Sign
-        map_item_add_xy(map, X - 2, Y + 1, item_new_tex(OBJ_ID_SIGN_SMALL_SIDE, TEX_ID_SIGN_WC_MAN, DIR_EAST, false));
+        map_item_add_xy(map, X - 2, Y + 1, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_WC_MAN, DIR_EAST, false));
 
         // Barrier
         map_item_add_xy(map, X - 1, Y, item_new_tex(OBJ_ID_WETFLOOR, TEX_ID_WETFLOOR, DIR_WEST, true));
@@ -212,7 +212,7 @@ void map_read(map_t* map) {
         add_room(map, X - 1, Y + HEIGHT - 1, 1, 1);
 
         // Sign
-        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_SIGN_SMALL_SIDE, TEX_ID_SIGN_WC_WOMEN, DIR_EAST, true));
+        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_WC_WOMEN, DIR_EAST, true));
 
         // Stalls
         map_item_add_xy(map, X + 0, Y, item_new_color(OBJ_ID_WC_PANEL, 32, DIR_SOUTH, true));
@@ -330,9 +330,11 @@ void map_read(map_t* map) {
         map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
         add_inspect_tex(map, X + 5, Y + 12, TEX_ID_PICTURE_5);
 
-        // Level 3 shutter
-        add_door(map, X + 1, Y + HEIGHT, DIR_NORTH, 2509);
+        // Note
         add_note(map, X + 1, Y + HEIGHT - 1, 4);
+
+        // Employee only sign
+        map_item_add_xy(map, X, Y + HEIGHT - 1, item_new_tex(OBJ_ID_SIGN_SIDE, TEX_ID_SIGN_EMPLOYEEONLY, DIR_SOUTH, false));
 
         // Level 4 shutter
         add_door(map, X + 2 + 0, Y - 1, DIR_SOUTH, 9157);
@@ -358,6 +360,13 @@ void map_read(map_t* map) {
 
         // Entrance(s)
         add_room(map, X + 1, Y - 1, 1, 1);
+
+        // Whiteboard
+        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_SIGN_BIG, TEX_ID_WHITEBOARD, DIR_NORTH, false));
+        add_inspect_tex(map, X + 3, Y, TEX_ID_WHITEBOARD);
+
+        // Door
+        add_door(map, X + 1, Y - 1, DIR_NORTH, 2509);
     }
 
     //---------------------------------------------------------------------------
