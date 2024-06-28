@@ -12,6 +12,7 @@ RUN apt-get update -q && apt-get install -qy --no-install-recommends \
     cmake \
     gcc-arm-none-eabi \
     libpng-dev \
+    libnewlib-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -28,4 +29,4 @@ WORKDIR /app
 COPY . .
 
 # Build
-RUN mkdir build && cd build && cmake cmake -DCMAKE_TOOLCHAIN_FILE=$PLAYDATE_SDK_PATH/C_API/buildsupport/arm.cmake .. && make
+RUN mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=$PLAYDATE_SDK_PATH/C_API/buildsupport/arm.cmake .. && make
