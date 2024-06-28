@@ -1,9 +1,9 @@
 FROM ubuntu:latest
+WORKDIR /opt
 
 ARG SDK_VERSION=2.4.2
 
 # Install Playdate SDK and dependencies
-WORKDIR /opt/
 RUN apt-get update -q && apt-get install -qy --no-install-recommends \
     curl \
     libpng-dev \
