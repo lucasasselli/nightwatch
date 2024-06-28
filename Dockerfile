@@ -6,6 +6,7 @@ ARG SDK_VERSION=2.4.2
 # Install Playdate SDK and dependencies
 RUN apt-get update -q && apt-get install -qy --no-install-recommends \
     curl \
+    ca-certificates \
     libpng-dev \
     git \
     cmake \
