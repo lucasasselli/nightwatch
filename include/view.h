@@ -18,4 +18,6 @@ void view_keypad_draw(float time);
 
 void view_inspect_draw(float time);
 
+void view_inventory_draw(float time);
+
 void view_gameover_draw(float time);

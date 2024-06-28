@@ -23,6 +23,7 @@ const char *PROMPT_STR_KEYPAD = "\xE2\x92\xB6 Keypad";
 const char *PROMPT_STR_ZOOM = "\xF0\x9F\x9F\xA8 Zoom";
 const char *PROMPT_STR_MOVE = "\xE2\x9C\x9B Move";
 const char *PROMPT_STR_CLOSE = "\xE2\x92\xB7 Close";
+const char *PROMPT_STR_NONOTES = "No notes found!";
 
 // clang-format off
 RANDW_CONSTR_BEGIN(float,CONSTR_FLICKER,2)
@@ -267,7 +268,7 @@ void view_game_draw(float time, float delta_t) {
 #endif
 }
 
-void view_note_draw(float time) {
+static void draw_note(int note_id) {
     const int MARGIN = 15;
     const int LINE_HEIGHT = 18;
     const int NOTE_WIDTH = 340;
@@ -275,13 +276,9 @@ void view_note_draw(float time) {
     const int X_OFFSET = (LCD_COLUMNS - NOTE_WIDTH) / 2;
     const int Y_OFFSET = 20;
 
-    const char *text = NOTES[gs.player_interact_item->action.arg];
+    const char *text = NOTES[note_id];
 
-    if (time == 0.0f) {
-        y_offset = 0;
-    } else {
-        y_offset = clampi(y_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - LCD_ROWS / 2);
-    }
+    y_offset = clampi(y_offset + pd->system->getCrankChange(), 0, NOTE_HEIGHT - LCD_ROWS / 2);
 
     int y = Y_OFFSET - y_offset;
 
@@ -338,6 +335,20 @@ void view_note_draw(float time) {
     DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 170, y + NOTE_HEIGHT + MARGIN);
 }
 
+void view_note_draw(float time) {
+    if (time == 0.0f) {
+        y_offset = 0;
+    }
+    draw_note(gs.player_interact_item->action.arg);
+
+    // Handle keys
+    PDButtons pressed;
+    pd->system->getButtonState(NULL, &pressed, NULL);
+    if (pressed & kButtonB) {
+        player_action_note(false);
+    }
+}
+
 void view_keypad_draw(float time) {
     const int KEY_SIZE = 40;
     const int KEY_MARGIN = 5;
@@ -390,6 +401,58 @@ void view_keypad_draw(float time) {
     pd->graphics->setFont(font_gui);
     DRAW_UTF8_STRING(PROMPT_STR_ENTER, 325, 190);
     DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 325, 210);
+
+    // Handle keys
+    PDButtons pressed;
+    pd->system->getButtonState(NULL, &pressed, NULL);
+
+    if (pressed & kButtonUp) {
+        if (gs.keypad_sel == 0) {
+            gs.keypad_sel = 8;
+        } else {
+            gs.keypad_sel -= 3;
+        }
+    } else if (pressed & kButtonDown) {
+        gs.keypad_sel += 3;
+    } else if (pressed & kButtonRight) {
+        gs.keypad_sel += 1;
+    } else if (pressed & kButtonLeft) {
+        gs.keypad_sel -= 1;
+    } else if (pressed & kButtonA) {
+        gs.keypad_val[gs.keypad_cnt] = gs.keypad_sel;
+        gs.keypad_cnt++;
+        if (gs.keypad_cnt < KEYPAD_PIN_SIZE) {
+            sound_effect_play(SOUND_KEY);
+        } else {
+            int insert_pin = 0;
+            for (int i = 0; i < KEYPAD_PIN_SIZE; i++) {
+                insert_pin *= 10;
+                insert_pin += gs.keypad_val[i];
+            }
+
+            if (insert_pin == gs.player_interact_item->action.arg) {
+                // Pin correct!
+                sound_effect_play(SOUND_KEYPAD_CORRECT);
+                gs.player_interact_item->action.type = ACTION_NONE;
+                gs.player_interact_item->obj_id = OBJ_ID_SHUTTER_OPEN;
+                gs.player_interact = false;
+                sound_effect_play(SOUND_FENCE_OPEN);
+                player_action_keypad(false);
+            } else {
+                // Pin incorrect
+                sound_effect_play(SOUND_KEYPAD_WRONG);
+                gs.keypad_cnt = 0;
+            }
+        }
+    } else if (pressed & kButtonB) {
+        player_action_keypad(false);
+    }
+
+    if (gs.keypad_sel < 0) {
+        gs.keypad_sel = 9;
+    } else if (gs.keypad_sel > 9) {
+        gs.keypad_sel = 0;
+    }
 }
 
 void view_inspect_draw(float time) {
@@ -452,22 +515,22 @@ void view_inspect_draw(float time) {
     }
 
     // Handle keys
-    PDButtons pushed;
-    pd->system->getButtonState(&pushed, NULL, NULL);
+    PDButtons pressed;
+    pd->system->getButtonState(NULL, &pressed, NULL);
 
-    if (pushed & kButtonUp) {
+    if (pressed & kButtonUp) {
         y_offset += MOVE_SPEED;
     }
-    if (pushed & kButtonDown) {
+    if (pressed & kButtonDown) {
         y_offset -= MOVE_SPEED;
     }
-    if (pushed & kButtonRight) {
+    if (pressed & kButtonRight) {
         x_offset -= MOVE_SPEED;
     }
-    if (pushed & kButtonLeft) {
+    if (pressed & kButtonLeft) {
         x_offset += MOVE_SPEED;
     }
-    if (pushed & kButtonB) {
+    if (pressed & kButtonB) {
         player_action_inspect(false);
         pd->graphics->freeBitmap(img_bm);
     }
@@ -500,6 +563,67 @@ void view_inspect_draw(float time) {
     DRAW_UTF8_STRING(PROMPT_STR_MOVE, 5, 218);
     DRAW_UTF8_STRING(PROMPT_STR_ZOOM, 170, 218);
     DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 330, 218);
+}
+
+int inventory_note = -1;
+
+void view_inventory_draw(float time) {
+    if (time == 0.0f) {
+        for (int i = 0; i < NOTES_CNT; i++) {
+            if (gs.notes_found[i]) inventory_note = i;
+        }
+    }
+
+    // Handle keys
+    PDButtons pressed;
+    pd->system->getButtonState(NULL, &pressed, NULL);
+
+    if (inventory_note < 0) {
+        // Nothing to show
+        pd->graphics->clear(kColorBlack);
+        pd->graphics->setDrawMode(kDrawModeFillWhite);
+        DRAW_UTF8_STRING(PROMPT_STR_NONOTES, 150, 90);
+        DRAW_UTF8_STRING(PROMPT_STR_CLOSE, 175, 120);
+    } else {
+        int prev_note = -1;
+        int next_note = -1;
+
+        // Notes available!
+        if (time == 0.0f) {
+            y_offset = 0;
+        }
+
+        for (int i = 0; i < NOTES_CNT; i++) {
+            if (gs.notes_found[i] && i < inventory_note) prev_note = i;
+            if (gs.notes_found[i] && i > inventory_note) next_note = i;
+        }
+
+        draw_note(inventory_note);
+
+        pd->graphics->setDrawMode(kDrawModeFillWhite);
+
+        if (next_note >= 0) {
+            pd->graphics->fillTriangle(385, 115, 390, 120, 385, 125, kPolygonFillEvenOdd);
+            if (pressed & kButtonRight) {
+                sound_effect_play(SOUND_NOTE);
+                inventory_note = next_note;
+                y_offset = 0;
+            }
+        }
+        if (prev_note >= 0) {
+            pd->graphics->fillTriangle(10, 120, 15, 115, 15, 125, kPolygonFillEvenOdd);
+            if (pressed & kButtonLeft) {
+                sound_effect_play(SOUND_NOTE);
+                inventory_note = prev_note;
+                y_offset = 0;
+            }
+        }
+    }
+
+    // B to exit
+    if (pressed & kButtonB) {
+        player_action_inventory(false);
+    }
 }
 
 void view_gameover_draw(float time) {

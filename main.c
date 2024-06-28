@@ -92,10 +92,6 @@ static int lua_update(lua_State *L) {
     float update_delta_t = update_et_this - update_et_last;
     update_et_last = update_et_this;
 
-    // Real work is done here!
-    // FIXME: Move to player active once key handling is separated.
-    game_update(update_delta_t);
-
     player_state_time += update_delta_t;
 
     // Clear screen when changing state!
@@ -109,6 +105,7 @@ static int lua_update(lua_State *L) {
 
     switch (gs.player_state) {
         case PLAYER_ACTIVE:
+            game_update(update_delta_t);
             view_game_draw(player_state_time, update_delta_t);
 
             // Show prompt
@@ -125,6 +122,9 @@ static int lua_update(lua_State *L) {
             break;
         case PLAYER_INSPECT:
             view_inspect_draw(player_state_time);
+            break;
+        case PLAYER_INVENTORY:
+            view_inventory_draw(player_state_time);
             break;
         case PLAYER_GAMEOVER:
             view_gameover_draw(player_state_time);

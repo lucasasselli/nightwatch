@@ -38,11 +38,21 @@ void player_reset(void) {
 void player_action_note(bool show) {
     if (show) {
         gs.player_state = PLAYER_READING;
+        gs.notes_found[gs.player_interact_item->action.arg] = true;
         sound_effect_play(SOUND_NOTE);
     } else {
         gs.player_state = PLAYER_ACTIVE;
         gs.player_interact_item->hidden = true;
         gs.player_interact = false;
+    }
+}
+
+void player_action_inventory(bool show) {
+    if (show) {
+        gs.player_state = PLAYER_INVENTORY;
+        sound_effect_play(SOUND_NOTE);
+    } else {
+        gs.player_state = PLAYER_ACTIVE;
     }
 }
 
@@ -61,59 +71,6 @@ void player_action_inspect(bool show) {
         gs.player_state = PLAYER_INSPECT;
     } else {
         gs.player_state = PLAYER_ACTIVE;
-    }
-}
-
-void player_action_keypress(PDButtons pushed, PDButtons pushed_old, float delta_t) {
-    (void)delta_t;
-    if (pushed_old == 0) {
-        if (pushed & kButtonUp) {
-            if (gs.keypad_sel == 0) {
-                gs.keypad_sel = 8;
-            } else {
-                gs.keypad_sel -= 3;
-            }
-        } else if (pushed & kButtonDown) {
-            gs.keypad_sel += 3;
-        } else if (pushed & kButtonRight) {
-            gs.keypad_sel += 1;
-        } else if (pushed & kButtonLeft) {
-            gs.keypad_sel -= 1;
-        } else if (pushed & kButtonA) {
-            gs.keypad_val[gs.keypad_cnt] = gs.keypad_sel;
-            gs.keypad_cnt++;
-            if (gs.keypad_cnt < KEYPAD_PIN_SIZE) {
-                sound_effect_play(SOUND_KEY);
-            } else {
-                int insert_pin = 0;
-                for (int i = 0; i < KEYPAD_PIN_SIZE; i++) {
-                    insert_pin *= 10;
-                    insert_pin += gs.keypad_val[i];
-                }
-
-                if (insert_pin == gs.player_interact_item->action.arg) {
-                    // Pin correct!
-                    sound_effect_play(SOUND_KEYPAD_CORRECT);
-                    gs.player_interact_item->action.type = ACTION_NONE;
-                    gs.player_interact_item->obj_id = OBJ_ID_SHUTTER_OPEN;
-                    gs.player_interact = false;
-                    sound_effect_play(SOUND_FENCE_OPEN);
-                    player_action_keypad(false);
-                } else {
-                    // Pin incorrect
-                    sound_effect_play(SOUND_KEYPAD_WRONG);
-                    gs.keypad_cnt = 0;
-                }
-            }
-        } else if (pushed & kButtonB) {
-            player_action_keypad(false);
-        }
-
-        if (gs.keypad_sel < 0) {
-            gs.keypad_sel = 9;
-        } else if (gs.keypad_sel > 9) {
-            gs.keypad_sel = 0;
-        }
     }
 }
 
@@ -158,7 +115,36 @@ void move_to_dir(vec2 pos, vec2 dir, float speed, vec2 out) {
     glm_vec2_add(pos, camera_delta, out);
 }
 
-bool player_action_move(PDButtons pushed, float delta_t) {
+bool player_handle_keys(float delta_t) {
+    PDButtons pushed;
+    PDButtons pressed;
+    pd->system->getButtonState(&pushed, &pressed, NULL);
+
+    if (pressed & kButtonB) {
+        player_action_inventory(true);
+        return false;
+    }
+    player_check_interaction();
+    if (gs.player_interact) {
+        action_t action = gs.player_interact_item->action;
+        if (pressed & kButtonA) {
+            switch (action.type) {
+                case ACTION_NONE:
+                    assert(0);
+                    break;
+                case ACTION_NOTE:
+                    player_action_note(true);
+                    break;
+                case ACTION_KEYPAD:
+                    player_action_keypad(true);
+                    break;
+                case ACTION_INSPECT:
+                    player_action_inspect(true);
+                    break;
+            }
+        }
+    }
+
     // Player movement is pretty expensive!
     if (pushed == 0) return false;
 

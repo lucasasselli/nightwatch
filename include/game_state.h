@@ -3,6 +3,7 @@
 #include <cglm/cglm.h>
 
 #include "a_star.h"
+#include "notes.h"
 
 typedef enum {
     ENEMY_HIDDEN,
@@ -19,6 +20,7 @@ typedef enum {
     PLAYER_READING,
     PLAYER_KEYPAD,
     PLAYER_INSPECT,
+    PLAYER_INVENTORY,
     PLAYER_GAMEOVER
 } player_state_t;
 
@@ -47,4 +49,6 @@ typedef struct {
     float torch_on;
 
     a_star_path_t path_to_player;
+
+    bool notes_found[NOTES_CNT];
 } game_state_t;

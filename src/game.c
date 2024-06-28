@@ -16,8 +16,6 @@
 extern game_state_t gs;
 extern PlaydateAPI* pd;
 
-PDButtons pushed_old;
-
 void game_reset(void) {
     // Camera
     camera_init(&gs.camera);
@@ -36,44 +34,10 @@ void game_reset(void) {
     map_viz_update(gs.map, gs.camera);
 
     gs.torch_charge = 0.0f;
-}
 
-static void handle_keys(PDButtons pushed, float delta_t) {
-    player_check_interaction();
-
-    if (gs.player_state == PLAYER_ACTIVE) {
-        if (gs.player_interact && pushed_old == 0) {
-            action_t action = gs.player_interact_item->action;
-            if (pushed & kButtonA) {
-                switch (action.type) {
-                    case ACTION_NONE:
-                        assert(0);
-                        break;
-                    case ACTION_NOTE:
-                        player_action_note(true);
-                        break;
-                    case ACTION_KEYPAD:
-                        player_action_keypad(true);
-                        break;
-                    case ACTION_INSPECT:
-                        player_action_inspect(true);
-                        break;
-                }
-            }
-        }
-        if (player_action_move(pushed, delta_t)) {
-            // Update map visibility
-            map_viz_update(gs.map, gs.camera);
-        }
-    } else if (gs.player_state == PLAYER_READING) {
-        if (pushed & kButtonB) {
-            player_action_note(false);
-        }
-    } else if (gs.player_state == PLAYER_KEYPAD) {
-        player_action_keypress(pushed, pushed_old, delta_t);
+    for (int i = 0; i < NOTES_CNT; i++) {
+        gs.notes_found[i] = false;
     }
-
-    pushed_old = pushed;
 }
 
 void action_torch_flicker(bool enable) {
@@ -87,9 +51,10 @@ void action_torch_flicker(bool enable) {
 
 void game_update(float delta_t) {
     // Handle keys
-    PDButtons pushed;
-    pd->system->getButtonState(&pushed, NULL, NULL);
-    handle_keys(pushed, delta_t);
+    if (player_handle_keys(delta_t)) {
+        // Update map visibility
+        map_viz_update(gs.map, gs.camera);
+    }
 
     if (gs.player_state == PLAYER_ACTIVE) {
         // Torch
