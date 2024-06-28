@@ -75,6 +75,14 @@ static void add_wall(map_t* map, int x, int y, dir_t dir) {
     map_item_add_xy(map, x, y, item);
 }
 
+static void add_inspect_tex(map_t* map, int x, int y, tex_id_t tex_id) {
+    item_t* item = item_new();
+    item->hidden = true;
+    item->action.type = ACTION_INSPECT;
+    item->action.arg = tex_id;
+    map_item_add_xy(map, x, y, item);
+}
+
 void map_read(map_t* map) {
     // TODO: Implement read from file?
 
@@ -152,11 +160,9 @@ void map_read(map_t* map) {
         map_item_add_xy(map, X + 4, Y + 4 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
 
         // Museum history sign
-        item_t* sign_hist = item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST, false);
-        sign_hist->action.type = ACTION_INSPECT;
-        sign_hist->action.arg = TEX_ID_SIGN_MUSEUM_HISTORY;
+        map_item_add_xy(map, X + WIDTH - 1, Y + 2, item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST, false));
+        add_inspect_tex(map, X + WIDTH - 1, Y + 2, TEX_ID_SIGN_MUSEUM_HISTORY);
 
-        map_item_add_xy(map, X + WIDTH - 1, Y + 2, sign_hist);
         add_note(map, X + WIDTH - 2, Y + 2, 2);
 
         // Level 2 shutter
@@ -316,9 +322,13 @@ void map_read(map_t* map) {
 
         // Pictures
         map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_0, DIR_EAST, false));
+        add_inspect_tex(map, X + 5, Y + 2, TEX_ID_PICTURE_0);
         map_item_add_xy(map, X + 5, Y + 5, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_2, DIR_EAST, false));
+        add_inspect_tex(map, X + 5, Y + 5, TEX_ID_PICTURE_2);
         map_item_add_xy(map, X + 5, Y + 9, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_4, DIR_EAST, false));
+        add_inspect_tex(map, X + 5, Y + 9, TEX_ID_PICTURE_4);
         map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
+        add_inspect_tex(map, X + 5, Y + 12, TEX_ID_PICTURE_5);
 
         // Level 3 shutter
         add_door(map, X + 1, Y + HEIGHT, DIR_NORTH, 2509);

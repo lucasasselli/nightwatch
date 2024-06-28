@@ -54,6 +54,10 @@ void game_update(float delta_t) {
     if (player_handle_keys(delta_t)) {
         // Update map visibility
         map_viz_update(gs.map, gs.camera);
+
+        if (gs.enemy_state != ENEMY_HIDDEN) {
+            enemy_update_path();
+        }
     }
 
     if (gs.player_state == PLAYER_ACTIVE) {
@@ -83,10 +87,5 @@ void game_update(float delta_t) {
 
         // Enemy
         enemy_update_state(delta_t);
-
-        // FIXME: Only if player changes tile
-        if (gs.enemy_state != ENEMY_HIDDEN) {
-            enemy_update_path();
-        }
     }
 }

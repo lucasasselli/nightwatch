@@ -149,6 +149,7 @@ void enemy_fsm_do(float delta_t) {
         // Enemy spotted by player, preparing to chase
         case ENEMY_SPOTTED:
             if (gs.enemy_in_fov) {
+                // TODO: Randomly despawn?
                 if (gs.enemy_aggression > ENEMY_AGGR_ATTACK_TH) {
                     enemy_fsm_change_state(ENEMY_CHASING);
                 }
@@ -167,7 +168,7 @@ void enemy_fsm_do(float delta_t) {
             }
 
             // TODO: Awareness increases distance
-            // TODO: Torch intensitity increases distance
+            // TODO: Torch intensitity decreases distance
             if (gs.path_to_player.size > ENEMY_DIST_ESCAPE) {
                 // Player escaped the monster!
                 enemy_fsm_change_state(ENEMY_HIDDEN);

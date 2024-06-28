@@ -42,6 +42,7 @@ void player_action_note(bool show) {
         sound_effect_play(SOUND_NOTE);
     } else {
         gs.player_state = PLAYER_ACTIVE;
+        gs.player_interact_item->action.type = ACTION_NONE;
         gs.player_interact_item->hidden = true;
         gs.player_interact = false;
     }
@@ -84,7 +85,7 @@ void player_check_interaction(void) {
     // TODO: Use callback to game?
     item_t* item = tile.items;
     while (item != NULL) {
-        if (item->action.type != ACTION_NONE && !item->hidden) {
+        if (item->action.type != ACTION_NONE) {
             gs.player_interact = true;
             gs.player_interact_item = item;
             break;  // Only one interactable item per tile
