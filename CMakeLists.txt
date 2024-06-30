@@ -46,6 +46,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 else()
     #add_definitions(-DMINIGL_DEBUG_PERF)
     add_definitions(-DDEBUG_MINIMAP)
+    add_definitions(-DDEBUG)
 
     set(TARGET_NAME ${PLAYDATE_GAME_NAME})
     add_library(${TARGET_NAME} SHARED 
@@ -65,7 +66,6 @@ else()
         COMMENT "Starting Valgrind...")
 endif()
 
-add_definitions(-DDEBUG)
 
 add_subdirectory(libs/minigl)
 
