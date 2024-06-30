@@ -38,6 +38,12 @@ if (TOOLCHAIN STREQUAL "armgcc")
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 
+    add_custom_target(release
+        DEPENDS ${TARGET_NAME}
+        COMMAND zip -r ${PLAYDATE_GAME_NAME}.pdx.zip ${PLAYDATE_GAME_NAME}.pdx
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
 else ()
 
 	set(LIB_EXT "")
