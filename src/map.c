@@ -85,6 +85,19 @@ void map_item_add_xy(map_t *map, int x, int y, item_t *new) {
     }
 }
 
+item_t *map_has_interact_item_vec2(map_t *map, vec2 pos) {
+    map_tile_t tile = map_get_tile_vec2(map, pos);
+    item_t *item = tile.items;
+    while (item != NULL) {
+        if (item->action.type != ACTION_NONE) {
+            return item;
+        }
+        item = item->next;
+    }
+
+    return NULL;
+}
+
 bool map_get_collide_xy(map_t *map, int x, int y) {
     return tile_get_collide(map_get_tile_xy(map, x, y));
 }
@@ -117,7 +130,7 @@ bool map_viz_get_ivec2(map_t *map, vec2 pos, ivec2 tile) {
 }
 
 void map_viz_update(map_t *map, camera_t camera) {
-    const float FOV_STEP = 2.0;
+    const float FOV_STEP = 1.0;
 
     // Reset visibility
     for (int y = 0; y < MAP_DRAW_SIZE; y++) {

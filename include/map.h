@@ -34,6 +34,8 @@ bool map_is_empty_xy(map_t* map, int x, int y);
 
 void map_item_add_xy(map_t* map, int x, int y, item_t* item);
 
+item_t* map_has_interact_item_vec2(map_t* map, vec2 pos);
+
 bool map_get_collide_xy(map_t* map, int x, int y);
 
 bool map_get_collide_ivec2(map_t* map, ivec2 pos);

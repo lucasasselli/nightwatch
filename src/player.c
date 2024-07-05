@@ -76,21 +76,24 @@ void player_action_inspect(bool show) {
 }
 
 void player_check_interaction(void) {
-    // What is the tile directly in front of the player?
-    vec2 action_tile_pos;
-    glm_vec2_add(gs.camera.pos, gs.camera.front, action_tile_pos);
-    map_tile_t tile = map_get_tile_vec2(gs.map, action_tile_pos);
     gs.player_interact = false;
 
-    // TODO: Use callback to game?
-    item_t* item = tile.items;
-    while (item != NULL) {
-        if (item->action.type != ACTION_NONE) {
-            gs.player_interact = true;
-            gs.player_interact_item = item;
-            break;  // Only one interactable item per tile
-        }
-        item = item->next;
+    item_t* at_player = map_has_interact_item_vec2(gs.map, gs.camera.pos);
+    if (at_player != NULL) {
+        gs.player_interact = true;
+        gs.player_interact_item = at_player;
+        return;
+    }
+
+    // What is the tile directly in front of the player?
+    vec2 front_pos;
+    glm_vec2_add(gs.camera.pos, gs.camera.front, front_pos);
+
+    item_t* in_front = map_has_interact_item_vec2(gs.map, front_pos);
+    if (in_front != NULL) {
+        gs.player_interact = true;
+        gs.player_interact_item = in_front;
+        return;
     }
 }
 
