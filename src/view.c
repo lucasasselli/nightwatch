@@ -105,7 +105,7 @@ static void torch_mask_init(void) {
                 }
 
                 if (color > 0) {
-                    color = (color >= tex_dither.data[y & 0x0000001F][x & 0x0000001F].color);
+                    color = (color >= tex_dither.data_g8[y & 0x0000001F][x & 0x0000001F].color);
                 }
                 torch_mask[i][y][x] = color;
             }
@@ -230,7 +230,7 @@ static void screen_update(void) {
                     // If pixel is already fully back, don't bother
                     int torch_fade_i = (TORCH_FADE_STEPS - 1) * p.depth;
                     p.color *= torch_fade[torch_mask_i][torch_fade_i];
-                    p.color = (p.color >= tex_dither.data[y & 0x0000001F][x & 0x0000001F].color);
+                    p.color = (p.color >= tex_dither.data_g8[y & 0x0000001F][x & 0x0000001F].color);
                 }
             } else {
                 p.color = 0;
@@ -505,11 +505,17 @@ void view_inspect_draw(float time) {
         for (int y = 0; y < img_height * ZOOM_MAX; y++) {
             float tex_x = 0.0f;
             for (int x = 0; x < img_width * ZOOM_MAX; x++) {
-                uint8_t alpha = tex->data[(int)tex_y][(int)tex_x].alpha;
-                uint8_t color = tex->data[(int)tex_y][(int)tex_x].color;
-                color = alpha > 0.0 ? color : 255;
+                uint8_t color;
 
-                if (color > tex_dither.data[y & 0x0000001F][x & 0x0000001F].color) {
+                if (tex->format == MINIGL_COLOR_FMT_GA8) {
+                    uint8_t alpha = tex->data_ga8[(int)tex_y][(int)tex_x].alpha;
+                    color = tex->data_ga8[(int)tex_y][(int)tex_x].color;
+                    color = alpha > 0.0 ? color : 255;
+                } else {
+                    color = tex->data_g8[(int)tex_y][(int)tex_x].color;
+                }
+
+                if (color > tex_dither.data_g8[y & 0x0000001F][x & 0x0000001F].color) {
                     clearpixel(bm_data, x, y, bm_rowbytes);
                 } else {
                     setpixel(bm_data, x, y, bm_rowbytes);

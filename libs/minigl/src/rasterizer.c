@@ -104,11 +104,14 @@ MINIGL_INLINE void set_pixel_tex_2d(int x, int y, float z, float uf, float vf) {
     int u = clampi(uf, 0, cfg.texture.size_x - 1);
     int v = clampi(vf, 0, cfg.texture.size_y - 1);
 
-    minigl_pixel_ga_t p = cfg.texture.data[v][u];
-
-    if (p.alpha == 0) return;
-
-    set_pixel(x, y, z, p.color);
+    if (cfg.texture.format == MINIGL_COLOR_FMT_GA8) {
+        minigl_pixel_ga8_t p = cfg.texture.data_ga8[v][u];
+        if (p.alpha == 0) return;
+        set_pixel(x, y, z, p.color);
+    } else {
+        minigl_pixel_g8_t p = cfg.texture.data_g8[v][u];
+        set_pixel(x, y, z, p.color);
+    }
 }
 
 MINIGL_INLINE void scanline_slopes(float a, float b, float c, vec4 v[3], vec3 out) {
