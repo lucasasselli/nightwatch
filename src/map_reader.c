@@ -212,7 +212,7 @@ void map_read(map_t* map) {
         add_room(map, X - 1, Y + HEIGHT - 1, 1, 1);
 
         // Sign
-        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_WC_WOMEN, DIR_EAST, true));
+        map_item_add_xy(map, X - 2, Y + HEIGHT, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_WC_WOMEN, DIR_EAST, false));
 
         // Stalls
         map_item_add_xy(map, X + 0, Y, item_new_color(OBJ_ID_WC_PANEL, 32, DIR_SOUTH, true));
