@@ -117,7 +117,7 @@ bool map_viz_get_ivec2(map_t *map, vec2 pos, ivec2 tile) {
 }
 
 void map_viz_update(map_t *map, camera_t camera) {
-    const float FOV_STEP = 5.0;
+    const float FOV_STEP = 2.0;
 
     // Reset visibility
     for (int y = 0; y < MAP_DRAW_SIZE; y++) {
