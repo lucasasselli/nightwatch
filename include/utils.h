@@ -22,6 +22,8 @@ extern PlaydateAPI* pd;
 #define IVEC2_INIT(x) ((ivec2){x[0], x[1]})
 #define VEC2_INIT(x) (ivec2){x[0], x[1]})
 
+int fake_printf(const char* format, ...);
+
 int mini(int a, int b);
 
 int maxi(int a, int b);
