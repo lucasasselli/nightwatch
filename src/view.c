@@ -177,8 +177,8 @@ void view_init(void) {
 
 void view_prompt_draw(void) {
     pd->graphics->setFont(font_gui);
+    pd->graphics->fillRect(310, 210, LCD_COLUMNS, LCD_ROWS, kColorBlack);
     pd->graphics->setDrawMode(kDrawModeFillWhite);
-
     switch (gs.player_interact_item->action.type) {
         case ACTION_NONE:
             break;
