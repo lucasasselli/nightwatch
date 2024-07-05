@@ -72,7 +72,7 @@ int obj_init(void) {
 
     // Sign side
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.25f, 0.2f, -0.49f});
+    glm_translate(trans, (vec3){-0.25f, 0.15f, -0.49f});
     glm_scale(trans, (vec3){0.4f, 0.4, 0.4});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SIDE]);
 
