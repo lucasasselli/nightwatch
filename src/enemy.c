@@ -7,12 +7,12 @@
 #define ENEMY_ROAM_SPEED 1.0f
 #define ENEMY_CHASING_SPEED 1.0f
 
-#define ENEMY_DESPAWN_TIME 2.0f           // s
+#define ENEMY_DESPAWN_TIME 4.0f           // s
 #define ENEMY_DESPAWN_FLICKER_DELAY 1.0f  // s
 
 #define ENEMY_AWARE_SIGHT_K 0.1f
-#define ENEMY_AWARE_IDLE_K 0.03f
-#define ENEMY_AWARE_DARK_K -0.01f
+#define ENEMY_AWARE_IDLE_K 0.01f
+#define ENEMY_AWARE_DARK_K -0.1f
 #define ENEMY_AWARE_MAX 5.0f
 #define ENEMY_AWARE_SPAWN_TH 1.0f
 
@@ -120,13 +120,17 @@ void enemy_fsm_do(float delta_t) {
                 if (enemy_get_distance() > ENEMY_DIST_MAX - gs.enemy_awareness) {
                     enemy_action_move(ENEMY_ROAM_SPEED, delta_t);
                 }
+
+                // If awareness is zero despawn again
+                if (gs.enemy_awareness == 0.0f) {
+                    enemy_fsm_change_state(ENEMY_DESPAWN);
+                }
             } else {
                 // Enemy seen by the player!
                 if (gs.enemy_spotted_cnt == 0) {
                     // First time spotted! Always despawn
                     enemy_fsm_change_state(ENEMY_DESPAWN_WAIT);
                 } else {
-                    // TODO: Randomly despawn!
                     enemy_fsm_change_state(ENEMY_SPOTTED);
                 }
             }
@@ -149,7 +153,6 @@ void enemy_fsm_do(float delta_t) {
         // Enemy spotted by player, preparing to chase
         case ENEMY_SPOTTED:
             if (gs.enemy_in_fov) {
-                // TODO: Randomly despawn?
                 if (gs.enemy_aggression > ENEMY_AGGR_ATTACK_TH) {
                     enemy_fsm_change_state(ENEMY_CHASING);
                 }
