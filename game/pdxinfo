@@ -4,3 +4,5 @@ description=
 bundleID=com.luca.nightwatch
 version=1.0
 buildNumber=1
+imagePath=res/launcher
+contentWarning=This game contains flashing lights that may make it unsuitable for people with epilepsy or other photosensitive conditions.
