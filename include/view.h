@@ -8,8 +8,6 @@
 
 void view_init(void);
 
-void view_prompt_draw(void);
-
 void view_game_draw(float time, float delta_t);
 
 void view_note_draw(float time);

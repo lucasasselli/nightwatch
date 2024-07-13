@@ -73,6 +73,8 @@ LCDBitmap *img_bm;
 int img_width;
 int img_height;
 
+action_type_t old_action = ACTION_NONE;
+
 static void torch_mask_init(void) {
     // Torch mask
     for (int i = 0; i < TORCH_INT_STEPS; i++) {
@@ -175,25 +177,6 @@ void view_init(void) {
 #endif
 }
 
-void view_prompt_draw(void) {
-    pd->graphics->setFont(font_gui);
-    pd->graphics->fillRect(310, 210, LCD_COLUMNS, LCD_ROWS, kColorBlack);
-    pd->graphics->setDrawMode(kDrawModeFillWhite);
-    switch (gs.player_interact_item->action.type) {
-        case ACTION_NONE:
-            break;
-        case ACTION_NOTE:
-            DRAW_UTF8_STRING(PROMPT_STR_READ, 330, 210);
-            break;
-        case ACTION_KEYPAD:
-            DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
-            break;
-        case ACTION_INSPECT:
-            DRAW_UTF8_STRING(PROMPT_STR_INSPECT, 310, 210);
-            break;
-    }
-}
-
 static void screen_update(void) {
     // Offset to center in screen
     const int X_OFFSET = (LCD_COLUMNS - SCREEN_SIZE_X) / 2;
@@ -223,8 +206,12 @@ static void screen_update(void) {
             assert(p.depth >= 0.0f && p.depth <= 1.0f);
 
 #ifndef TORCH_DISABLE
-            uint8_t m = torch_mask[torch_mask_i][y][x];
 
+            // If max brightess mask is 0 then pixel will never be set
+            // or cleared
+            if (torch_mask[TORCH_INT_STEPS - 1][y][x] == 0) continue;
+
+            uint8_t m = torch_mask[torch_mask_i][y][x];
             if (m) {
                 if (p.color > 0) {
                     // If pixel is already fully back, don't bother
@@ -262,6 +249,42 @@ void view_game_draw(float time, float delta_t) {
 
     // Update the screen
     screen_update();
+
+    // Draw prompt
+    action_type_t action;
+
+    if (gs.player_interact) {
+        action = gs.player_interact_item->action.type;
+    } else {
+        action = ACTION_NONE;
+    }
+
+#ifndef DEBUG_MINIMAP
+    if (old_action == action && time >= 0.0f) {
+        // No need to redraw the prompt!
+        return;
+    }
+#endif
+
+    pd->graphics->setFont(font_gui);
+    pd->graphics->fillRect(310, 210, LCD_COLUMNS, LCD_ROWS, kColorBlack);
+    pd->graphics->setDrawMode(kDrawModeFillWhite);
+
+    switch (action) {
+        case ACTION_NONE:
+            break;
+        case ACTION_NOTE:
+            DRAW_UTF8_STRING(PROMPT_STR_READ, 330, 210);
+            break;
+        case ACTION_KEYPAD:
+            DRAW_UTF8_STRING(PROMPT_STR_KEYPAD, 310, 210);
+            break;
+        case ACTION_INSPECT:
+            DRAW_UTF8_STRING(PROMPT_STR_INSPECT, 310, 210);
+            break;
+    }
+
+    old_action = action;
 
 #ifdef DEBUG_MINIMAP
     minimap_debug_draw(0, 0, &gs);

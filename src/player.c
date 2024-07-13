@@ -201,7 +201,7 @@ bool player_handle_keys(float delta_t) {
 
             // Calculate perpendicular vector
             glm_swapf(&coll_normf[0], &coll_normf[1]);
-            coll_normf[0] *= -1.0;
+            coll_normf[0] *= -1.0f;
 
             if (glm_vec2_dot(gs.camera.front, coll_normf) < 0.0f) {
                 glm_vec2_scale_as(coll_normf, -1.0, coll_normf);

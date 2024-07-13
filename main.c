@@ -28,8 +28,6 @@ int update_cnt = 0;
 
 player_state_t player_state_old;
 float player_state_time = 0;
-bool prompt_shown = false;
-bool screen_clear_req = false;
 
 void print_perf(void) {
 #ifdef MINIGL_DEBUG_PERF
@@ -96,10 +94,9 @@ static int lua_update(lua_State *L) {
 
     // Clear screen when changing state!
     // Or when requested by the view
-    if (player_state_old != gs.player_state || screen_clear_req) {
+    if (player_state_old != gs.player_state) {
         pd->graphics->clear(kColorBlack);
         player_state_time = 0.0;
-        screen_clear_req = false;
     }
     player_state_old = gs.player_state;
 
@@ -107,12 +104,6 @@ static int lua_update(lua_State *L) {
         case PLAYER_ACTIVE:
             game_update(update_delta_t);
             view_game_draw(player_state_time, update_delta_t);
-
-            // Show prompt
-            if (gs.player_interact) {
-                view_prompt_draw();
-                prompt_shown = true;
-            }
             break;
         case PLAYER_READING:
             view_note_draw(player_state_time);
@@ -129,13 +120,6 @@ static int lua_update(lua_State *L) {
         case PLAYER_GAMEOVER:
             view_gameover_draw(player_state_time);
             break;
-    }
-
-    if (!gs.player_interact && prompt_shown) {
-        if (prompt_shown) {
-            prompt_shown = false;
-            screen_clear_req = true;
-        }
     }
 
 #ifdef DEBUG
