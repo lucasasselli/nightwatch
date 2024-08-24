@@ -26,10 +26,16 @@ typedef enum {
     OBJ_ID_WC_PANEL,
     OBJ_ID_WC_COLUMN,
     OBJ_ID_WC_SINK,
-    OBJ_ID_BARRIER
+    OBJ_ID_BARRIER,
+    OBJ_ID_CUBE0,
+    OBJ_ID_CUBE1,
+    OBJ_ID_CUBE2,
+    OBJ_ID_PYRAMID0,
+    OBJ_ID_PYRAMID1,
+    OBJ_ID_PYRAMID2
 } obj_id_t;
 
-#define OBJ_ID_NUM 24
+#define OBJ_ID_NUM 30
 
 int obj_init(void);
 

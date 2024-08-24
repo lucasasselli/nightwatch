@@ -27,7 +27,7 @@ const char *PROMPT_STR_NONOTES = "No notes found!";
 
 // clang-format off
 RANDW_CONSTR_BEGIN(float,CONSTR_FLICKER,2)
-    RANDW_POINT(0.0, 8),
+    RANDW_POINT(0.0, 6),
     RANDW_RANGE(0.0, 1.0, 2)
 RANDW_CONSTR_END;
 // clang-format on
@@ -65,7 +65,7 @@ fp16_t torch_fade[TORCH_INT_STEPS][TORCH_FADE_STEPS];
 
 #define DRAW_UTF8_STRING(s, x, y) pd->graphics->drawText(s, strlen(s), kUTF8Encoding, x, y)
 
-char str_buffer[1000];
+char str_buffer[100];
 int x_offset = 0;
 int y_offset = 0;
 float zoom = 1.0f;

@@ -72,8 +72,6 @@ static int lua_load(lua_State *L) {
                 game_reset();
                 break;
         }
-    } else {
-        debug("Loading done!");
     }
     load_step++;
 
