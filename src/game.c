@@ -30,7 +30,7 @@ void game_reset(void) {
         map_free(gs.map);
     }
     gs.map = map_new();
-    map_read(gs.map);
+    map_gen(gs.map);
     map_viz_update(gs.map, gs.camera);
 
     gs.torch_charge = 0.0f;

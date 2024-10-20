@@ -28,7 +28,7 @@ void player_reset(void) {
 
     // Pick a random starting position in the map
     ivec2 t;
-    t[0] = 31;  // TODO: Encode in the map or the level itself
+    t[0] = 39;  // TODO: Encode in the map or the level itself
     t[1] = 59;
     ivec2_to_vec2_center(t, gs.camera.pos);
 

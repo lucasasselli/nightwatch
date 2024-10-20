@@ -78,6 +78,7 @@ static void enemy_fsm_change_state(enemy_state_t next_state) {
                     gs.enemy_tile[1] = rand() % MAP_SIZE;
                 } while (map_get_collide_ivec2(gs.map, gs.enemy_tile) || map_viz_get_ivec2(gs.map, gs.camera.pos, gs.enemy_tile));
             }
+            debug("Enemy spawned at %d, %d", gs.enemy_tile[0], gs.enemy_tile[1]);
             break;
 
         case ENEMY_DESPAWN_WAIT:

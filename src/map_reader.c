@@ -75,6 +75,11 @@ static void add_wall(map_t* map, int x, int y, dir_t dir) {
     map_item_add_xy(map, x, y, item);
 }
 
+static void add_statue_with_base(map_t* map, int x, int y, dir_t dir, tex_mdbb_id_t tex_id) {
+    map_item_add_xy(map, x, y, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));
+    map_item_add_xy(map, x, y, item_new_mdbb(tex_id, DIR_SOUTH, true));
+}
+
 static void add_inspect_tex(map_t* map, int x, int y, tex_id_t tex_id) {
     item_t* item = item_new();
     item->hidden = true;
@@ -83,17 +88,12 @@ static void add_inspect_tex(map_t* map, int x, int y, tex_id_t tex_id) {
     map_item_add_xy(map, x, y, item);
 }
 
-void map_read(map_t* map) {
-    // TODO: Implement read from file?
-
-    //---------------------------------------------------------------------------
+void map_gen(map_t* map) {
     //---------------------------------------------------------------------------
     // Outside
     //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-
     {
-        const int X = 28;
+        const int X = 36;
         const int Y = 61;
         const int WIDTH = 8;
         const int HEIGHT = 2;
@@ -117,70 +117,38 @@ void map_read(map_t* map) {
     }
 
     //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    // Level 1
-    //---------------------------------------------------------------------------
+    // Atrium
     //---------------------------------------------------------------------------
 
     // Atrium
     {
-        const int X = 27;
+        const int X = 35;
         const int Y = 49;
         const int WIDTH = 9;
         const int HEIGHT = 11;
 
         // Entrance shutter
         add_room(map, X, Y, WIDTH, HEIGHT);
-        add_door(map, 30, 60, DIR_NORTH, 1234);
-        map_tile_clone_xy(map, 31, 60, 30, 60);
-        map_tile_clone_xy(map, 32, 60, 30, 60);
+        add_door(map, 38, 60, DIR_NORTH, 1234);
+        map_tile_clone_xy(map, 39, 60, 38, 60);
+        map_tile_clone_xy(map, 40, 60, 38, 60);
 
         // Columns
-        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_0, DIR_SOUTH, false));
-
-        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 3, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_1, DIR_SOUTH, false));
-
-        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2, Y + 2 + 6, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_2, DIR_SOUTH, false));
-
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_3, DIR_SOUTH, false));
-
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 3, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_4, DIR_SOUTH, false));
-
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_mat(OBJ_ID_COLUMN, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + WIDTH - 3, Y + 2 + 6, item_new_tex(OBJ_ID_SIGN_COLUMN, TEX_ID_COLUMN_SYMBOL_5, DIR_SOUTH, false));
+        for (int i = 0; i < 3; i++) {
+            map_item_add_xy(map, X + 2, Y + 2 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            map_item_add_xy(map, X + WIDTH - 3, Y + 2 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+        }
 
         // Statue
-        // TODO: Replace with something else!
-        map_item_add_xy(map, X + 4, Y + 4, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));
-        map_item_add_xy(map, X + 4, Y + 4 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
+        add_statue_with_base(map, X + 4, Y + 4, DIR_SOUTH, TEX_ID_VENUS);
 
-        // Museum history sign
-        map_item_add_xy(map, X + WIDTH - 1, Y + 2, item_new_tex(OBJ_ID_SIGN_HUGE, TEX_ID_SIGN_MUSEUM_HISTORY, DIR_EAST, false));
-        add_inspect_tex(map, X + WIDTH - 1, Y + 2, TEX_ID_SIGN_MUSEUM_HISTORY);
-
-        add_note(map, X + WIDTH - 2, Y + 2, 2);
-
-        // Level 2 shutter
+        // FIXME: Move to the other room
         add_room(map, X + 3, Y - 1, 3, 1);
-        add_door(map, X + 3 + 0, Y - 1, DIR_SOUTH, 9568);
-        map_tile_clone_xy(map, X + 3 + 1, Y - 1, X + 3 + 0, Y - 1);
-        map_tile_clone_xy(map, X + 3 + 2, Y - 1, X + 3 + 0, Y - 1);
-
-        // Note(s)
-        add_note(map, X + 4, Y + 7, 0);
     }
 
-    //---------------------------------------------------------------------------
     // Man bathroom
-    //---------------------------------------------------------------------------
-    // NOTE: Unreachable
     {
-        const int X = 37;
+        const int X = 45;
         const int Y = 57;
         const int WIDTH = 6;
         const int HEIGHT = 3;
@@ -197,11 +165,9 @@ void map_read(map_t* map) {
         map_item_add_xy(map, X - 1, Y, item_new_tex(OBJ_ID_WETFLOOR, TEX_ID_WETFLOOR, DIR_WEST, true));
     }
 
-    //---------------------------------------------------------------------------
     // Women bathroom
-    //---------------------------------------------------------------------------
     {
-        const int X = 37;
+        const int X = 45;
         const int Y = 53;
         const int WIDTH = 6;
         const int HEIGHT = 3;
@@ -227,22 +193,95 @@ void map_read(map_t* map) {
         map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_WC_SINK, TEX_ID_WC_SINK, DIR_NORTH, true));
         map_item_add_xy(map, X + 4, Y, item_new_tex(OBJ_ID_WC_SINK, TEX_ID_WC_SINK, DIR_NORTH, true));
         map_item_add_xy(map, X + 5, Y, item_new_tex(OBJ_ID_WC_SINK, TEX_ID_WC_SINK, DIR_NORTH, true));
-
-        // Note(s)
-        add_note(map, X + 4, Y, 1);
     }
 
     //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    // Level 2
-    //---------------------------------------------------------------------------
+    // West wing
     //---------------------------------------------------------------------------
 
+    // Four rooms
+    {
+        const int X = 16;
+        const int Y = 46;
+
+        // Entrance
+        add_room(map, X + 14, Y + 7, 5, 2);
+
+        // Barrier
+        add_barrier(map, X + 12, Y + 6, 2, 0);
+        add_barrier(map, X + 10, Y + 2, 0, 2);
+
+        // Corridors
+        add_room(map, X + 6, Y + 2, 4, 2);
+        add_room(map, X + 2, Y + 6, 2, 4);
+        add_room(map, X + 6, Y + 12, 4, 2);
+        add_room(map, X + 12, Y + 6, 2, 4);
+
+        // North-west
+        add_room(map, X, Y + 0, 6, 6);
+        /*map_item_add_xy(map, X + 2, Y + 3, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST, true));*/
+
+        // South-west
+        add_room(map, X, Y + 10, 6, 6);
+
+        // North-east
+        add_room(map, X + 10, Y + 0, 6, 6);
+
+        // South-east
+        add_room(map, X + 10, Y + 10, 6, 6);
+
+        // Exit
+        add_room(map, X + 7, Y - 2, 2, 4);
+    }
+
+    // Big-room
+    {
+        const int X = 20;
+        const int Y = 32;
+
+        // Main room
+        add_room(map, X, Y, 8, 12);
+
+        // Employee only sign
+        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_EMPLOYEEONLY, DIR_NORTH, false));
+
+        // East annex
+        add_room(map, X + 8, Y + 5, 1, 2);
+        add_room(map, X + 9, Y + 3, 5, 6);
+
+        // West annex
+        add_room(map, X - 1, Y + 5, 1, 2);
+        add_room(map, X - 6, Y + 3, 5, 6);
+    }
+
     //---------------------------------------------------------------------------
-    // Room 1
+    // Employee only
     //---------------------------------------------------------------------------
     {
-        const int X = 27;
+        const int X = 22;
+        const int Y = 21;
+        const int WIDTH = 1;
+        const int HEIGHT = 11;
+
+        add_room(map, X, Y, WIDTH, HEIGHT);
+    }
+
+    {
+        const int X = 22;
+        const int Y = 20;
+        const int WIDTH = 17;
+        const int HEIGHT = 1;
+
+        add_room(map, X, Y, WIDTH, HEIGHT);
+    }
+
+    //---------------------------------------------------------------------------
+    // Central wing
+    //---------------------------------------------------------------------------
+
+    // Room 1
+    {
+        const int X = 35;
         const int Y = 41;
         const int WIDTH = 9;
         const int HEIGHT = 7;
@@ -252,25 +291,19 @@ void map_read(map_t* map) {
         // Statues - Upper row
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 7
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_4, DIR_NORTH, false));
 
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 8
 
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 9
         map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_1, DIR_NORTH, false));
 
         // Statues - Lower row
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 0
-
-        add_note(map, X + 2 + 2, Y + 2 + 4, 3);
     }
 
-    //---------------------------------------------------------------------------
     // Room 2
-    //---------------------------------------------------------------------------
     {
-        const int X = 27;
+        const int X = 35;
         const int Y = 33;
         const int WIDTH = 9;
         const int HEIGHT = 7;
@@ -284,7 +317,6 @@ void map_read(map_t* map) {
         // Statues - Upper row
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 1
         map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_2, DIR_NORTH, false));
 
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 2
 
@@ -295,16 +327,11 @@ void map_read(map_t* map) {
 
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 5
         map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_tex(OBJ_ID_SIGN_BASE, TEX_ID_ROMAN_3, DIR_NORTH, false));
-
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 6
     }
 
-    //---------------------------------------------------------------------------
     // Gallery
-    //---------------------------------------------------------------------------
     {
-        const int X = 37;
+        const int X = 45;
         const int Y = 33;
         const int WIDTH = 6;
         const int HEIGHT = 15;
@@ -329,57 +356,15 @@ void map_read(map_t* map) {
         add_inspect_tex(map, X + 5, Y + 9, TEX_ID_PICTURE_4);
         map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
         add_inspect_tex(map, X + 5, Y + 12, TEX_ID_PICTURE_5);
-
-        // Note
-        add_note(map, X + 1, Y + HEIGHT - 1, 4);
-
-        // Employee only sign
-        map_item_add_xy(map, X, Y + HEIGHT - 1, item_new_tex(OBJ_ID_SIGN_SIDE, TEX_ID_SIGN_EMPLOYEEONLY, DIR_SOUTH, false));
-
-        // Level 4 shutter
-        add_door(map, X + 2 + 0, Y - 1, DIR_SOUTH, 9157);
-        map_tile_clone_xy(map, X + 2 + 1, Y - 1, X + 2 + 0, Y - 1);
     }
 
     //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    // Level 3
-    //---------------------------------------------------------------------------
+    // North wing
     //---------------------------------------------------------------------------
 
-    //---------------------------------------------------------------------------
-    // Break room
-    //---------------------------------------------------------------------------
-    {
-        const int X = 37;
-        const int Y = 49;
-        const int WIDTH = 6;
-        const int HEIGHT = 3;
-
-        add_room(map, X, Y, WIDTH, HEIGHT);
-
-        // Entrance(s)
-        add_room(map, X + 1, Y - 1, 1, 1);
-
-        // Whiteboard
-        map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_SIGN_BIG, TEX_ID_WHITEBOARD, DIR_NORTH, false));
-        add_inspect_tex(map, X + 3, Y, TEX_ID_WHITEBOARD);
-
-        // Door
-        add_door(map, X + 1, Y - 1, DIR_NORTH, 2509);
-    }
-
-    //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    // Level 4
-    //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-
-    //---------------------------------------------------------------------------
     // Corridor
-    //---------------------------------------------------------------------------
     {
-        const int X = 38;
+        const int X = 46;
         const int Y = 19;
         const int WIDTH = 4;
         const int HEIGHT = 13;
@@ -391,17 +376,11 @@ void map_read(map_t* map) {
 
         // Entrance(s)
         add_room(map, X + 1, Y + HEIGHT, 2, 1);
-
-        // Level 5 shutter
-        add_door(map, X + 1 + 0, Y - 1, DIR_SOUTH, 2509);  // FIXME:
-        map_tile_clone_xy(map, X + 1 + 1, Y - 1, X + 1 + 0, Y - 1);
     }
 
-    //---------------------------------------------------------------------------
     // Room 1
-    //---------------------------------------------------------------------------
     {
-        const int X = 31;
+        const int X = 39;
         const int Y = 19;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -411,13 +390,14 @@ void map_read(map_t* map) {
 
         // Entrance(s)
         add_room(map, X + WIDTH, Y + 2, 1, 2);
+
+        // Employee only sign
+        map_item_add_xy(map, X, Y, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_EMPLOYEEONLY, DIR_WEST, false));
     }
 
-    //---------------------------------------------------------------------------
     // Room 2
-    //---------------------------------------------------------------------------
     {
-        const int X = 31;
+        const int X = 39;
         const int Y = 26;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -430,11 +410,9 @@ void map_read(map_t* map) {
         add_room(map, X + 2, Y - 1, 2, 1);
     }
 
-    //---------------------------------------------------------------------------
     // Room 3
-    //---------------------------------------------------------------------------
     {
-        const int X = 43;
+        const int X = 51;
         const int Y = 19;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -446,11 +424,9 @@ void map_read(map_t* map) {
         add_room(map, X - 1, Y + 2, 1, 2);
     }
 
-    //---------------------------------------------------------------------------
     // Room 4
-    //---------------------------------------------------------------------------
     {
-        const int X = 43;
+        const int X = 51;
         const int Y = 26;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -462,20 +438,18 @@ void map_read(map_t* map) {
         add_room(map, X - 1, Y + 2, 1, 2);
         add_room(map, X + 2, Y - 1, 2, 1);
     }
-
-    //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    // Level 5
-    //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
 
     //---------------------------------------------------------------------------
     // Big room
     //---------------------------------------------------------------------------
     {
-        const int X = 34;
+        const int X = 42;
         const int Y = 6;
 
+        // Entrance(s)
+        add_room(map, X + 5, Y + 12, 2, 1);
+
+        // Floor
         add_room(map, X + 4, Y + 0, 4, 2);
         add_room(map, X + 2, Y + 2, 8, 2);
         add_room(map, X + 0, Y + 4, 12, 2);
@@ -483,8 +457,11 @@ void map_read(map_t* map) {
         add_room(map, X + 2, Y + 8, 8, 2);
         add_room(map, X + 4, Y + 10, 4, 2);
 
-        // Entrance(s)
-        add_room(map, X + 5, Y + 12, 2, 1);
+        // Columns
+        for (int i = 0; i < 2; i++) {
+            map_item_add_xy(map, X + 4, Y + 4 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            map_item_add_xy(map, X + 7, Y + 4 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+        }
     }
 
     //---------------------------------------------------------------------------

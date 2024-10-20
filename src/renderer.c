@@ -69,6 +69,7 @@ static void draw_item(item_t* item, camera_t camera, mat4 trans, int x, int y) {
         case DRAW_MODE_MDBB:
             tile_dir((ivec2){x, y}, camera.pos, dir);
 
+            // FIXME: There's something very wrong here
             a = vec2_angle((vec2){0.0f, -1.0f}, dir) + item->dir * GLM_PI_2f;
             minigl_set_tex(*tex_mdbb_get_a(item->tex_mdbb_id, a));
             break;

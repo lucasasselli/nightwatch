@@ -166,8 +166,8 @@ int obj_init(void) {
 
     // Barrier
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});
-    glm_scale(trans, (vec3){0.1f, 0.05f, 0.1f});
+    /*glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});*/
+    /*glm_scale(trans, (vec3){0.1f, 0.05f, 0.1f});*/
     minigl_obj_trans(&obj_array[OBJ_ID_BARRIER], trans);
 
     // Cube 0
