@@ -15,16 +15,12 @@ int obj_init(void) {
     result |= minigl_obj_read_file("res/models/wall.obj", &obj_wall, 0);
     result |= minigl_obj_read_file("res/models/cube.obj", &obj_cube, 0);
     result |= minigl_obj_read_file("res/models/base.obj", &obj_array[OBJ_ID_BASE], 0);
-    result |= minigl_obj_read_file("res/models/tile_high_poly.obj", &obj_array[OBJ_ID_SIGN_HUGE], MINIGL_OBJ_TEXFLIPY);
-    result |= minigl_obj_read_file("res/models/tile_high_poly.obj", &obj_array[OBJ_ID_SIGN_BIG], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/wetfloor.obj", &obj_array[OBJ_ID_WETFLOOR], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/bench.obj", &obj_array[OBJ_ID_BENCH], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/sink.obj", &obj_array[OBJ_ID_WC_SINK], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/shutter_closed.obj", &obj_array[OBJ_ID_SHUTTER_CLOSED], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/shutter_open.obj", &obj_array[OBJ_ID_SHUTTER_OPEN], MINIGL_OBJ_TEXFLIPY);
     result |= minigl_obj_read_file("res/models/barrier.obj", &obj_array[OBJ_ID_BARRIER], 0);
-    result |= minigl_obj_read_file("res/models/cube.obj", &obj_array[OBJ_ID_CUBE2], 0);
-    result |= minigl_obj_read_file("res/models/pyramid.obj", &obj_array[OBJ_ID_PYRAMID2], 0);
 
     if (result) return result;
 
@@ -42,29 +38,11 @@ int obj_init(void) {
     glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     minigl_obj_copy_trans(obj_wall, trans, &obj_array[OBJ_ID_WALL]);
 
-    // Wall graffiti
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
-    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_WALL_GRAFFITI]);
-
     // Sign square
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
     // glm_scale(trans, (vec3){1.0f, 1.0, 1.0});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SQUARE]);
-
-    // Sign huge
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
-    glm_scale(trans, (vec3){4.0f, 1.5, 1.0});
-    minigl_obj_trans(&obj_array[OBJ_ID_SIGN_HUGE], trans);
-
-    // Sign big
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.49f});
-    glm_scale(trans, (vec3){2.0f, 0.75, 1.0});
-    minigl_obj_trans(&obj_array[OBJ_ID_SIGN_BIG], trans);
 
     // Sign small side
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
@@ -161,44 +139,8 @@ int obj_init(void) {
     // Barrier
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});
-    glm_scale(trans, (vec3){0.1f, 0.05f, 0.1f});
+    glm_scale(trans, (vec3){0.1f, 0.07f, 0.1f});
     minigl_obj_trans(&obj_array[OBJ_ID_BARRIER], trans);
-
-    // Barrier
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    /*glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});*/
-    /*glm_scale(trans, (vec3){0.1f, 0.05f, 0.1f});*/
-    minigl_obj_trans(&obj_array[OBJ_ID_BARRIER], trans);
-
-    // Cube 0
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 1.0f, 0.0f});
-    minigl_obj_copy_trans(obj_array[OBJ_ID_CUBE2], trans, &obj_array[OBJ_ID_CUBE0]);
-
-    // Cube 1
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 2.0f, 0.0f});
-    minigl_obj_copy_trans(obj_array[OBJ_ID_CUBE2], trans, &obj_array[OBJ_ID_CUBE1]);
-
-    // Cube 2
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 3.0f, 0.0f});
-    minigl_obj_trans(&obj_array[OBJ_ID_CUBE2], trans);
-
-    // Pyramid 0
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 1.0f, 0.0f});
-    minigl_obj_copy_trans(obj_array[OBJ_ID_PYRAMID2], trans, &obj_array[OBJ_ID_PYRAMID0]);
-
-    // Pyramid 1
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 2.0f, 0.0f});
-    minigl_obj_copy_trans(obj_array[OBJ_ID_PYRAMID2], trans, &obj_array[OBJ_ID_PYRAMID1]);
-
-    // Pyramid 2
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){0.0f, 3.0f, 0.0f});
-    minigl_obj_trans(&obj_array[OBJ_ID_PYRAMID2], trans);
 
     return 0;
 }

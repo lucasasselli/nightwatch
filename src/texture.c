@@ -30,8 +30,6 @@ int tex_load(tex_id_t id) {
             return tex_file_read("res/textures/note.tex", TEX_ID_NOTE, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_WC_SINK:
             return tex_file_read("res/textures/sink.tex", TEX_ID_WC_SINK, (minigl_tex_read_opts_t){.force_g8 = true});
-        case TEX_ID_SIGN_MUSEUM_HISTORY:
-            return tex_file_read("res/textures/museum_history.tex", TEX_ID_SIGN_MUSEUM_HISTORY, MINIGL_TEX_READ_OPTS_NONE);
         case TEX_ID_SIGN_WC_MAN:
             return tex_file_read("res/textures/sign_wc_man.tex", TEX_ID_SIGN_WC_MAN, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_SIGN_WC_WOMEN:
@@ -50,26 +48,6 @@ int tex_load(tex_id_t id) {
             return tex_file_read("res/textures/picture_horse.tex", TEX_ID_PICTURE_4, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_5:
             return tex_file_read("res/textures/picture_man.tex", TEX_ID_PICTURE_5, (minigl_tex_read_opts_t){.force_g8 = true});
-        case TEX_ID_ROMAN_1:
-            return tex_file_read("res/textures/roman_1.tex", TEX_ID_ROMAN_1, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_ROMAN_2:
-            return tex_file_read("res/textures/roman_2.tex", TEX_ID_ROMAN_2, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_ROMAN_3:
-            return tex_file_read("res/textures/roman_3.tex", TEX_ID_ROMAN_3, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_ROMAN_4:
-            return tex_file_read("res/textures/roman_4.tex", TEX_ID_ROMAN_4, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_0:
-            return tex_file_read("res/textures/column_symbol_0.tex", TEX_ID_COLUMN_SYMBOL_0, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_1:
-            return tex_file_read("res/textures/column_symbol_1.tex", TEX_ID_COLUMN_SYMBOL_1, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_2:
-            return tex_file_read("res/textures/column_symbol_2.tex", TEX_ID_COLUMN_SYMBOL_2, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_3:
-            return tex_file_read("res/textures/column_symbol_3.tex", TEX_ID_COLUMN_SYMBOL_3, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_4:
-            return tex_file_read("res/textures/column_symbol_4.tex", TEX_ID_COLUMN_SYMBOL_4, MINIGL_TEX_READ_OPTS_NONE);
-        case TEX_ID_COLUMN_SYMBOL_5:
-            return tex_file_read("res/textures/column_symbol_5.tex", TEX_ID_COLUMN_SYMBOL_5, MINIGL_TEX_READ_OPTS_NONE);
         case TEX_ID_WHITEBOARD:
             return tex_file_read("res/textures/whiteboard.tex", TEX_ID_WHITEBOARD, (minigl_tex_read_opts_t){.force_g8 = true});
     }

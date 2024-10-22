@@ -283,22 +283,11 @@ void map_gen(map_t* map) {
     {
         const int X = 35;
         const int Y = 41;
-        const int WIDTH = 9;
-        const int HEIGHT = 7;
 
-        add_room(map, X, Y, WIDTH, HEIGHT);
-
-        // Statues - Upper row
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 7
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 8
-
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 9
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-
-        // Statues - Lower row
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 0
+        add_room(map, X, Y, 9, 3);
+        add_room(map, X, Y + 3, 2, 1);
+        add_room(map, X + 7, Y + 3, 2, 1);
+        add_room(map, X, Y + 4, 9, 3);
     }
 
     // Room 2
@@ -308,25 +297,14 @@ void map_gen(map_t* map) {
         const int WIDTH = 9;
         const int HEIGHT = 7;
 
-        add_room(map, X, Y, WIDTH, HEIGHT);
+        add_room(map, X, Y, 9, 3);
+        add_room(map, X, Y + 3, 2, 1);
+        add_room(map, X + 7, Y + 3, 2, 1);
+        add_room(map, X, Y + 4, 9, 3);
 
         // Entrance(s)
         add_room(map, X + 2, Y + HEIGHT, 2, 1);
         add_room(map, X + WIDTH - 4, Y + HEIGHT, 2, 1);
-
-        // Statues - Upper row
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 1
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 0, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
-
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 2
-
-        map_item_add_xy(map, X + 2 + 4, Y + 2 + 0, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 3
-
-        // Statues - Lower row
-        map_item_add_xy(map, X + 2 + 0, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 4
-
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));  // 5
-        map_item_add_xy(map, X + 2 + 2, Y + 2 + 2, item_new_mdbb(TEX_ID_VENUS, DIR_NORTH, true));
     }
 
     // Gallery

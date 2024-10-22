@@ -5,10 +5,7 @@
 typedef enum {
     OBJ_ID_FLOOR,
     OBJ_ID_WALL,
-    OBJ_ID_WALL_GRAFFITI,
     OBJ_ID_SIGN_SQUARE,
-    OBJ_ID_SIGN_HUGE,
-    OBJ_ID_SIGN_BIG,
     OBJ_ID_SIGN_SIDE_SMALL,
     OBJ_ID_SIGN_SIDE,
     OBJ_ID_SIGN_BASE,
@@ -26,16 +23,10 @@ typedef enum {
     OBJ_ID_WC_PANEL,
     OBJ_ID_WC_COLUMN,
     OBJ_ID_WC_SINK,
-    OBJ_ID_BARRIER,
-    OBJ_ID_CUBE0,
-    OBJ_ID_CUBE1,
-    OBJ_ID_CUBE2,
-    OBJ_ID_PYRAMID0,
-    OBJ_ID_PYRAMID1,
-    OBJ_ID_PYRAMID2
+    OBJ_ID_BARRIER
 } obj_id_t;
 
-#define OBJ_ID_NUM 30
+#define OBJ_ID_NUM 21
 
 int obj_init(void);
 
