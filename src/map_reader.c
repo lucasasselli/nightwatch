@@ -199,13 +199,33 @@ void map_gen(map_t* map) {
     // West wing
     //---------------------------------------------------------------------------
 
+    /*
+    {
+        const int X = 18;
+        const int Y = 32;
+
+        // Entrance
+        add_room(map, X + 14, Y + 22, 3, 2);
+
+        add_room(map, X + 0, Y + 0, 6, 8);
+        add_room(map, X + 0, Y + 9, 11, 5);
+        add_room(map, X + 7, Y + 0, 4, 10);
+        add_room(map, X + 10, Y + 0, 2, 7);
+        add_room(map, X + 12, Y + 0, 4, 14);
+        add_room(map, X + 0, Y + 15, 5, 13);
+        add_room(map, X + 4, Y + 15, 2, 7);
+        add_room(map, X + 6, Y + 15, 10, 13);
+        add_room(map, X + 13, Y + 14, 2, 1);
+        add_room(map, X + 2, Y + 8, 2, 1);
+    }
+
     // Four rooms
     {
-        const int X = 16;
+        const int X = 18;
         const int Y = 46;
 
         // Entrance
-        add_room(map, X + 14, Y + 7, 5, 2);
+        add_room(map, X + 14, Y + 7, 3, 2);
 
         // Barrier
         add_barrier(map, X + 12, Y + 6, 2, 0);
@@ -219,7 +239,6 @@ void map_gen(map_t* map) {
 
         // North-west
         add_room(map, X, Y + 0, 6, 6);
-        /*map_item_add_xy(map, X + 2, Y + 3, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST, true));*/
 
         // South-west
         add_room(map, X, Y + 10, 6, 6);
@@ -240,40 +259,22 @@ void map_gen(map_t* map) {
         const int Y = 32;
 
         // Main room
-        add_room(map, X, Y, 8, 12);
+        add_room(map, X + 0, Y, 5, 3);
+        add_room(map, X + 6, Y, 2, 3);
+        add_room(map, X, Y + 3, 8, 2);
+        add_room(map, X + 1, Y + 5, 1, 1);  // e
+
+        add_room(map, X + 0, Y + 6, 2, 3);
+        add_room(map, X + 3, Y + 6, 8, 2);
+        add_room(map, X + 3, Y + 8, 1, 1);
+
+        add_room(map, X + 8, Y + 8, 2, 1);
+        add_room(map, X + 0, Y + 9, 4, 3);
+        add_room(map, X + 5, Y + 9, 6, 3);
 
         // Employee only sign
         map_item_add_xy(map, X + 3, Y, item_new_tex(OBJ_ID_SIGN_SIDE_SMALL, TEX_ID_SIGN_EMPLOYEEONLY, DIR_NORTH, false));
-
-        // East annex
-        add_room(map, X + 8, Y + 5, 1, 2);
-        add_room(map, X + 9, Y + 3, 5, 6);
-
-        // West annex
-        add_room(map, X - 1, Y + 5, 1, 2);
-        add_room(map, X - 6, Y + 3, 5, 6);
-    }
-
-    //---------------------------------------------------------------------------
-    // Employee only
-    //---------------------------------------------------------------------------
-    {
-        const int X = 22;
-        const int Y = 21;
-        const int WIDTH = 1;
-        const int HEIGHT = 11;
-
-        add_room(map, X, Y, WIDTH, HEIGHT);
-    }
-
-    {
-        const int X = 22;
-        const int Y = 20;
-        const int WIDTH = 17;
-        const int HEIGHT = 1;
-
-        add_room(map, X, Y, WIDTH, HEIGHT);
-    }
+    }*/
 
     //---------------------------------------------------------------------------
     // Central wing
@@ -288,6 +289,13 @@ void map_gen(map_t* map) {
         add_room(map, X, Y + 3, 2, 1);
         add_room(map, X + 7, Y + 3, 2, 1);
         add_room(map, X, Y + 4, 9, 3);
+
+        // Pictures
+        map_item_add_xy(map, X + 3, Y + 4, item_new_tex(OBJ_ID_PICTURE_RECT, TEX_ID_PICTURE_0, DIR_NORTH, false));
+        map_item_add_xy(map, X + 5, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_1, DIR_NORTH, false));
+
+        map_item_add_xy(map, X + 3, Y + 2, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_C, TEX_ID_PICTURE_2, DIR_SOUTH, false));
+        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_3, DIR_SOUTH, false));
     }
 
     // Room 2
@@ -305,6 +313,16 @@ void map_gen(map_t* map) {
         // Entrance(s)
         add_room(map, X + 2, Y + HEIGHT, 2, 1);
         add_room(map, X + WIDTH - 4, Y + HEIGHT, 2, 1);
+
+        // Pictures
+        map_item_add_xy(map, X + 3, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_0, TEX_ID_PICTURE_4, DIR_NORTH, false));
+        map_item_add_xy(map, X + 3, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_1, TEX_ID_PICTURE_5, DIR_NORTH, false));
+        map_item_add_xy(map, X + 3, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_2, TEX_ID_PICTURE_6, DIR_NORTH, false));
+        map_item_add_xy(map, X + 3, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_3, TEX_ID_PICTURE_7, DIR_NORTH, false));
+        map_item_add_xy(map, X + 5, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_8, DIR_NORTH, false));
+
+        map_item_add_xy(map, X + 3, Y + 2, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_C, TEX_ID_PICTURE_0, DIR_SOUTH, false));
+        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_PICTURE_RECT, TEX_ID_PICTURE_1, DIR_SOUTH, false));
     }
 
     // Gallery
@@ -326,14 +344,13 @@ void map_gen(map_t* map) {
         map_item_add_xy(map, X + 2, Y + 11, item_new_color(OBJ_ID_BENCH, 100, DIR_WEST, true));
 
         // Pictures
-        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_0, DIR_EAST, false));
-        add_inspect_tex(map, X + 5, Y + 2, TEX_ID_PICTURE_0);
-        map_item_add_xy(map, X + 5, Y + 5, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_2, DIR_EAST, false));
-        add_inspect_tex(map, X + 5, Y + 5, TEX_ID_PICTURE_2);
-        map_item_add_xy(map, X + 5, Y + 9, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_4, DIR_EAST, false));
-        add_inspect_tex(map, X + 5, Y + 9, TEX_ID_PICTURE_4);
-        map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
-        add_inspect_tex(map, X + 5, Y + 12, TEX_ID_PICTURE_5);
+        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_0, TEX_ID_PICTURE_0, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 2, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_3, TEX_ID_PICTURE_1, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 4, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_2, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 6, item_new_tex(OBJ_ID_PICTURE_RECT, TEX_ID_PICTURE_3, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 8, item_new_tex(OBJ_ID_PICTURE_RECT, TEX_ID_PICTURE_4, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 10, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_5, DIR_EAST, false));
+        map_item_add_xy(map, X + 5, Y + 12, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_C, TEX_ID_PICTURE_6, DIR_EAST, false));
     }
 
     //---------------------------------------------------------------------------
@@ -342,23 +359,23 @@ void map_gen(map_t* map) {
 
     // Corridor
     {
-        const int X = 46;
+        const int X = 37;
         const int Y = 19;
-        const int WIDTH = 4;
+        const int WIDTH = 5;
         const int HEIGHT = 13;
 
         add_room(map, X, Y, WIDTH, HEIGHT);
 
-        map_item_add_xy(map, X, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_1, DIR_WEST, false));
-        map_item_add_xy(map, X + WIDTH - 1, Y + 6, item_new_tex(OBJ_ID_SIGN_SQUARE, TEX_ID_PICTURE_3, DIR_EAST, false));
+        map_item_add_xy(map, X, Y + 6, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_1, DIR_WEST, false));
+        map_item_add_xy(map, X + WIDTH - 1, Y + 6, item_new_tex(OBJ_ID_PICTURE_SQUARE, TEX_ID_PICTURE_3, DIR_EAST, false));
 
         // Entrance(s)
-        add_room(map, X + 1, Y + HEIGHT, 2, 1);
+        add_room(map, X + 1, Y + HEIGHT, 3, 1);
     }
 
     // Room 1
     {
-        const int X = 39;
+        const int X = 30;
         const int Y = 19;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -375,7 +392,7 @@ void map_gen(map_t* map) {
 
     // Room 2
     {
-        const int X = 39;
+        const int X = 30;
         const int Y = 26;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -390,7 +407,7 @@ void map_gen(map_t* map) {
 
     // Room 3
     {
-        const int X = 51;
+        const int X = 43;
         const int Y = 19;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -404,7 +421,7 @@ void map_gen(map_t* map) {
 
     // Room 4
     {
-        const int X = 51;
+        const int X = 43;
         const int Y = 26;
         const int WIDTH = 6;
         const int HEIGHT = 6;
@@ -421,25 +438,42 @@ void map_gen(map_t* map) {
     // Big room
     //---------------------------------------------------------------------------
     {
-        const int X = 42;
-        const int Y = 6;
+        const int X = 30;
+        const int Y = 1;
+
+        const int WIDTH = 20;
+        const int HEIGHT = 17;
 
         // Entrance(s)
-        add_room(map, X + 5, Y + 12, 2, 1);
+        add_room(map, X + 8, Y + HEIGHT, 3, 1);
 
         // Floor
-        add_room(map, X + 4, Y + 0, 4, 2);
-        add_room(map, X + 2, Y + 2, 8, 2);
-        add_room(map, X + 0, Y + 4, 12, 2);
-        add_room(map, X + 0, Y + 6, 12, 2);
-        add_room(map, X + 2, Y + 8, 8, 2);
-        add_room(map, X + 4, Y + 10, 4, 2);
+        add_room(map, X, Y, WIDTH, HEIGHT);
 
-        // Columns
-        for (int i = 0; i < 2; i++) {
-            map_item_add_xy(map, X + 4, Y + 4 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
-            map_item_add_xy(map, X + 7, Y + 4 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
-        }
+        /*// Columns*/
+        /*for (int i = 0; i < 2; i++) {*/
+        /*    for (int i = 0; i < 2; i++) {*/
+        /*        map_item_add_xy(map, X + 4, Y + 4 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));*/
+        /*    }*/
+        /*}*/
+    }
+
+    {
+        const int X = 19;
+        const int Y = 41;
+
+        add_room(map, X + 15, Y + 12, 1, 3);
+
+        add_room(map, X + 0, Y + 0, 5, 7);
+        add_room(map, X + 0, Y + 8, 10, 3);
+        add_room(map, X + 6, Y + 0, 4, 8);
+        add_room(map, X + 10, Y + 0, 2, 7);
+        add_room(map, X + 11, Y + 0, 4, 11);
+        add_room(map, X + 0, Y + 12, 5, 9);
+        add_room(map, X + 5, Y + 12, 2, 4);
+        add_room(map, X + 6, Y + 12, 9, 9);
+        add_room(map, X + 1, Y + 6, 2, 2);
+        add_room(map, X + 12, Y + 10, 2, 2);
     }
 
     //---------------------------------------------------------------------------

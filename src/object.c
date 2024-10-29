@@ -38,35 +38,53 @@ int obj_init(void) {
     glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     minigl_obj_copy_trans(obj_wall, trans, &obj_array[OBJ_ID_WALL]);
 
-    // Sign square
+    // Picture square
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
     // glm_scale(trans, (vec3){1.0f, 1.0, 1.0});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SQUARE]);
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE]);
+
+    // Picture square small center
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
+    glm_scale(trans, (vec3){0.6f, 0.6, 0.6});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_SMALL_C]);
+
+    // Picture square small 0
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.25f, +0.25f, -0.48f});
+    glm_scale(trans, (vec3){0.45f, 0.45f, 0.45f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_SMALL_0]);
+
+    // Picture square small 1
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){+0.25f, +0.25f, -0.48f});
+    glm_scale(trans, (vec3){0.45f, 0.45f, 0.45f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_SMALL_1]);
+
+    // Picture square small 2
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.25f, -0.25f, -0.48f});
+    glm_scale(trans, (vec3){0.45f, 0.45f, 0.45f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_SMALL_2]);
+
+    // Picture square small 3
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){+0.25f, -0.25f, -0.48f});
+    glm_scale(trans, (vec3){0.45f, 0.45f, 0.45f});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_SMALL_3]);
+
+    // Picture rectangle
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
+    glm_scale(trans, (vec3){0.5f, 1.0, 1.0});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_RECT]);
 
     // Sign small side
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.3f, 0.2f, -0.49f});
     glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
     minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SIDE_SMALL]);
-
-    // Sign side
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.25f, 0.15f, -0.49f});
-    glm_scale(trans, (vec3){0.4f, 0.4, 0.4});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_SIDE]);
-
-    // Sign base
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, -0.6f, 0.36f});
-    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_BASE]);
-
-    // Sign column
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, 0.0f, 0.21f});
-    glm_scale(trans, (vec3){0.2f, 0.2, 0.2});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_SIGN_COLUMN]);
 
     // Enemy
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);

@@ -17,10 +17,13 @@ typedef enum {
     TEX_ID_PICTURE_3,
     TEX_ID_PICTURE_4,
     TEX_ID_PICTURE_5,
+    TEX_ID_PICTURE_6,
+    TEX_ID_PICTURE_7,
+    TEX_ID_PICTURE_8,
     TEX_ID_WHITEBOARD
 } tex_id_t;
 
-#define TEX_ID_NUM 15
+#define TEX_ID_NUM 18
 
 typedef enum {
     TEX_ID_VENUS

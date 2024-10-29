@@ -37,17 +37,23 @@ int tex_load(tex_id_t id) {
         case TEX_ID_SIGN_EMPLOYEEONLY:
             return tex_file_read("res/textures/sign_employeeonly.tex", TEX_ID_SIGN_EMPLOYEEONLY, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_0:
-            return tex_file_read("res/textures/picture_owl.tex", TEX_ID_PICTURE_0, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_0.tex", TEX_ID_PICTURE_0, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_1:
-            return tex_file_read("res/textures/picture_key.tex", TEX_ID_PICTURE_1, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_1.tex", TEX_ID_PICTURE_1, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_2:
-            return tex_file_read("res/textures/picture_sword.tex", TEX_ID_PICTURE_2, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_2.tex", TEX_ID_PICTURE_2, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_3:
-            return tex_file_read("res/textures/picture_telescope.tex", TEX_ID_PICTURE_3, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_3.tex", TEX_ID_PICTURE_3, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_4:
-            return tex_file_read("res/textures/picture_horse.tex", TEX_ID_PICTURE_4, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_4.tex", TEX_ID_PICTURE_4, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_PICTURE_5:
-            return tex_file_read("res/textures/picture_man.tex", TEX_ID_PICTURE_5, (minigl_tex_read_opts_t){.force_g8 = true});
+            return tex_file_read("res/textures/picture_5.tex", TEX_ID_PICTURE_5, (minigl_tex_read_opts_t){.force_g8 = true});
+        case TEX_ID_PICTURE_6:
+            return tex_file_read("res/textures/picture_6.tex", TEX_ID_PICTURE_6, (minigl_tex_read_opts_t){.force_g8 = true});
+        case TEX_ID_PICTURE_7:
+            return tex_file_read("res/textures/picture_7.tex", TEX_ID_PICTURE_7, (minigl_tex_read_opts_t){.force_g8 = true});
+        case TEX_ID_PICTURE_8:
+            return tex_file_read("res/textures/picture_8.tex", TEX_ID_PICTURE_8, (minigl_tex_read_opts_t){.force_g8 = true});
         case TEX_ID_WHITEBOARD:
             return tex_file_read("res/textures/whiteboard.tex", TEX_ID_WHITEBOARD, (minigl_tex_read_opts_t){.force_g8 = true});
     }
