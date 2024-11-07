@@ -4,4 +4,4 @@
 
 #include "map.h"
 
-void map_gen(map_t* map);
+void mapgen_gen(map_t* map);

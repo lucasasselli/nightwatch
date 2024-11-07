@@ -2,15 +2,9 @@
 
 #include <stdbool.h>
 
+#include "common.h"
 #include "object.h"
 #include "texture.h"
-
-typedef enum {
-    DIR_NORTH,
-    DIR_EAST,
-    DIR_SOUTH,
-    DIR_WEST
-} dir_t;
 
 typedef enum {
     ITEM_NORMAL,

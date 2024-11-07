@@ -19,8 +19,8 @@ set(PLAYDATE_GAME_DEVICE ${PLAYDATE_GAME_NAME}_DEVICE)
 
 project(${PLAYDATE_GAME_NAME} C ASM)
 
-file(GLOB SOURCE_FILES src/*.c)
-file(GLOB MINIGL_FILES libs/minigl/src/*.c)
+file(GLOB_RECURSE SOURCE_FILES src/*.c)
+file(GLOB_RECURSE MINIGL_FILES libs/minigl/src/*.c)
 
 set(ZLIB_ROOT, {PROJECT_SOURCE_DIR}/ext/zlib)
 

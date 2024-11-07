@@ -3,7 +3,7 @@
 #include "enemy.h"
 #include "game_state.h"
 #include "map.h"
-#include "map_reader.h"
+#include "mapgen/mapgen.h"
 #include "pd_api.h"
 #include "player.h"
 #include "sound.h"
@@ -30,7 +30,7 @@ void game_reset(void) {
         map_free(gs.map);
     }
     gs.map = map_new();
-    map_gen(gs.map);
+    mapgen_gen(gs.map);
     map_viz_update(gs.map, gs.camera);
 
     gs.torch_charge = 0.0f;
