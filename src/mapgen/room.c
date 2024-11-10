@@ -87,8 +87,6 @@ void room_add_floor(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int
 }
 
 void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
-    int type = randi(0, 6);
-
     // Add only if tile has a wall in the same direction.
     map_tile_t tile;
     switch (dir) {
@@ -110,35 +108,8 @@ void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
         return;
     }
 
-    switch (type) {
-        case 0:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_0, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_1, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_2, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_3, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            break;
-        case 1:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_0, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_3, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            break;
-
-        case 2:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_1, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_2, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            break;
-
-        case 3:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE_SMALL_C, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            break;
-
-        case 4:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
-            break;
-
-        case 5:
-            room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_RECT, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir_rotate(dir, b.r), false));
-            break;
-    }
+    dir = dir_rotate(dir, b.r);
+    room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
 }
 
 /*

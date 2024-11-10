@@ -2,6 +2,7 @@
 
 minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
 minigl_matgroup_t mat_shutter = {.size = 3, .color = {160, 128, 96}};
+minigl_matgroup_t mat_random = {.size = 5, .color = {0, 64, 128, 192, 255}};
 
 typedef void (*furnish_fun_t)(map_t*, bounds_t);
 
@@ -60,106 +61,152 @@ static void furnish_donut(map_t* map, bounds_t b) {
     room_add_floor(map, b, 0, 3, 9, 2);
 
     // Pictures
-    add_picture(map, b, 3, 3, DIR_NORTH);
-    add_picture(map, b, 5, 3, DIR_NORTH);
-
-    add_picture(map, b, 3, 1, DIR_SOUTH);
-    add_picture(map, b, 5, 1, DIR_SOUTH);
+    for (int i = 0; i < 3; i++) {
+        add_picture(map, b, 3 + i, 3, DIR_NORTH);
+        add_picture(map, b, 3 + i, 1, DIR_SOUTH);
+    }
 }
 
-roomlib_room_t room_atrium = {9,
-                              11,
-                              &furnish_atrium,
-                              3,
-                              {
-                                  {3, 3, DIR_NORTH},
-                                  {5, 2, DIR_EAST},
-                                  {5, 2, DIR_WEST},
-                              }};
+static void furnish_square_small(map_t* map, bounds_t b) {
+    furnish_default(map, b);
 
-roomlib_room_t room_gallery = {5,
-                               15,
-                               &furnish_gallery,
-                               6,
-                               {
-                                   {1, 3, DIR_NORTH},
-                                   {1, 2, DIR_WEST},
-                                   {12, 2, DIR_WEST},
-                                   {1, 3, DIR_SOUTH},
-                                   {1, 2, DIR_EAST},
-                                   {12, 2, DIR_EAST},
-                               }};
+    for (int i = 0; i < 2; i++) {
+        add_picture(map, b, 1 + i, 0, DIR_NORTH);
+        add_picture(map, b, 3, 1 + i, DIR_EAST);
+        add_picture(map, b, 1 + i, 3, DIR_SOUTH);
+        add_picture(map, b, 0, 1 + i, DIR_WEST);
+    }
+}
 
-roomlib_room_t room_donut = {9,
-                             5,
-                             &furnish_donut,
-                             2,
-                             {
-                                 {3, 3, DIR_NORTH},
-                                 {3, 3, DIR_SOUTH},
-                             }};
+static void furnish_square_large(map_t* map, bounds_t b) {
+    furnish_default(map, b);
 
-roomlib_room_t room0 = {9,
-                        4,
-                        NULL,
-                        3,
-                        {
-                            {3, 3, DIR_NORTH},
-                            {1, 2, DIR_EAST},
-                            {3, 3, DIR_SOUTH},
-                            {1, 2, DIR_WEST},
-                        }};
+    room_add_item(map, b, 2, 2, item_new_mat(OBJ_ID_RANDOM, &mat_wall, DIR_SOUTH, true));
 
-roomlib_room_t room1 = {9,
-                        9,
-                        NULL,
-                        4,
-                        {
-                            {3, 3, DIR_NORTH},
-                            {1, 2, DIR_EAST},
-                            {3, 3, DIR_SOUTH},
-                            {1, 2, DIR_WEST},
-                        }};
+    for (int i = 0; i < 3; i++) {
+        add_picture(map, b, 1 + i, 0, DIR_NORTH);
+        add_picture(map, b, 4, 1 + i, DIR_EAST);
+        add_picture(map, b, 1 + i, 4, DIR_SOUTH);
+        add_picture(map, b, 0, 1 + i, DIR_WEST);
+    }
+}
 
-roomlib_room_t room2 = {4,
-                        4,
-                        NULL,
-                        4,
-                        {
-                            {1, 2, DIR_NORTH},
-                            {1, 2, DIR_EAST},
-                            {1, 2, DIR_SOUTH},
-                            {1, 2, DIR_WEST},
-                        }};
+// clang-format off
+roomlib_room_t room_atrium = {
+    9,
+    11,
+    &furnish_atrium,
+    3,
+    {
+        {3, 3, DIR_NORTH},
+        {5, 2, DIR_EAST},
+        {5, 2, DIR_WEST},
+    }};
 
-roomlib_room_t room3 = {4,
-                        9,
-                        NULL,
-                        6,
-                        {
-                            {1, 2, DIR_NORTH},
-                            {1, 2, DIR_EAST},
-                            {5, 2, DIR_EAST},
-                            {1, 2, DIR_SOUTH},
-                            {1, 2, DIR_WEST},
-                            {5, 2, DIR_WEST},
-                        }};
+roomlib_room_t room_gallery = {
+    5,
+    15,
+    &furnish_gallery,
+    6,
+    {
+        {1, 3, DIR_NORTH},
+        {1, 2, DIR_WEST},
+        {12, 2, DIR_WEST},
+        {1, 3, DIR_SOUTH},
+        {1, 2, DIR_EAST},
+        {12, 2, DIR_EAST},
+    }};
 
-roomlib_room_t room4 = {9,
-                        9,
-                        NULL,
-                        8,
-                        {
-                            {1, 2, DIR_NORTH},
-                            {5, 2, DIR_NORTH},
-                            {1, 2, DIR_EAST},
-                            {5, 2, DIR_EAST},
-                            {1, 2, DIR_SOUTH},
-                            {5, 2, DIR_SOUTH},
-                            {1, 2, DIR_WEST},
-                            {5, 2, DIR_WEST},
-                        }};
+roomlib_room_t room_donut = {
+    9,
+    5,
+    &furnish_donut,
+    2,
+    {
+        {3, 3, DIR_NORTH},
+        {3, 3, DIR_SOUTH},
+    }};
 
-roomlib_room_t* room_library[] = {&room_gallery, &room0, &room1, &room_donut};
+/*roomlib_room_t room0 = {9,*/
+/*                        4,*/
+/*                        NULL,*/
+/*                        3,*/
+/*                        {*/
+/*                            {3, 3, DIR_NORTH},*/
+/*                            {1, 2, DIR_EAST},*/
+/*                            {3, 3, DIR_SOUTH},*/
+/*                            {1, 2, DIR_WEST},*/
+/*                        }};*/
+/**/
+/*roomlib_room_t room1 = {9,*/
+/*                        9,*/
+/*                        NULL,*/
+/*                        4,*/
+/*                        {*/
+/*                            {3, 3, DIR_NORTH},*/
+/*                            {1, 2, DIR_EAST},*/
+/*                            {3, 3, DIR_SOUTH},*/
+/*                            {1, 2, DIR_WEST},*/
+/*                        }};*/
+
+roomlib_room_t room_square_small = {
+    4,
+    4,
+    &furnish_square_small,
+    4,
+    {
+        {1, 2, DIR_NORTH},
+        {1, 2, DIR_EAST},
+        {1, 2, DIR_SOUTH},
+        {1, 2, DIR_WEST},
+    }};
+
+roomlib_room_t room_square_large = {
+    5,
+    5,
+    &furnish_square_large,
+    2,
+    {
+        {1, 3, DIR_NORTH},
+        {1, 3, DIR_SOUTH}
+    }};
+
+roomlib_room_t room3 = {
+    4,
+    9,
+    NULL,
+    6,
+    {
+        {1, 2, DIR_NORTH},
+        {1, 2, DIR_EAST},
+        {5, 2, DIR_EAST},
+        {1, 2, DIR_SOUTH},
+        {1, 2, DIR_WEST},
+        {5, 2, DIR_WEST},
+    }};
+
+roomlib_room_t room4 = {
+    9,
+    9,
+    NULL,
+    8,
+    {
+        {1, 2, DIR_NORTH},
+        {5, 2, DIR_NORTH},
+        {1, 2, DIR_EAST},
+        {5, 2, DIR_EAST},
+        {1, 2, DIR_SOUTH},
+        {5, 2, DIR_SOUTH},
+        {1, 2, DIR_WEST},
+        {5, 2, DIR_WEST},
+    }};
+
+roomlib_room_t* room_library[] = {
+    &room_gallery, 
+    &room_donut,
+    &room_square_small,
+    &room_square_large,
+};
+// clang-format on
 
 #define ROOM_NUM 4

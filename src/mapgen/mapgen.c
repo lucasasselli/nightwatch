@@ -8,7 +8,7 @@
 #include "mapgen/room_library.h"
 #include "random.h"
 
-#define MAPGEN_ROOMS_MAX 100
+#define MAPGEN_ROOMS_MAX 25
 
 static void map_add_floor(map_t* map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
@@ -164,7 +164,7 @@ static void add_room(roomlib_room_t* room, int x, int y, int r) {
     }
     room_cnt++;
 
-    cbuff_shuffle(doors_cbuff, 10);
+    cbuff_shuffle(doors_cbuff, 3);
 }
 
 static bool add_room_at_door(map_t* map, roomlib_room_t* room, door_t door_out) {
@@ -245,7 +245,7 @@ void mapgen_gen(map_t* map) {
     furnish_array = malloc(sizeof(furnish_fun_t*) * MAPGEN_ROOMS_MAX);
 
     // Place start room
-    add_room(&room_atrium, MAP_SIZE / 2, MAP_SIZE - room_atrium.height - 1, 0);
+    add_room(&room_atrium, MAP_SIZE / 2 - room_atrium.width / 2, MAP_SIZE - room_atrium.height - 2, 0);
 
     // Foreach door in list place a room
     while (cbuff_size(doors_cbuff) > 0) {

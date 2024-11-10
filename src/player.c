@@ -29,7 +29,7 @@ void player_reset(void) {
     // Pick a random starting position in the map
     ivec2 t;
     t[0] = MAP_SIZE / 2;  // TODO: Encode in the map or the level itself
-    t[1] = MAP_SIZE / 2;
+    t[1] = MAP_SIZE - 10;
     ivec2_to_vec2_center(t, gs.camera.pos);
 
     camera_update_trans(&gs.camera);
