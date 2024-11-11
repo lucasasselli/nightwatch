@@ -8,7 +8,7 @@
 #include "mapgen/room_library.h"
 #include "random.h"
 
-#define MAPGEN_ROOMS_MAX 25
+#define MAPGEN_ROOMS_MAX 20
 
 static void map_add_floor(map_t* map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {

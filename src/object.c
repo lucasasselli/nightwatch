@@ -2,26 +2,6 @@
 
 minigl_obj_t obj_array[OBJ_ID_NUM];
 
-#include "random.h"
-
-void obj_rand(minigl_obj_t* obj) {
-    const float VOLUME_MAX = 0.7;
-
-    minigl_obj_read_file("res/models/cube.obj", obj, 0);
-
-    for (int i = 0; i < obj->vcoord_size; i++) {
-        obj->vcoord_ptr[i][0] += randf(-VOLUME_MAX, VOLUME_MAX, 0.1f);
-        obj->vcoord_ptr[i][1] += randf(-VOLUME_MAX, VOLUME_MAX, 0.1f);
-        obj->vcoord_ptr[i][2] += randf(-VOLUME_MAX, VOLUME_MAX, 0.1f);
-    }
-
-    mat4 trans;
-    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
-    glm_translate(trans, (vec3){-0.0f, 0.5f, -0.0f});
-    glm_scale(trans, (vec3){0.4f, 0.4f, 0.4f});
-    minigl_obj_trans(obj, trans);
-}
-
 int obj_init(void) {
     const float WALL_SCALE_Y = 1.5f;
     const float FLOOR_Y_OFF = WALL_SCALE_Y / 2.0f;
@@ -144,8 +124,6 @@ int obj_init(void) {
     glm_translate(trans, (vec3){-0.0f, -0.7f, -0.5f});
     glm_scale(trans, (vec3){0.1f, 0.07f, 0.1f});
     minigl_obj_trans(&obj_array[OBJ_ID_BARRIER], trans);
-
-    obj_rand(&obj_array[OBJ_ID_RANDOM]);
 
     return 0;
 }

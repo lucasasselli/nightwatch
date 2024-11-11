@@ -112,19 +112,28 @@ void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
     room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
 }
 
-/*
- void add_barrier(map_t* map, int pos_x, int pos_y, int width, int height) {
+static void add_barrier(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
-        map_item_add_xy(map, pos_x, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_WEST, true));
-        map_item_add_xy(map, pos_x + width - 1, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_EAST, true));
+        room_add_item(map, b, pos_x, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_WEST, true));
+        room_add_item(map, b, pos_x + width - 1, pos_y + y, item_new_color(OBJ_ID_BARRIER, 64, DIR_EAST, true));
     }
 
     for (int x = 0; x < width; x++) {
-        map_item_add_xy(map, pos_x + x, pos_y, item_new_color(OBJ_ID_BARRIER, 64, DIR_NORTH, true));
-        map_item_add_xy(map, pos_x + x, pos_y + height - 1, item_new_color(OBJ_ID_BARRIER, 64, DIR_SOUTH, true));
+        room_add_item(map, b, pos_x + x, pos_y, item_new_color(OBJ_ID_BARRIER, 64, DIR_NORTH, true));
+        room_add_item(map, b, pos_x + x, pos_y + height - 1, item_new_color(OBJ_ID_BARRIER, 64, DIR_SOUTH, true));
     }
 }
 
+minigl_matgroup_t mat_sculpture = {.size = 2, .color = {128, 64}};
+
+void add_sculpture(map_t* map, bounds_t b, int x, int y) {
+    // TODO: Add more sculptures and randomize
+    room_add_item(map, b, x, y, item_new_mat(OBJ_ID_BASE, &mat_sculpture, DIR_NORTH, true));
+    room_add_item(map, b, x, y, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
+    /*add_barrier(map, b, x, y, 1, 1);*/
+}
+
+/*
  void add_door(map_t* map, int x, int y, dir_t dir, int pin) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;

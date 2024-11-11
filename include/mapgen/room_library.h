@@ -32,7 +32,6 @@ static void furnish_atrium(map_t* map, bounds_t b) {
     room_add_item(map, b, 4, 4, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
 
     // Columns
-    // FIXME: Add mechanism to rotate ...
     for (int i = 0; i < 3; i++) {
         room_add_item(map, b, 2, 2 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
         room_add_item(map, b, b.width - 3, 2 + i * 3, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
@@ -81,7 +80,7 @@ static void furnish_square_small(map_t* map, bounds_t b) {
 static void furnish_square_large(map_t* map, bounds_t b) {
     furnish_default(map, b);
 
-    room_add_item(map, b, 2, 2, item_new_mat(OBJ_ID_RANDOM, &mat_wall, DIR_SOUTH, true));
+    add_sculpture(map, b, 2, 2);
 
     for (int i = 0; i < 3; i++) {
         add_picture(map, b, 1 + i, 0, DIR_NORTH);
@@ -89,6 +88,19 @@ static void furnish_square_large(map_t* map, bounds_t b) {
         add_picture(map, b, 1 + i, 4, DIR_SOUTH);
         add_picture(map, b, 0, 1 + i, DIR_WEST);
     }
+}
+
+static void furnish_columns(map_t* map, bounds_t b) {
+    furnish_default(map, b);
+
+    room_add_item(map, b, 1, 1, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+    add_sculpture(map, b, 4, 1);
+
+    add_sculpture(map, b, 1, 4);
+    room_add_item(map, b, 4, 4, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+
+    room_add_item(map, b, 1, 7, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+    add_sculpture(map, b, 4, 7);
 }
 
 // clang-format off
@@ -127,28 +139,6 @@ roomlib_room_t room_donut = {
         {3, 3, DIR_SOUTH},
     }};
 
-/*roomlib_room_t room0 = {9,*/
-/*                        4,*/
-/*                        NULL,*/
-/*                        3,*/
-/*                        {*/
-/*                            {3, 3, DIR_NORTH},*/
-/*                            {1, 2, DIR_EAST},*/
-/*                            {3, 3, DIR_SOUTH},*/
-/*                            {1, 2, DIR_WEST},*/
-/*                        }};*/
-/**/
-/*roomlib_room_t room1 = {9,*/
-/*                        9,*/
-/*                        NULL,*/
-/*                        4,*/
-/*                        {*/
-/*                            {3, 3, DIR_NORTH},*/
-/*                            {1, 2, DIR_EAST},*/
-/*                            {3, 3, DIR_SOUTH},*/
-/*                            {1, 2, DIR_WEST},*/
-/*                        }};*/
-
 roomlib_room_t room_square_small = {
     4,
     4,
@@ -171,34 +161,14 @@ roomlib_room_t room_square_large = {
         {1, 3, DIR_SOUTH}
     }};
 
-roomlib_room_t room3 = {
-    4,
-    9,
-    NULL,
+roomlib_room_t room_columns = {
     6,
-    {
-        {1, 2, DIR_NORTH},
-        {1, 2, DIR_EAST},
-        {5, 2, DIR_EAST},
-        {1, 2, DIR_SOUTH},
-        {1, 2, DIR_WEST},
-        {5, 2, DIR_WEST},
-    }};
-
-roomlib_room_t room4 = {
     9,
-    9,
-    NULL,
-    8,
+    furnish_columns,
+    2,
     {
-        {1, 2, DIR_NORTH},
-        {5, 2, DIR_NORTH},
-        {1, 2, DIR_EAST},
-        {5, 2, DIR_EAST},
-        {1, 2, DIR_SOUTH},
-        {5, 2, DIR_SOUTH},
-        {1, 2, DIR_WEST},
-        {5, 2, DIR_WEST},
+        {2, 2, DIR_NORTH},
+        {2, 2, DIR_SOUTH},
     }};
 
 roomlib_room_t* room_library[] = {
@@ -206,7 +176,8 @@ roomlib_room_t* room_library[] = {
     &room_donut,
     &room_square_small,
     &room_square_large,
+    &room_columns,
 };
 // clang-format on
 
-#define ROOM_NUM 4
+#define ROOM_NUM 5
