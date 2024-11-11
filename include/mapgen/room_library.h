@@ -1,7 +1,6 @@
 #include "mapgen/room.h"
 
 minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
-minigl_matgroup_t mat_shutter = {.size = 3, .color = {160, 128, 96}};
 minigl_matgroup_t mat_random = {.size = 5, .color = {0, 64, 128, 192, 255}};
 
 typedef void (*furnish_fun_t)(map_t*, bounds_t);
@@ -25,7 +24,30 @@ static void furnish_default(map_t* map, bounds_t b) {
 }
 
 static void furnish_atrium(map_t* map, bounds_t b) {
-    furnish_default(map, b);
+    const int OUTSIDE_Y = 2;
+
+    // Don't fill the entire room!
+    room_add_floor(map, b, 0, 0, b.width, b.height - 4);
+
+    // Entrance
+    room_add_floor(map, b, 3, b.height - 4, 3, 1);
+
+    // Door
+    // TODO: Generate pin
+    room_add_door(map, b, 3, b.height - 4, 3, DIR_NORTH);
+
+    // This section is normally unreachable
+    for (int i = 0; i < 4; i++) {
+        room_add_item(map, b, 2 * i, b.height - 1, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+    }
+
+    for (int y = 0; y < 3; y++) {
+        for (int x = 0; x < b.width; x++) {
+            item_t* item = item_new_color(OBJ_ID_FLOOR, 64, DIR_NORTH, true);
+            item->type = ITEM_NORMAL;
+            room_add_item(map, b, x, b.height - 3 + y, item);
+        }
+    }
 
     // Venus
     room_add_item(map, b, 4, 4, item_new_mat(OBJ_ID_BASE, &mat_wall, DIR_NORTH, true));
@@ -106,7 +128,7 @@ static void furnish_columns(map_t* map, bounds_t b) {
 // clang-format off
 roomlib_room_t room_atrium = {
     9,
-    11,
+    15,
     &furnish_atrium,
     3,
     {

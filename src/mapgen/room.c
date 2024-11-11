@@ -1,60 +1,46 @@
 #include "mapgen/room.h"
 
 #include "random.h"
-#include "utils.h"
 
-void room_add_item(map_t* map, bounds_t b, int pos_x, int pos_y, item_t* item) {
-    int rot_x;
-    int rot_y;
-
+static void get_map_coord(bounds_t b, int pos_x, int pos_y, int* map_x, int* map_y) {
     switch (b.r) {
         case 0:
-            rot_x = pos_x;
-            rot_y = pos_y;
+            *map_x = b.x + pos_x;
+            *map_y = b.y + pos_y;
             break;
         case 1:
-            rot_x = b.height - pos_y - 1;
-            rot_y = pos_x;
+            *map_x = b.x + b.height - pos_y - 1;
+            *map_y = b.y + pos_x;
             break;
         case 2:
-            rot_x = b.width - pos_x - 1;
-            rot_y = b.height - pos_y - 1;
+            *map_x = b.x + b.width - pos_x - 1;
+            *map_y = b.y + b.height - pos_y - 1;
             break;
         case 3:
-            rot_x = pos_y;
-            rot_y = b.width - pos_x - 1;
+            *map_x = b.x + pos_y;
+            *map_y = b.y + b.width - pos_x - 1;
             break;
     }
+}
 
-    map_item_add_xy(map, b.x + rot_x, b.y + rot_y, item);
+void room_add_item(map_t* map, bounds_t b, int pos_x, int pos_y, item_t* item) {
+    int map_x, map_y;
+    get_map_coord(b, pos_x, pos_y, &map_x, &map_y);
+    map_item_add_xy(map, map_x, map_y, item);
 }
 
 map_tile_t room_get_tile(map_t* map, bounds_t b, int pos_x, int pos_y) {
-    int rot_x;
-    int rot_y;
+    int map_x, map_y;
+    get_map_coord(b, pos_x, pos_y, &map_x, &map_y);
+    return map_get_tile_xy(map, map_x, map_y);
+}
 
-    switch (b.r) {
-        case 0:
-            rot_x = pos_x;
-            rot_y = pos_y;
-            break;
-        case 1:
-            rot_x = b.height - pos_y - 1;
-            rot_y = pos_x;
-            break;
-        case 2:
-            rot_x = b.width - pos_x - 1;
-            rot_y = b.height - pos_y - 1;
-            break;
-        case 3:
-            rot_x = pos_y;
-            rot_y = b.width - pos_x - 1;
-            break;
-    }
-
-    debug("%d %d %d %d %d", b.r, b.x, b.y, rot_x, rot_y);
-
-    return map_get_tile_xy(map, b.x + rot_x, b.y + rot_y);
+void room_clone_tile(map_t* map, bounds_t b, int a_x, int a_y, int b_x, int b_y) {
+    int map_a_x, map_a_y;
+    int map_b_x, map_b_y;
+    get_map_coord(b, b_x, b_y, &map_b_x, &map_b_y);
+    get_map_coord(b, a_x, a_y, &map_a_x, &map_a_y);
+    map_tile_clone_xy(map, map_a_x, map_a_y, map_b_x, map_b_y);
 }
 
 bounds_t room_norm_r(bounds_t room) {
@@ -133,8 +119,9 @@ void add_sculpture(map_t* map, bounds_t b, int x, int y) {
     /*add_barrier(map, b, x, y, 1, 1);*/
 }
 
-/*
- void add_door(map_t* map, int x, int y, dir_t dir, int pin) {
+minigl_matgroup_t mat_shutter = {.size = 3, .color = {160, 128, 96}};
+
+void room_add_door(map_t* map, bounds_t b, int pos_x, int pos_y, int width, dir_t dir) {
     item_t* item = item_new();
     item->type = ITEM_NORMAL;
     item->obj_id = OBJ_ID_SHUTTER_CLOSED;
@@ -142,10 +129,20 @@ void add_sculpture(map_t* map, bounds_t b, int x, int y) {
     item->matgroup = &mat_shutter;
     item->dir = dir;
     item->action.type = ACTION_KEYPAD;
-    item->action.arg = pin;
-    map_item_add_xy(map, x, y, item);
+    item->action.arg = 0;  // TODO
+
+    room_add_item(map, b, pos_x, pos_y, item);
+
+    for (int i = 1; i < width; i++) {
+        if (b.r % 2) {
+            room_clone_tile(map, b, pos_x, pos_y + i, pos_x, pos_y);
+        } else {
+            room_clone_tile(map, b, pos_x + i, pos_y, pos_x, pos_y);
+        }
+    }
 }
 
+/*
  void add_note(map_t* map, int x, int y, int id) {
     item_t* item = item_new_tex(OBJ_ID_NOTE, TEX_ID_NOTE, DIR_NORTH, true);
     item->effects = EFFECT_SPIN;

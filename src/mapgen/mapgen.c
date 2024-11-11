@@ -55,16 +55,16 @@ static void gen_walls(map_t* map) {
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             if (tile_has_item(map->grid[y][x], ITEM_FLOOR, -1, -1)) {
-                if (!tile_has_item(map->grid[y - 1][x], ITEM_FLOOR, -1, -1)) {
+                if (!tile_has_item(map->grid[y - 1][x], -1, -1, -1)) {
                     add_wall(map, x, y - 1, DIR_SOUTH);
                 }
-                if (!tile_has_item(map->grid[y][x + 1], ITEM_FLOOR, -1, -1)) {
+                if (!tile_has_item(map->grid[y][x + 1], -1, -1, -1)) {
                     add_wall(map, x + 1, y, DIR_WEST);
                 }
-                if (!tile_has_item(map->grid[y + 1][x], ITEM_FLOOR, -1, -1)) {
+                if (!tile_has_item(map->grid[y + 1][x], -1, -1, -1)) {
                     add_wall(map, x, y + 1, DIR_NORTH);
                 }
-                if (!tile_has_item(map->grid[y][x - 1], ITEM_FLOOR, -1, -1)) {
+                if (!tile_has_item(map->grid[y][x - 1], -1, -1, -1)) {
                     add_wall(map, x - 1, y, DIR_EAST);
                 }
             }
