@@ -106,7 +106,8 @@ void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
     }
 
     dir = dir_rotate(dir, b.r);
-    room_add_item(map, b, x, y, item_new_tex(OBJ_ID_PICTURE_SQUARE, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8), dir, false));
+    int obj_id = randi(OBJ_ID_PICTURE_SQUARE_S, OBJ_ID_PICTURE_SQUARE_L + 1);
+    room_add_item(map, b, x, y, item_new_tex(obj_id, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8 + 1), dir, false));
 }
 
 static void add_barrier(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height) {

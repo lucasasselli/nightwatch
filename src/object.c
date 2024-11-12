@@ -38,11 +38,23 @@ int obj_init(void) {
     glm_scale(trans, (vec3){1.0f, WALL_SCALE_Y, 1.0});
     minigl_obj_copy_trans(obj_wall, trans, &obj_array[OBJ_ID_WALL]);
 
-    // Picture square
+    // Picture square (small)
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
+    glm_scale(trans, (vec3){0.7f, 0.7, 0.7});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_S]);
+
+    // Picture square (medium)
+    glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
+    glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
+    glm_scale(trans, (vec3){0.8f, 0.8, 0.8});
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_M]);
+
+    // Picture square (large)
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);
     glm_translate(trans, (vec3){-0.0f, 0.0f, -0.48f});
     glm_scale(trans, (vec3){0.9f, 0.9, 0.9});
-    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE]);
+    minigl_obj_copy_trans(obj_tile, trans, &obj_array[OBJ_ID_PICTURE_SQUARE_L]);
 
     // Sign small side
     glm_mat4_copy(GLM_MAT4_IDENTITY, trans);

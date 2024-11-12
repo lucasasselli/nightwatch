@@ -5,7 +5,9 @@
 typedef enum {
     OBJ_ID_FLOOR,
     OBJ_ID_WALL,
-    OBJ_ID_PICTURE_SQUARE,
+    OBJ_ID_PICTURE_SQUARE_S,
+    OBJ_ID_PICTURE_SQUARE_M,
+    OBJ_ID_PICTURE_SQUARE_L,
     OBJ_ID_SIGN_SIDE_SMALL,
     OBJ_ID_ENEMY,
     OBJ_ID_STATUE,
@@ -23,7 +25,7 @@ typedef enum {
     OBJ_ID_BARRIER
 } obj_id_t;
 
-#define OBJ_ID_NUM 18
+#define OBJ_ID_NUM 20
 
 int obj_init(void);
 
