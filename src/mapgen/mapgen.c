@@ -6,9 +6,10 @@
 #include "item.h"
 #include "mapgen/room.h"
 #include "mapgen/room_library.h"
+#include "notes.h"
 #include "random.h"
 
-#define MAPGEN_ROOMS_MAX 20
+#define MAPGEN_ROOMS_MAX 50
 
 static void map_add_floor(map_t* map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
@@ -52,19 +53,19 @@ static void add_wall(map_t* map, int x, int y, dir_t dir) {
 }
 
 static void gen_walls(map_t* map) {
-    for (int y = 0; y < MAP_SIZE; y++) {
-        for (int x = 0; x < MAP_SIZE; x++) {
+    for (int y = 1; y < MAP_SIZE - 1; y++) {
+        for (int x = 1; x < MAP_SIZE - 1; x++) {
             if (tile_has_item(map->grid[y][x], ITEM_FLOOR, -1, -1)) {
-                if (!tile_has_item(map->grid[y - 1][x], -1, -1, -1)) {
+                if (!tile_has_item(map->grid[y - 1][x], ITEM_FLOOR, -1, -1)) {
                     add_wall(map, x, y - 1, DIR_SOUTH);
                 }
-                if (!tile_has_item(map->grid[y][x + 1], -1, -1, -1)) {
+                if (!tile_has_item(map->grid[y][x + 1], ITEM_FLOOR, -1, -1)) {
                     add_wall(map, x + 1, y, DIR_WEST);
                 }
-                if (!tile_has_item(map->grid[y + 1][x], -1, -1, -1)) {
+                if (!tile_has_item(map->grid[y + 1][x], ITEM_FLOOR, -1, -1)) {
                     add_wall(map, x, y + 1, DIR_NORTH);
                 }
-                if (!tile_has_item(map->grid[y][x - 1], -1, -1, -1)) {
+                if (!tile_has_item(map->grid[y][x - 1], ITEM_FLOOR, -1, -1)) {
                     add_wall(map, x - 1, y, DIR_EAST);
                 }
             }
@@ -237,6 +238,14 @@ static bool add_room_at_door(map_t* map, roomlib_room_t* room, door_t door_out) 
     return false;
 }
 
+void add_note(map_t* map, int x, int y, int id) {
+    item_t* item = item_new_tex(OBJ_ID_NOTE, TEX_ID_NOTE, DIR_NORTH, true);
+    item->effects = EFFECT_SPIN;
+    item->action.type = ACTION_NOTE;
+    item->action.arg = id;
+    map_item_add_xy(map, x, y, item);
+}
+
 void mapgen_gen(map_t* map) {
     room_cnt = 0;
 
@@ -258,6 +267,7 @@ void mapgen_gen(map_t* map) {
             // Cycle the room library
             roomlib_room_t* room = room_library[(rand_room_start + i) % ROOM_NUM];
             if (add_room_at_door(map, room, door)) {
+                // TODO: Add game items
                 break;
             }
         }
@@ -265,9 +275,34 @@ void mapgen_gen(map_t* map) {
         if (room_cnt >= MAPGEN_ROOMS_MAX) break;
     }
 
+    // TODO: Place first note in front of spawn position
+
     // Add the furniture
+    int notes_placed = 1;
+    int note_place_window = room_cnt / NOTES_CNT;
+    int note_place_target;
+
     for (int i = 0; i < room_cnt; i++) {
-        (*furnish_array[i])(map, room_array[i]);
+        bounds_t room = room_array[i];
+
+        (*furnish_array[i])(map, room);
+
+        if (notes_placed < NOTES_CNT) {
+            // New note window
+            if ((i % note_place_window) == 0) {
+                note_place_target = randi(0, note_place_window);
+            }
+
+            // Note target, place note
+            if ((i % note_place_window) == note_place_target) {
+                item_t* item = item_new_tex(OBJ_ID_NOTE, TEX_ID_NOTE, DIR_NORTH, true);
+                item->effects = EFFECT_SPIN;
+                item->action.type = ACTION_NOTE;
+                item->action.arg = notes_placed;
+                room_add_item_rand(map, room, item);
+                notes_placed++;
+            }
+        }
     }
 
     // Automatically add walls

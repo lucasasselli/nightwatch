@@ -2,4 +2,4 @@
 
 extern const char *NOTES[];
 
-#define NOTES_CNT 5
+#define NOTES_CNT 10

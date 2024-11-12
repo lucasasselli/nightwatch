@@ -24,8 +24,6 @@ static void furnish_default(map_t* map, bounds_t b) {
 }
 
 static void furnish_atrium(map_t* map, bounds_t b) {
-    const int OUTSIDE_Y = 2;
-
     // Don't fill the entire room!
     room_add_floor(map, b, 0, 0, b.width, b.height - 4);
 
@@ -38,13 +36,13 @@ static void furnish_atrium(map_t* map, bounds_t b) {
 
     // This section is normally unreachable
     for (int i = 0; i < 4; i++) {
-        room_add_item(map, b, 2 * i, b.height - 1, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+        room_add_item(map, b, 2 * i, b.height - 2, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
     }
 
     for (int y = 0; y < 3; y++) {
         for (int x = 0; x < b.width; x++) {
             item_t* item = item_new_color(OBJ_ID_FLOOR, 64, DIR_NORTH, true);
-            item->type = ITEM_NORMAL;
+            item->type = ITEM_FLOOR;
             room_add_item(map, b, x, b.height - 3 + y, item);
         }
     }
@@ -72,6 +70,16 @@ static void furnish_gallery(map_t* map, bounds_t b) {
     for (int i = 0; i < 6; i++) {
         add_picture(map, b, 0, 2 + 2 * i, DIR_WEST);
         add_picture(map, b, 4, 2 + 2 * i, DIR_EAST);
+    }
+}
+
+static void furnish_corridor(map_t* map, bounds_t b) {
+    furnish_default(map, b);
+
+    // Pictures
+    for (int i = 0; i < 3; i++) {
+        add_picture(map, b, 0, 1 + 2 * i, DIR_WEST);
+        add_picture(map, b, 3, 1 + 2 * i, DIR_EAST);
     }
 }
 
@@ -151,6 +159,16 @@ roomlib_room_t room_gallery = {
         {12, 2, DIR_EAST},
     }};
 
+roomlib_room_t room_corridor = {
+    4,
+    7,
+    &furnish_corridor,
+    2,
+    {
+        {1, 2, DIR_NORTH},
+        {1, 2, DIR_SOUTH},
+    }};
+
 roomlib_room_t room_donut = {
     9,
     5,
@@ -165,11 +183,10 @@ roomlib_room_t room_square_small = {
     4,
     4,
     &furnish_square_small,
-    4,
+    3,
     {
         {1, 2, DIR_NORTH},
         {1, 2, DIR_EAST},
-        {1, 2, DIR_SOUTH},
         {1, 2, DIR_WEST},
     }};
 
@@ -195,6 +212,7 @@ roomlib_room_t room_columns = {
 
 roomlib_room_t* room_library[] = {
     &room_gallery, 
+    &room_corridor,
     &room_donut,
     &room_square_small,
     &room_square_large,
@@ -202,4 +220,4 @@ roomlib_room_t* room_library[] = {
 };
 // clang-format on
 
-#define ROOM_NUM 5
+#define ROOM_NUM 6

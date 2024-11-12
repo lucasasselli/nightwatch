@@ -21,6 +21,8 @@ typedef struct {
 
 void room_add_item(map_t* map, bounds_t b, int pos_x, int pos_y, item_t* item);
 
+void room_add_item_rand(map_t* map, bounds_t b, item_t* item);
+
 map_tile_t room_get_tile(map_t* map, bounds_t b, int pos_x, int pos_y);
 
 bounds_t room_norm_r(bounds_t room);

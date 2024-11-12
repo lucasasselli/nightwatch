@@ -29,6 +29,17 @@ void room_add_item(map_t* map, bounds_t b, int pos_x, int pos_y, item_t* item) {
     map_item_add_xy(map, map_x, map_y, item);
 }
 
+void room_add_item_rand(map_t* map, bounds_t b, item_t* item) {
+    int map_x, map_y;
+    do {
+        int x = randi(0, b.width);
+        int y = randi(0, b.height);
+        get_map_coord(b, x, y, &map_x, &map_y);
+        break;
+    } while (map_get_collide_xy(map, map_x, map_y));
+    map_item_add_xy(map, map_x, map_y, item);
+}
+
 map_tile_t room_get_tile(map_t* map, bounds_t b, int pos_x, int pos_y) {
     int map_x, map_y;
     get_map_coord(b, pos_x, pos_y, &map_x, &map_y);
@@ -143,13 +154,6 @@ void room_add_door(map_t* map, bounds_t b, int pos_x, int pos_y, int width, dir_
 }
 
 /*
- void add_note(map_t* map, int x, int y, int id) {
-    item_t* item = item_new_tex(OBJ_ID_NOTE, TEX_ID_NOTE, DIR_NORTH, true);
-    item->effects = EFFECT_SPIN;
-    item->action.type = ACTION_NOTE;
-    item->action.arg = id;
-    map_item_add_xy(map, x, y, item);
-}
 
  void add_inspect_tex(map_t* map, int x, int y, tex_id_t tex_id) {
     item_t* item = item_new();
