@@ -47,8 +47,8 @@ static void memswap(void* a, void* b, size_t size) {
 void cbuff_shuffle(cbuff_t* buff, int n) {
     if (buff->tail < buff->head) {
         for (int i = 0; i < n; i++) {
-            int a = randi(buff->tail, buff->head) % buff->size;
-            int b = randi(buff->tail, buff->head) % buff->size;
+            int a = randi_range(buff->tail, buff->head) % buff->size;
+            int b = randi_range(buff->tail, buff->head) % buff->size;
             if (a != b) {
                 memswap(buff->data_ptr + a * buff->data_size, buff->data_ptr + b * buff->data_size, buff->data_size);
             }

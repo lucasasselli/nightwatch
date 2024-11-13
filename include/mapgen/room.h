@@ -29,6 +29,8 @@ bounds_t room_norm_r(bounds_t room);
 
 void room_add_floor(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height);
 
+void room_remove_floor(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height);
+
 void room_add_door(map_t* map, bounds_t b, int pos_x, int pos_y, int width, dir_t dir);
 
 void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir);

@@ -9,7 +9,8 @@
 #include "notes.h"
 #include "random.h"
 
-#define MAPGEN_ROOMS_MAX 50
+#define MAPGEN_ROOMS_MAX 20
+#define MAPGEN_SHUFFLE_K 4
 
 static void map_add_floor(map_t* map, int pos_x, int pos_y, int width, int height) {
     for (int y = 0; y < height; y++) {
@@ -165,12 +166,12 @@ static void add_room(roomlib_room_t* room, int x, int y, int r) {
     }
     room_cnt++;
 
-    cbuff_shuffle(doors_cbuff, 3);
+    cbuff_shuffle(doors_cbuff, room_cnt / MAPGEN_SHUFFLE_K);
 }
 
 static bool add_room_at_door(map_t* map, roomlib_room_t* room, door_t door_out) {
     // Pick a random door
-    int rand_door_start = randi(0, room->door_num);
+    int rand_door_start = randi_range(0, room->door_num);
 
     for (int i = 0; i < room->door_num; i++) {
         roomlib_door_t door_in = room->doors[(rand_door_start + i) % room->door_num];
@@ -262,7 +263,7 @@ void mapgen_gen(map_t* map) {
         cbuff_pop(doors_cbuff, &door);
 
         // Pick a random room
-        int rand_room_start = randi(0, ROOM_NUM);
+        int rand_room_start = randi_range(0, ROOM_NUM);
         for (int i = 0; i < ROOM_NUM; i++) {
             // Cycle the room library
             roomlib_room_t* room = room_library[(rand_room_start + i) % ROOM_NUM];
@@ -290,7 +291,7 @@ void mapgen_gen(map_t* map) {
         if (notes_placed < NOTES_CNT) {
             // New note window
             if ((i % note_place_window) == 0) {
-                note_place_target = randi(0, note_place_window);
+                note_place_target = randi_range(0, note_place_window);
             }
 
             // Note target, place note

@@ -667,5 +667,5 @@ void view_gameover_draw(float time) {
         sound_effect_play(SOUND_DISCOVERED);
     }
     pd->graphics->setDrawMode(kDrawModeCopy);
-    pd->graphics->drawBitmap(img_gameover, randi(0, 10), randi(0, 10), kBitmapUnflipped);
+    pd->graphics->drawBitmap(img_gameover, randi_range(0, 10), randi_range(0, 10), kBitmapUnflipped);
 }

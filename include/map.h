@@ -24,6 +24,8 @@ map_tile_t map_get_tile_ivec2(map_t* map, ivec2 pos);
 
 map_tile_t map_get_tile_vec2(map_t* map, vec2 pos);
 
+void map_tile_remove_all_xy(map_t* map, int x, int y);
+
 item_t* tile_find_item(map_tile_t tile, int item_type, int dir, int action_type);
 
 bool tile_has_item(map_tile_t tile, int item_type, int dir, int action_type);

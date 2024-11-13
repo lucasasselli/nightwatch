@@ -19,6 +19,14 @@ map_tile_t map_get_tile_vec2(map_t *map, vec2 pos) {
     return map_get_tile_xy(map, pos[0], pos[1]);
 }
 
+void map_tile_remove_all_xy(map_t *map, int x, int y) {
+    map_tile_t *tile = &map->grid[y][x];
+    if (!tile->is_clone && tile->items != NULL) {
+        item_list_free(tile->items);
+    }
+    tile->items = NULL;
+}
+
 item_t *tile_find_item(map_tile_t tile, int item_type, int dir, int action_type) {
     item_t *item = tile.items;
     while (item != NULL) {

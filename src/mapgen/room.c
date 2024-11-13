@@ -32,8 +32,8 @@ void room_add_item(map_t* map, bounds_t b, int pos_x, int pos_y, item_t* item) {
 void room_add_item_rand(map_t* map, bounds_t b, item_t* item) {
     int map_x, map_y;
     do {
-        int x = randi(0, b.width);
-        int y = randi(0, b.height);
+        int x = randi_range(0, b.width);
+        int y = randi_range(0, b.height);
         get_map_coord(b, x, y, &map_x, &map_y);
         break;
     } while (map_get_collide_xy(map, map_x, map_y));
@@ -83,6 +83,16 @@ void room_add_floor(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int
     }
 }
 
+void room_remove_floor(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height) {
+    int map_x, map_y;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            get_map_coord(b, pos_x + x, pos_y + y, &map_x, &map_y);
+            map_tile_remove_all_xy(map, map_x, map_y);
+        }
+    }
+}
+
 void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
     // Add only if tile has a wall in the same direction.
     map_tile_t tile;
@@ -106,8 +116,8 @@ void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
     }
 
     dir = dir_rotate(dir, b.r);
-    int obj_id = randi(OBJ_ID_PICTURE_SQUARE_S, OBJ_ID_PICTURE_SQUARE_L + 1);
-    room_add_item(map, b, x, y, item_new_tex(obj_id, randi(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8 + 1), dir, false));
+    int obj_id = randi_range(OBJ_ID_PICTURE_SQUARE_S, OBJ_ID_PICTURE_SQUARE_L + 1);
+    room_add_item(map, b, x, y, item_new_tex(obj_id, randi_range(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8 + 1), dir, false));
 }
 
 static void add_barrier(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height) {

@@ -1,4 +1,5 @@
 #include "mapgen/room.h"
+#include "random.h"
 
 minigl_matgroup_t mat_wall = {.size = 2, .color = {160, 128}};
 minigl_matgroup_t mat_random = {.size = 5, .color = {0, 64, 128, 192, 255}};
@@ -61,15 +62,37 @@ static void furnish_atrium(map_t* map, bounds_t b) {
 static void furnish_gallery(map_t* map, bounds_t b) {
     furnish_default(map, b);
 
-    // Benches
     for (int i = 0; i < 3; i++) {
-        room_add_item(map, b, 2, 3 + 4 * i, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_WEST, b.r), true));
+        int t = randi_range(0, 4);
+        int y_off = 1 + i * 5;
+        switch (t) {
+            case 0:
+                // Vertical
+                room_remove_floor(map, b, 3, y_off + 1, 1, 3);
+                break;
+            case 1:
+                // Horizontal
+                room_remove_floor(map, b, 2, y_off + 2, 3, 1);
+                break;
+            case 2:
+                // Square
+                room_remove_floor(map, b, 2, y_off + 1, 3, 3);
+                break;
+            case 3:
+                // Bench
+                room_add_item(map, b, 3, y_off + 2, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_WEST, b.r), true));
+                break;
+            case 4:
+                // Sculpture
+                add_sculpture(map, b, 3, y_off + 2);
+                break;
+        }
     }
 
-    // Pictures
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
+        // TODO: top walls?
         add_picture(map, b, 0, 2 + 2 * i, DIR_WEST);
-        add_picture(map, b, 4, 2 + 2 * i, DIR_EAST);
+        add_picture(map, b, 6, 2 + 2 * i, DIR_EAST);
     }
 }
 
@@ -83,54 +106,62 @@ static void furnish_corridor(map_t* map, bounds_t b) {
     }
 }
 
-static void furnish_donut(map_t* map, bounds_t b) {
-    room_add_floor(map, b, 0, 0, 9, 2);
-    room_add_floor(map, b, 0, 2, 2, 1);
-    room_add_floor(map, b, 7, 2, 2, 1);
-    room_add_floor(map, b, 0, 3, 9, 2);
-
-    // Pictures
-    for (int i = 0; i < 3; i++) {
-        add_picture(map, b, 3 + i, 3, DIR_NORTH);
-        add_picture(map, b, 3 + i, 1, DIR_SOUTH);
-    }
-}
-
 static void furnish_square_small(map_t* map, bounds_t b) {
     furnish_default(map, b);
 
+    int t = randi_range(0, 2);
+    switch (t) {
+        case 0:
+            // Bench
+            room_add_item(map, b, 2, 2, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_WEST, b.r), true));
+            break;
+        case 1:
+            // Sculpture
+            add_sculpture(map, b, 2, 2);
+            break;
+    }
+
     for (int i = 0; i < 2; i++) {
-        add_picture(map, b, 1 + i, 0, DIR_NORTH);
-        add_picture(map, b, 3, 1 + i, DIR_EAST);
-        add_picture(map, b, 1 + i, 3, DIR_SOUTH);
-        add_picture(map, b, 0, 1 + i, DIR_WEST);
+        add_picture(map, b, 1 + i * 2, 0, DIR_NORTH);
+        add_picture(map, b, 4, 1 + i * 2, DIR_EAST);
+        add_picture(map, b, 1 + i * 2, 4, DIR_SOUTH);
+        add_picture(map, b, 0, 1 + i * 2, DIR_WEST);
     }
 }
 
 static void furnish_square_large(map_t* map, bounds_t b) {
     furnish_default(map, b);
 
-    add_sculpture(map, b, 2, 2);
-
-    for (int i = 0; i < 3; i++) {
-        add_picture(map, b, 1 + i, 0, DIR_NORTH);
-        add_picture(map, b, 4, 1 + i, DIR_EAST);
-        add_picture(map, b, 1 + i, 4, DIR_SOUTH);
-        add_picture(map, b, 0, 1 + i, DIR_WEST);
+    switch (randi(2)) {
+        case 0:
+            // Columns
+            room_add_item(map, b, 2, 2, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            room_add_item(map, b, 2, 6, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            room_add_item(map, b, 6, 2, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            room_add_item(map, b, 6, 6, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
+            switch (randi(2)) {
+                case 0:
+                    // Statues
+                    add_sculpture(map, b, 4, 3);
+                    add_sculpture(map, b, 4, 5);
+                    add_sculpture(map, b, 3, 4);
+                    add_sculpture(map, b, 5, 4);
+                    break;
+                case 1:
+                    // Benches
+                    add_sculpture(map, b, 4, 4);
+                    room_add_item(map, b, 4, 2, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_NORTH, b.r), true));
+                    room_add_item(map, b, 4, 6, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_NORTH, b.r), true));
+                    room_add_item(map, b, 2, 4, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_WEST, b.r), true));
+                    room_add_item(map, b, 6, 4, item_new_color(OBJ_ID_BENCH, 100, dir_rotate(DIR_WEST, b.r), true));
+                    break;
+            }
+            break;
+        case 1:
+            // Square
+            room_remove_floor(map, b, 3, 3, 3, 3);
+            break;
     }
-}
-
-static void furnish_columns(map_t* map, bounds_t b) {
-    furnish_default(map, b);
-
-    room_add_item(map, b, 1, 1, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
-    add_sculpture(map, b, 4, 1);
-
-    add_sculpture(map, b, 1, 4);
-    room_add_item(map, b, 4, 4, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
-
-    room_add_item(map, b, 1, 7, item_new_color(OBJ_ID_COLUMN, 100, DIR_NORTH, true));
-    add_sculpture(map, b, 4, 7);
 }
 
 // clang-format off
@@ -146,17 +177,17 @@ roomlib_room_t room_atrium = {
     }};
 
 roomlib_room_t room_gallery = {
-    5,
-    15,
+    7,
+    17,
     &furnish_gallery,
     6,
     {
-        {1, 3, DIR_NORTH},
-        {1, 2, DIR_WEST},
-        {12, 2, DIR_WEST},
-        {1, 3, DIR_SOUTH},
+        {2, 3, DIR_NORTH},
+        {2, 3, DIR_SOUTH},
         {1, 2, DIR_EAST},
-        {12, 2, DIR_EAST},
+        {1, 2, DIR_WEST},
+        {14, 2, DIR_EAST},
+        {14, 2, DIR_WEST},
     }};
 
 roomlib_room_t room_corridor = {
@@ -169,55 +200,37 @@ roomlib_room_t room_corridor = {
         {1, 2, DIR_SOUTH},
     }};
 
-roomlib_room_t room_donut = {
-    9,
-    5,
-    &furnish_donut,
-    2,
-    {
-        {3, 3, DIR_NORTH},
-        {3, 3, DIR_SOUTH},
-    }};
-
 roomlib_room_t room_square_small = {
-    4,
-    4,
+    5,
+    5,
     &furnish_square_small,
-    3,
+    5,
     {
-        {1, 2, DIR_NORTH},
-        {1, 2, DIR_EAST},
-        {1, 2, DIR_WEST},
+        {1, 3, DIR_NORTH},
+        {2, 2, DIR_NORTH},
+        {1, 3, DIR_EAST},
+        {2, 2, DIR_EAST},
+        {1, 3, DIR_WEST}
     }};
 
 roomlib_room_t room_square_large = {
-    5,
-    5,
-    &furnish_square_large,
-    2,
-    {
-        {1, 3, DIR_NORTH},
-        {1, 3, DIR_SOUTH}
-    }};
-
-roomlib_room_t room_columns = {
-    6,
     9,
-    furnish_columns,
-    2,
+    9,
+    &furnish_square_large,
+    4,
     {
-        {2, 2, DIR_NORTH},
-        {2, 2, DIR_SOUTH},
+        {3, 3, DIR_NORTH},
+        {3, 3, DIR_SOUTH},
+        {3, 3, DIR_EAST},
+        {3, 3, DIR_WEST},
     }};
 
 roomlib_room_t* room_library[] = {
     &room_gallery, 
     &room_corridor,
-    &room_donut,
     &room_square_small,
     &room_square_large,
-    &room_columns,
 };
 // clang-format on
 
-#define ROOM_NUM 6
+#define ROOM_NUM 4

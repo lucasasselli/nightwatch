@@ -48,9 +48,11 @@ typedef struct {
     { .type = RAND_RANGE, .a = x, .b = y, .weight = z }
 // clang-format on
 
-int randi(int min, int max);
+int randi_range(int min, int max);
 
-float randf(float min, float max, float step);
+int randi(int max);
+
+float randf_range(float min, float max, float step);
 
 void randi_array(int* array, size_t size, int min, int max);
 

@@ -3,21 +3,25 @@
 #include <assert.h>
 #include <stdlib.h>
 
-int randi(int min, int max) {
+int randi_range(int min, int max) {
     assert(min < max);
     return min + rand() % (max - min);
 }
 
-float randf(float min, float max, float step) {
+int randi(int max) {
+    return randi_range(0, max);
+}
+
+float randf_range(float min, float max, float step) {
     assert(min < max);
     assert(step < max);
     float d = (max - min) / step;
-    return min + randi(0, d) * step;
+    return min + randi_range(0, d) * step;
 }
 
 void randi_array(int* array, size_t size, int min, int max) {
     for (size_t i = 0; i < size; i++) {
-        array[i] = randi(min, max);
+        array[i] = randi_range(min, max);
     }
 }
 
@@ -29,7 +33,7 @@ int randwi(const randw_constr_int_t* c) {
         max += c->values[i].weight;
     }
 
-    int w = randi(0, max);
+    int w = randi_range(0, max);
 
     int t = 0;
     for (size_t i = 0; i < c->size; i++) {
@@ -37,7 +41,7 @@ int randwi(const randw_constr_int_t* c) {
             if (c->values[i].type == RAND_POINT) {
                 return c->values[i].a;
             } else {
-                return randi(c->values[i].a, c->values[i].b);
+                return randi_range(c->values[i].a, c->values[i].b);
             }
         }
         t += c->values[i].weight;
@@ -56,7 +60,7 @@ float randwf(const randw_constr_float_t* c, float step) {
         max += c->values[i].weight;
     }
 
-    int w = randi(0, max);
+    int w = randi_range(0, max);
 
     int t = 0;
     for (size_t i = 0; i < c->size; i++) {
@@ -64,7 +68,7 @@ float randwf(const randw_constr_float_t* c, float step) {
             if (c->values[i].type == RAND_POINT) {
                 return c->values[i].a;
             } else {
-                return randf(c->values[i].a, c->values[i].b, step);
+                return randf_range(c->values[i].a, c->values[i].b, step);
             }
         }
         t += c->values[i].weight;
