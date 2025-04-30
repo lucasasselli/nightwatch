@@ -1,6 +1,9 @@
 #include "minigl/frame.h"
 
+#include <stdlib.h>
+#ifdef MINIGL_PNG
 #include <spng.h>
+#endif
 
 #include "minigl/system.h"
 
@@ -17,6 +20,7 @@ minigl_frame_t* minigl_frame_new(int width, int height) {
     return out;
 }
 
+#ifdef MINIGL_PNG
 int minigl_frame_to_file(minigl_frame_t* frame, char* path) {
     int ret = 0;
 
@@ -65,3 +69,4 @@ png_free:
 
     return ret;
 }
+#endif

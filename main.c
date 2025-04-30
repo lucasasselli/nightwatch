@@ -54,7 +54,9 @@ static int lua_load(lua_State *L) {
             pd->system->logToConsole("%s:%i: Can't load texture id=%d!", __FILE__, __LINE__, load_step);
         }
     } else if (load_step < (TEX_MDBB_ID_NUM + TEX_ID_NUM)) {
-        tex_mdbb_load(load_step - TEX_ID_NUM);
+        if (tex_mdbb_load(load_step - TEX_ID_NUM)) {
+            pd->system->logToConsole("%s:%i: Can't load texture id=%d!", __FILE__, __LINE__, load_step);
+        }
     } else if (load_step < (LOAD_STEP_LOCAL_CNT + TEX_ID_NUM + TEX_MDBB_ID_NUM)) {
         switch (load_step - TEX_ID_NUM - TEX_MDBB_ID_NUM) {
             case 0:

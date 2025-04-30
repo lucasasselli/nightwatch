@@ -2,9 +2,9 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "minigl/common.h"
-#include "minigl/utils.h"
 
 minigl_cfg_t cfg = {0};
 

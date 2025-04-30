@@ -50,6 +50,7 @@ typedef struct {
  */
 minigl_frame_t* minigl_frame_new(int width, int height);
 
+#ifdef MINIGL_PNG
 /**
  * @brief Writes the MiniGL frame to a file.
  *
@@ -58,3 +59,4 @@ minigl_frame_t* minigl_frame_new(int width, int height);
  * @return 0 on success, non-zero on failure.
  */
 int minigl_frame_to_file(minigl_frame_t* frame, char* path);
+#endif

@@ -117,7 +117,8 @@ void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir) {
 
     dir = dir_rotate(dir, b.r);
     int obj_id = randi_range(OBJ_ID_PICTURE_SQUARE_S, OBJ_ID_PICTURE_SQUARE_L + 1);
-    room_add_item(map, b, x, y, item_new_tex(obj_id, randi_range(TEX_ID_PICTURE_0, TEX_ID_PICTURE_8 + 1), dir, false));
+    int tex_id = randi_range(TEX_ID_PICTURE_0, TEX_ID_PICTURE_14 + 1);
+    room_add_item(map, b, x, y, item_new_tex(obj_id, tex_id, dir, false));
 }
 
 static void add_barrier(map_t* map, bounds_t b, int pos_x, int pos_y, int width, int height) {
@@ -134,10 +135,9 @@ static void add_barrier(map_t* map, bounds_t b, int pos_x, int pos_y, int width,
 
 minigl_matgroup_t mat_sculpture = {.size = 2, .color = {128, 64}};
 
-void add_sculpture(map_t* map, bounds_t b, int x, int y) {
-    // TODO: Add more sculptures and randomize
-    room_add_item(map, b, x, y, item_new_mat(OBJ_ID_BASE, &mat_sculpture, DIR_NORTH, true));
-    room_add_item(map, b, x, y, item_new_mdbb(TEX_ID_VENUS, DIR_SOUTH, true));
+void room_add_statue(map_t* map, bounds_t b, int x, int y, dir_t dir) {
+    room_add_item(map, b, x, y, item_new_mat(OBJ_ID_BASE, &mat_sculpture, dir_rotate(dir, b.r), true));
+    room_add_item(map, b, x, y, item_new_mdbb(TEX_ID_VENUS, dir_rotate(dir, b.r), true));
     /*add_barrier(map, b, x, y, 1, 1);*/
 }
 

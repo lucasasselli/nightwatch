@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pd_api.h"
+#include "stdio.h"
 
 extern PlaydateAPI* pd;
 
@@ -8,6 +9,7 @@ void* minigl_fopen(char* path, char* flags) {
     if (strcmp(flags, "r") == 0) {
         return pd->file->open(path, kFileRead);
     }
+
     return NULL;
 }
 

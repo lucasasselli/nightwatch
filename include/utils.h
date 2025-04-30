@@ -2,7 +2,6 @@
 
 #include <cglm/cglm.h>
 
-#include "camera.h"
 #include "pd_api.h"
 
 #ifdef DEBUG

@@ -35,4 +35,4 @@ void room_add_door(map_t* map, bounds_t b, int pos_x, int pos_y, int width, dir_
 
 void add_picture(map_t* map, bounds_t b, int x, int y, dir_t dir);
 
-void add_sculpture(map_t* map, bounds_t b, int x, int y);
+void room_add_statue(map_t* map, bounds_t b, int x, int y, dir_t dir);

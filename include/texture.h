@@ -20,21 +20,29 @@ typedef enum {
     TEX_ID_PICTURE_6,
     TEX_ID_PICTURE_7,
     TEX_ID_PICTURE_8,
-    TEX_ID_WHITEBOARD
+    TEX_ID_PICTURE_9,
+    TEX_ID_PICTURE_10,
+    TEX_ID_PICTURE_11,
+    TEX_ID_PICTURE_12,
+    TEX_ID_PICTURE_13,
+    TEX_ID_PICTURE_14,
 } tex_id_t;
 
-#define TEX_ID_NUM 18
+#define TEX_ID_NUM 23
 
 typedef enum {
     TEX_ID_VENUS
 } tex_mdbb_id_t;
 
 #define TEX_MDBB_ID_NUM 1
-#define MDBB_SIZE 36
+#define MDBB_SIZE 8
+#define MDBB_STEP (360 / MDBB_SIZE)
 
 int tex_load(tex_id_t id);
 
 int tex_mdbb_load(tex_mdbb_id_t id);
+
+int tex_load_all();
 
 minigl_tex_t* tex_get(tex_id_t id);
 
