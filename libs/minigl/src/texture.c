@@ -1,5 +1,6 @@
 #include "minigl/texture.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "minigl/system.h"
@@ -125,6 +126,9 @@ int minigl_tex_read_tex(const char *path, minigl_tex_t *out) {
     minigl_fread(&out->format, sizeof(minigl_color_fmt_t), f);
     minigl_fread(&out->size_x, sizeof(uint32_t), f);
     minigl_fread(&out->size_y, sizeof(uint32_t), f);
+
+    assert(out->size_x > 0 && out->size_x < 1000);
+    assert(out->size_x > 0 && out->size_x < 1000);
 
     switch (out->format) {
         case MINIGL_COLOR_FMT_G8:

@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum uint8_t {
+typedef enum : uint8_t {
     MINIGL_COLOR_FMT_G8,
     MINIGL_COLOR_FMT_GA8
 } minigl_color_fmt_t;
